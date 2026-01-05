@@ -10,10 +10,10 @@ interface TicketsFiltersProps {
 
 export function TicketsFilters({ activeFilter, onFilterChange }: TicketsFiltersProps) {
   const filterButtons = [
-    { key: "all" as FilterType, label: "Todos os tickets" },
-    { key: "pending" as FilterType, label: "Tickets pendentes" },
-    { key: "closed" as FilterType, label: "Tickets fechados" },
-    { key: "awaiting-approval" as FilterType, label: "Tickets aguardando aprovação" },
+    { key: "all" as FilterType, label: "Todos os chamados" },
+    { key: "pending" as FilterType, label: "Chamados pendentes" },
+    { key: "closed" as FilterType, label: "Chamados fechados" },
+    { key: "awaiting-approval" as FilterType, label: "Chamados aguardando aprovação" },
   ]
 
   return (

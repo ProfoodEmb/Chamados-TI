@@ -1,12 +1,28 @@
 "use client"
 
-import { Search, Clock, Bell } from "lucide-react"
+import { Search, Clock, Bell, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { CreateTicketDialog } from "@/components/create-ticket-dialog"
 
 export function Header() {
+  const handleCreateTicket = (ticketData: {
+    subject: string
+    description: string
+    category: string
+    urgency: string
+    attachments: File[]
+  }) => {
+    console.log("Novo chamado criado:", ticketData)
+  }
+
   return (
-    <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-end px-4 md:px-6 z-40 transition-all duration-300">
+    <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 z-40 transition-all duration-300">
+      {/* Left side - Create Ticket Button */}
+      <div className="flex items-center">
+        <CreateTicketDialog onCreateTicket={handleCreateTicket} />
+      </div>
+
       {/* Right side - Actions */}
       <div className="flex items-center gap-2 md:gap-3">
         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">

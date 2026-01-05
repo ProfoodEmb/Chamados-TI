@@ -14,7 +14,7 @@ const menuItems = [
   {
     icon: Ticket,
     href: "/tickets",
-    label: "Tickets",
+    label: "Chamados",
   },
 ]
 

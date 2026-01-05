@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -29,20 +30,31 @@ interface TicketsTableProps {
 
 export function TicketsTable({ activeFilter }: TicketsTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const router = useRouter()
 
   const filteredTickets = useMemo(() => {
     return filterTickets(mockTickets, activeFilter, searchTerm)
   }, [activeFilter, searchTerm])
 
+  const handleRowClick = (ticketId: string) => {
+    router.push(`/tickets/${ticketId}`)
+  }
+
   const handleCreateTicket = (ticketData: {
+    tipo: string
+    categoria: string
+    sistema: string
+    problema: string
     subject: string
     description: string
-    category: string
+    anydesk: string
     urgency: string
+    attachments: File[]
   }) => {
-    // Aqui você pode implementar a lógica para salvar o ticket
-    console.log("Novo ticket criado:", ticketData)
-    // Por exemplo, fazer uma chamada para API ou adicionar ao estado global
+    // Aqui você pode implementar a lógica para salvar o chamado e anexos
+    console.log("Novo chamado criado:", ticketData)
+    console.log("Anexos:", ticketData.attachments.map(file => ({ name: file.name, size: file.size })))
+    // Por exemplo, fazer upload dos anexos e salvar o chamado via API
   }
 
   return (
@@ -53,7 +65,7 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Pesquisar tickets..."
+              placeholder="Pesquisar chamados..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 w-full"
@@ -87,8 +99,8 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
                 <tr>
                   <td colSpan={9} className="py-8 px-4 text-center text-muted-foreground text-sm">
                     {searchTerm.length >= 3 
-                      ? "Nenhum ticket encontrado para sua busca."
-                      : "Nenhum ticket encontrado para este filtro."
+                      ? "Nenhum chamado encontrado para sua busca."
+                      : "Nenhum chamado encontrado para este filtro."
                     }
                   </td>
                 </tr>
@@ -96,7 +108,8 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
                 filteredTickets.map((ticket, index) => (
                   <tr
                     key={ticket.id}
-                    className={`border-b border-border hover:bg-muted/30 transition-colors ${
+                    onClick={() => handleRowClick(ticket.id)}
+                    className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
                       index % 2 === 0 ? "bg-background" : "bg-muted/10"
                     }`}
                   >
