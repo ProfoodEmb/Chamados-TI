@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { mockTickets, filterTickets, type FilterType } from "@/lib/mock-tickets"
-import { CreateTicketDialog } from "@/components/create-ticket-dialog"
 
 const urgencyColors = {
   critical: "bg-red-500",
@@ -40,23 +39,6 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
     router.push(`/tickets/${ticketId}`)
   }
 
-  const handleCreateTicket = (ticketData: {
-    tipo: string
-    categoria: string
-    sistema: string
-    problema: string
-    subject: string
-    description: string
-    anydesk: string
-    urgency: string
-    attachments: File[]
-  }) => {
-    // Aqui você pode implementar a lógica para salvar o chamado e anexos
-    console.log("Novo chamado criado:", ticketData)
-    console.log("Anexos:", ticketData.attachments.map(file => ({ name: file.name, size: file.size })))
-    // Por exemplo, fazer upload dos anexos e salvar o chamado via API
-  }
-
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header */}
@@ -71,7 +53,6 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
               className="pl-10 w-full"
             />
           </div>
-          <CreateTicketDialog onCreateTicket={handleCreateTicket} />
         </div>
       </div>
 
