@@ -8,17 +8,37 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Inbox, PlayCircle, Eye, CheckCircle2, User as UserIcon, Clock } from "lucide-react"
 import { mockTickets, type Ticket } from "@/lib/mock-tickets"
-import { type User } from "@/lib/users"
+
+interface User {
+  id: string
+  name: string
+  email: string
+  role: string
+  team: string
+}
 
 export default function KanbanPage() {
   const [user, setUser] = useState<User | null>(null)
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      setUser(JSON.parse(userData))
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/get-session")
+        const session = await response.json()
+        
+        if (session?.user) {
+          setUser(session.user)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar sessão:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    fetchUser()
   }, [])
 
   const urgencyColors = {
@@ -154,8 +174,25 @@ export default function KanbanPage() {
     </div>
   )
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!user) {
-    return <div>Carregando...</div>
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-muted-foreground">Erro ao carregar usuário</p>
+        </div>
+      </div>
+    )
   }
 
   return (

@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { User, Mail, Building2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -15,18 +16,56 @@ interface UserProfileDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
+interface UserData {
+  id: string
+  name: string
+  email: string
+  role: string
+  team: string
+}
+
 export function UserProfileDialog({ open, onOpenChange }: UserProfileDialogProps) {
-  // Dados mockados do usuário
-  const userData = {
-    nome: "Jackson Felipe",
-    email: "jackson.felipe@empresa.com",
-    setor: "Tecnologia da Informação",
-    cargo: "Analista de Sistemas",
-    telefone: "(11) 98765-4321",
-    ramal: "2045",
-    dataAdmissao: "15/03/2022",
-    localizacao: "São Paulo - SP",
-    avatar: "/abstract-geometric-shapes.png",
+  const [user, setUser] = useState<UserData | null>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/get-session")
+        const session = await response.json()
+        
+        if (session?.user) {
+          setUser(session.user)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar sessão:", error)
+      }
+    }
+
+    if (open) {
+      fetchUser()
+    }
+  }, [open])
+
+  const getRoleLabel = (role: string) => {
+    const roles: Record<string, string> = {
+      admin: "Administrador Geral",
+      lider_infra: "Líder de Infraestrutura",
+      func_infra: "Funcionário de Infraestrutura",
+      lider_sistemas: "Líder de Sistemas",
+      func_sistemas: "Funcionário de Sistemas",
+      user: "Usuário",
+    }
+    return roles[role] || "Usuário"
+  }
+
+  const getTeamLabel = (team: string) => {
+    const teams: Record<string, string> = {
+      admin: "Administração",
+      infra: "Infraestrutura",
+      sistemas: "Sistemas",
+      user: "Geral",
+    }
+    return teams[team] || "Geral"
   }
 
   return (
@@ -43,14 +82,14 @@ export function UserProfileDialog({ open, onOpenChange }: UserProfileDialogProps
           
           <div className="relative flex flex-col items-center gap-4">
             <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
-              <AvatarImage src={userData.avatar} alt={userData.nome} />
+              <AvatarImage src="/abstract-geometric-shapes.png" alt={user?.name || "Usuário"} />
               <AvatarFallback className="bg-white text-blue-600 text-2xl font-bold">
-                {userData.nome.split(" ").map(n => n[0]).join("")}
+                {user?.name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
             <div className="text-center">
-              <h2 className="text-2xl font-bold">{userData.nome}</h2>
-              <p className="text-white/90 text-sm">{userData.cargo}</p>
+              <h2 className="text-2xl font-bold">{user?.name || "Carregando..."}</h2>
+              <p className="text-white/90 text-sm">{user ? getRoleLabel(user.role) : "..."}</p>
             </div>
           </div>
         </div>
@@ -71,7 +110,7 @@ export function UserProfileDialog({ open, onOpenChange }: UserProfileDialogProps
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-500">Email</p>
-                  <p className="text-sm font-medium text-gray-900 truncate">{userData.email}</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{user?.email || "..."}</p>
                 </div>
               </div>
             </div>
@@ -90,7 +129,7 @@ export function UserProfileDialog({ open, onOpenChange }: UserProfileDialogProps
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-gray-500">Setor</p>
-                  <p className="text-sm font-medium text-gray-900">{userData.setor}</p>
+                  <p className="text-sm font-medium text-gray-900">{user ? getTeamLabel(user.team) : "..."}</p>
                 </div>
               </div>
             </div>

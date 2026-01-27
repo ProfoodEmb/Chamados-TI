@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Plus, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,6 +18,14 @@ import { RelatorioFormDialog, type RelatorioFormData } from "@/components/relato
 import { InfraFormDialog, type InfraFormData } from "@/components/infra-form-dialog"
 import { UserProfileDialog } from "@/components/user-profile-dialog"
 
+interface User {
+  id: string
+  name: string
+  email: string
+  role: string
+  team: string
+}
+
 export function Header() {
   const [showSectorDialog, setShowSectorDialog] = useState(false)
   const [showTicketForm, setShowTicketForm] = useState(false)
@@ -26,6 +34,24 @@ export function Header() {
   const [showProfileDialog, setShowProfileDialog] = useState(false)
   const [selectedSistema, setSelectedSistema] = useState<{ id: string; nome: string } | null>(null)
   const [infraCategory, setInfraCategory] = useState<string>("")
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("/api/auth/get-session")
+        const session = await response.json()
+        
+        if (session?.user) {
+          setUser(session.user)
+        }
+      } catch (error) {
+        console.error("Erro ao buscar sessão:", error)
+      }
+    }
+
+    fetchUser()
+  }, [])
 
   const handleSelectSector = (sector: "infra" | "sistemas") => {
     console.log("Setor selecionado:", sector)
@@ -158,12 +184,21 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
                 <Avatar className="w-8 h-8 cursor-pointer">
-                  <AvatarImage src="/abstract-geometric-shapes.png" alt="Jackson Felipe" />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">JF</AvatarFallback>
+                  <AvatarImage src="/abstract-geometric-shapes.png" alt={user?.name || "Usuário"} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">
+                    {user?.name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-medium text-foreground">Jackson Felipe</span>
-                  <span className="text-xs text-muted-foreground">Usuário</span>
+                  <span className="text-sm font-medium text-foreground">{user?.name || "Carregando..."}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {user?.role === "admin" ? "Administrador" : 
+                     user?.role === "lider_infra" ? "Líder Infra" :
+                     user?.role === "func_infra" ? "Funcionário Infra" :
+                     user?.role === "lider_sistemas" ? "Líder Sistemas" :
+                     user?.role === "func_sistemas" ? "Funcionário Sistemas" :
+                     "Usuário"}
+                  </span>
                 </div>
               </Button>
             </DropdownMenuTrigger>
