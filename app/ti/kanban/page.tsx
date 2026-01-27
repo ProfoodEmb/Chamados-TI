@@ -21,6 +21,7 @@ export default function KanbanPage() {
   const [user, setUser] = useState<User | null>(null)
   const [tickets, setTickets] = useState<Ticket[]>(mockTickets)
   const [isLoading, setIsLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,10 +30,25 @@ export default function KanbanPage() {
         const session = await response.json()
         
         if (session?.user) {
+          const userRole = session.user.role
+          const authorized = userRole === "admin" || 
+                           userRole === "lider_infra" || 
+                           userRole === "func_infra" || 
+                           userRole === "lider_sistemas" || 
+                           userRole === "func_sistemas"
+          
+          if (!authorized) {
+            // Redirecionar para home se não for autorizado
+            window.location.href = "/"
+            return
+          }
+          
           setUser(session.user)
+          setIsAuthorized(true)
         }
       } catch (error) {
         console.error("Erro ao buscar sessão:", error)
+        window.location.href = "/"
       } finally {
         setIsLoading(false)
       }
@@ -185,14 +201,8 @@ export default function KanbanPage() {
     )
   }
 
-  if (!user) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <p className="text-muted-foreground">Erro ao carregar usuário</p>
-        </div>
-      </div>
-    )
+  if (!isAuthorized || !user) {
+    return null
   }
 
   return (

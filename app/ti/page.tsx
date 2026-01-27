@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,42 @@ export default function TIPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [urgencyFilter, setUrgencyFilter] = useState("all")
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Verificar se o usuário tem permissão para acessar esta página
+  useEffect(() => {
+    const checkAuthorization = async () => {
+      try {
+        const response = await fetch("/api/auth/get-session")
+        const session = await response.json()
+        
+        if (session?.user) {
+          const userRole = session.user.role
+          const authorized = userRole === "admin" || 
+                           userRole === "lider_infra" || 
+                           userRole === "func_infra" || 
+                           userRole === "lider_sistemas" || 
+                           userRole === "func_sistemas"
+          
+          if (!authorized) {
+            // Redirecionar para home se não for autorizado
+            window.location.href = "/"
+            return
+          }
+          
+          setIsAuthorized(true)
+        }
+      } catch (error) {
+        console.error("Erro ao verificar autorização:", error)
+        window.location.href = "/"
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    checkAuthorization()
+  }, [])
 
   const statusColors = {
     "Aberto": "bg-blue-500",
@@ -55,6 +91,23 @@ export default function TIPage() {
     
     return matchesSearch && matchesStatus && matchesUrgency
   })
+
+  // Mostrar loading enquanto verifica autorização
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Verificando permissões...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não estiver autorizado, não renderiza nada (já foi redirecionado)
+  if (!isAuthorized) {
+    return null
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">

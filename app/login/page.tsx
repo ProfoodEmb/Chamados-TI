@@ -42,9 +42,15 @@ export default function LoginPage() {
         const userRole = session.user.role
         
         // Redirecionar baseado no tipo de usuário
-        if (userRole === "admin" || userRole.includes("lider") || userRole.includes("func")) {
+        // Apenas admin e membros da equipe T.I. vão para /ti
+        if (userRole === "admin" || 
+            userRole === "lider_infra" || 
+            userRole === "func_infra" || 
+            userRole === "lider_sistemas" || 
+            userRole === "func_sistemas") {
           router.push("/ti")
         } else {
+          // Usuários comuns vão para a home
           router.push("/")
         }
       }

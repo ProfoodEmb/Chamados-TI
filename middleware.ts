@@ -22,6 +22,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
 
+  // Proteger rotas /ti/* - apenas para equipe T.I.
+  if (pathname.startsWith("/ti")) {
+    // Aqui poderíamos verificar o role do usuário, mas isso requer uma chamada ao banco
+    // Por enquanto, vamos deixar a verificação no client-side
+    // TODO: Implementar verificação de role no servidor
+  }
+
   return NextResponse.next()
 }
 
