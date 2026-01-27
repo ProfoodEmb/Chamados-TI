@@ -28,11 +28,11 @@ export default function Home() {
               </div>
               <div>
                 <h2 className="text-base font-semibold text-foreground">Meus chamados</h2>
-                <p className="text-xs text-muted-foreground">3 chamados recentes</p>
+                <p className="text-xs text-muted-foreground">0 chamados</p>
               </div>
             </div>
             <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-              2 ativos
+              0 ativos
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -40,59 +40,16 @@ export default function Home() {
           </div>
 
           <div className="space-y-3">
-            {/* Chamado 1 */}
-            <Link href="/tickets">
-              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
-                <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-medium text-foreground">#28147 Erro ao emitir NF-e</h3>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">2h atrás</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                      Em andamento
-                    </span>
-                  </div>
-                </div>
+            {/* Nenhum chamado ainda */}
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
-            </Link>
-
-            {/* Chamado 2 */}
-            <Link href="/tickets">
-              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
-                <div className="w-2 h-2 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-medium text-foreground">#28146 Sistema lento no cadastro</h3>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">4h atrás</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700">
-                      Aberto
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
-
-            {/* Chamado 3 */}
-            <Link href="/tickets">
-              <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer">
-                <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="text-sm font-medium text-foreground">#28145 Impressora não conecta</h3>
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">1 dia atrás</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                      Resolvido
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
+              <h3 className="text-sm font-medium text-foreground mb-1">Nenhum chamado ainda</h3>
+              <p className="text-xs text-muted-foreground mb-4">Crie seu primeiro chamado clicando no botão acima</p>
+            </div>
           </div>
 
           <Link href="/tickets">

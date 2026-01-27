@@ -126,9 +126,10 @@ export function Header() {
     }
   }
 
-  const handleLogout = () => {
-    // Limpar qualquer dado de sessão/localStorage se necessário
-    localStorage.removeItem("user")
+  const handleLogout = async () => {
+    // Usar Better Auth para fazer logout
+    const { signOut } = await import("@/lib/auth-client")
+    await signOut()
     // Redirecionar para a página de login
     window.location.href = "/login"
   }

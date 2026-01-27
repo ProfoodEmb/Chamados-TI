@@ -5,7 +5,8 @@ import { Eye, EyeOff, Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { credentials, getUserById } from "@/lib/users"
+import { signIn } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -13,37 +14,45 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
     
-    // Simular login com credenciais
-    setTimeout(() => {
-      const cred = credentials[username as keyof typeof credentials]
-      
-      if (cred && cred.password === password) {
-        // Login bem-sucedido
-        const user = getUserById(cred.userId)
-        
-        if (user) {
-          localStorage.setItem("user", JSON.stringify(user))
-          setIsLoading(false)
-          
-          // Redirecionar baseado no tipo de usuário
-          if (user.role === "admin" || user.role.includes("lider") || user.role.includes("func")) {
-            window.location.href = "/ti"
-          } else {
-            window.location.href = "/"
-          }
-        }
-      } else {
-        // Login falhou
-        setIsLoading(false)
+    try {
+      // Fazer login com Better Auth usando username@empresa.com como email
+      const result = await signIn.email({
+        email: `${username}@empresa.com`,
+        password: password,
+      })
+
+      if (result.error) {
         setError("Usuário ou senha incorretos!")
+        setIsLoading(false)
+        return
       }
-    }, 1000)
+
+      // Buscar dados do usuário para determinar redirecionamento
+      const response = await fetch("/api/auth/get-session")
+      const session = await response.json()
+      
+      if (session?.user) {
+        const userRole = session.user.role
+        
+        // Redirecionar baseado no tipo de usuário
+        if (userRole === "admin" || userRole.includes("lider") || userRole.includes("func")) {
+          router.push("/ti")
+        } else {
+          router.push("/")
+        }
+      }
+    } catch (err) {
+      console.error("Erro no login:", err)
+      setError("Erro ao fazer login. Tente novamente.")
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -143,9 +152,10 @@ export default function LoginPage() {
             <div className="space-y-1 text-xs text-blue-700">
               <p>• admin / admin123 (Administrador)</p>
               <p>• lider_infra / lider123 (Líder Infra)</p>
-              <p>• func_infra / func123 (Funcionário Infra)</p>
+              <p>• func_infra / func1234 (Funcionário Infra)</p>
               <p>• lider_sistemas / lider123 (Líder Sistemas)</p>
-              <p>• func_sistemas / func123 (Funcionário Sistemas)</p>
+              <p>• func_sistemas / func1234 (Funcionário Sistemas)</p>
+              <p>• usuario / usuario123 (Usuário)</p>
             </div>
           </div>
         </div>

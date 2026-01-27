@@ -1,14 +1,14 @@
 import { prisma } from '../lib/prisma'
-import bcrypt from 'bcryptjs'
+import { auth } from '../lib/auth'
 
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...')
 
-  // Criar usuários
+  // Criar usuários com Better Auth
   const users = [
     {
       username: 'admin',
-      password: await bcrypt.hash('admin123', 10),
+      password: 'admin123',
       name: 'Administrador Geral',
       email: 'admin@empresa.com',
       role: 'admin',
@@ -16,53 +16,73 @@ async function main() {
     },
     {
       username: 'lider_infra',
-      password: await bcrypt.hash('lider123', 10),
+      password: 'lider123',
       name: 'João Silva',
-      email: 'joao.silva@empresa.com',
+      email: 'lider_infra@empresa.com',
       role: 'lider_infra',
       team: 'infra',
     },
     {
       username: 'func_infra',
-      password: await bcrypt.hash('func123', 10),
+      password: 'func1234',
       name: 'Maria Santos',
-      email: 'maria.santos@empresa.com',
+      email: 'func_infra@empresa.com',
       role: 'func_infra',
       team: 'infra',
     },
     {
       username: 'lider_sistemas',
-      password: await bcrypt.hash('lider123', 10),
+      password: 'lider123',
       name: 'Pedro Costa',
-      email: 'pedro.costa@empresa.com',
+      email: 'lider_sistemas@empresa.com',
       role: 'lider_sistemas',
       team: 'sistemas',
     },
     {
       username: 'func_sistemas',
-      password: await bcrypt.hash('func123', 10),
+      password: 'func1234',
       name: 'Ana Oliveira',
-      email: 'ana.oliveira@empresa.com',
+      email: 'func_sistemas@empresa.com',
       role: 'func_sistemas',
       team: 'sistemas',
     },
     {
       username: 'usuario',
-      password: await bcrypt.hash('usuario123', 10),
+      password: 'usuario123',
       name: 'Jackson Felipe',
-      email: 'jackson.felipe@empresa.com',
+      email: 'usuario@empresa.com',
       role: 'user',
       team: 'user',
     },
   ]
 
-  for (const user of users) {
-    await prisma.user.upsert({
-      where: { username: user.username },
-      update: {},
-      create: user,
+  for (const userData of users) {
+    // Verificar se o usuário já existe
+    const existingUser = await prisma.user.findUnique({
+      where: { email: userData.email }
     })
-    console.log(`✅ Usuário criado: ${user.username}`)
+
+    if (existingUser) {
+      console.log(`⏭️  Usuário já existe: ${userData.username}`)
+      continue
+    }
+
+    // Criar usuário usando Better Auth API
+    try {
+      await auth.api.signUpEmail({
+        body: {
+          email: userData.email,
+          password: userData.password,
+          name: userData.name,
+          username: userData.username,
+          role: userData.role,
+          team: userData.team,
+        }
+      })
+      console.log(`✅ Usuário criado: ${userData.username}`)
+    } catch (error) {
+      console.error(`❌ Erro ao criar usuário ${userData.username}:`, error)
+    }
   }
 
   console.log('✨ Seed concluído com sucesso!')
