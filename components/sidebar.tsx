@@ -1,15 +1,20 @@
 "use client"
 
-import { Home, Ticket, Settings } from "lucide-react"
+import { Home, Ticket, LayoutGrid, Settings, BarChart3 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const menuItems = [
   {
-    icon: Home,
-    href: "/",
-    label: "Início",
+    icon: BarChart3,
+    href: "/ti",
+    label: "Dashboard T.I.",
+  },
+  {
+    icon: LayoutGrid,
+    href: "/ti/kanban",
+    label: "Kanban",
   },
   {
     icon: Ticket,
@@ -32,7 +37,9 @@ export function Sidebar() {
       <nav className="flex flex-col gap-4">
         {menuItems.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          // Verificar se é a rota exata ou se é uma subrota (mas não conflitar com /ti e /ti/kanban)
+          const isActive = pathname === item.href || 
+            (item.href !== "/" && item.href !== "/ti" && pathname?.startsWith(item.href + "/"))
 
           return (
             <Link

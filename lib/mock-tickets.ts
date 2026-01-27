@@ -17,12 +17,15 @@ export interface Ticket {
   urgency: "high" | "medium" | "low" | "critical"
   lastAction: string
   status: "Aberto" | "Pendente" | "Fechado" | "Resolvido" | "Aguardando Aprovação"
+  kanbanStatus: "inbox" | "in_progress" | "review" | "done"
   description: string
   createdAt: string
   service?: string
   dueDate?: string
   anydesk?: string
   messages: Message[]
+  assignedTo?: string // ID do usuário atribuído
+  team?: "infra" | "sistemas" | "automacao" // Equipe responsável
 }
 
 export const mockTickets: Ticket[] = [
@@ -36,10 +39,13 @@ export const mockTickets: Ticket[] = [
     urgency: "critical",
     lastAction: "18/12/2025 14:58",
     status: "Fechado",
+    kanbanStatus: "done",
     description: "Problema de conectividade na rede da gráfica",
     createdAt: "18/12/2025 10:30",
     service: "Segurança - VPN",
     anydesk: "123 456 789",
+    team: "infra",
+    assignedTo: "2",
     messages: [
       {
         id: "m1",

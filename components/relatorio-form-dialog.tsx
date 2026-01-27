@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Paperclip, X, Upload, FileText } from "lucide-react"
+import { Paperclip, X, Upload, FileText, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -18,6 +18,7 @@ interface RelatorioFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (data: RelatorioFormData) => void
+  onBack?: () => void
 }
 
 export interface RelatorioFormData {
@@ -56,8 +57,10 @@ const formatos = [
 export function RelatorioFormDialog({ 
   open, 
   onOpenChange, 
-  onSubmit 
+  onSubmit,
+  onBack
 }: RelatorioFormDialogProps) {
+  const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     tipoRelatorio: "",
     titulo: "",
@@ -117,6 +120,7 @@ export function RelatorioFormDialog({
 
   const handleClose = (open: boolean) => {
     if (!open) {
+      setShowForm(false)
       setFormData({
         tipoRelatorio: "",
         titulo: "",
@@ -129,6 +133,12 @@ export function RelatorioFormDialog({
     onOpenChange(open)
   }
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack()
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 gap-0 overflow-hidden border-0">
@@ -139,6 +149,17 @@ export function RelatorioFormDialog({
         {/* Header Azul */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-white rounded-t-lg">
           <div className="flex items-center gap-4">
+            {onBack && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                className="h-10 w-10 text-white hover:bg-white/20 flex-shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            )}
             <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <FileText className="w-8 h-8 text-white" />
             </div>

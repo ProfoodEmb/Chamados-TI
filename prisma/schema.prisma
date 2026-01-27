@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  name      String
+  email     String   @unique
+  role      String   // admin, lider_infra, func_infra, lider_sistemas, func_sistemas
+  team      String   // admin, infra, sistemas
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relações
+  ticketsCreated   Ticket[]  @relation("TicketRequester")
+  ticketsAssigned  Ticket[]  @relation("TicketAssigned")
+  messages         Message[]
+  attachments      Attachment[]
+}
+
+model Ticket {
+  id            String   @id @default(uuid())
+  number        String   @unique
+  subject       String
+  description   String
+  category      String
+  urgency       String   // low, medium, high, critical
+  status        String   // Aberto, Pendente, Fechado, Resolvido, Aguardando Aprovação
+  kanbanStatus  String   @default("inbox") // inbox, in_progress, review, done
+  team          String?  // infra, sistemas, automacao
+  service       String?
+  anydesk       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relações
+  requesterId   String
+  requester     User     @relation("TicketRequester", fields: [requesterId], references: [id])
+  
+  assignedToId  String?
+  assignedTo    User?    @relation("TicketAssigned", fields: [assignedToId], references: [id])
+  
+  messages      Message[]
+  attachments   Attachment[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  role      String   // user, support
+  createdAt DateTime @default(now())
+
+  // Relações
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  filename  String
+  url       String
+  size      Int
+  mimeType  String
+  createdAt DateTime @default(now())
+
+  // Relações
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+}

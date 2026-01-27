@@ -1,19 +1,29 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Clock, Bell, Plus } from "lucide-react"
+import { Plus, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { SelectSectorDialog } from "@/components/select-sector-dialog"
 import { TicketFormDialog, type TicketFormData } from "@/components/ticket-form-dialog"
 import { RelatorioFormDialog, type RelatorioFormData } from "@/components/relatorio-form-dialog"
 import { InfraFormDialog, type InfraFormData } from "@/components/infra-form-dialog"
+import { UserProfileDialog } from "@/components/user-profile-dialog"
 
 export function Header() {
   const [showSectorDialog, setShowSectorDialog] = useState(false)
   const [showTicketForm, setShowTicketForm] = useState(false)
   const [showRelatorioForm, setShowRelatorioForm] = useState(false)
   const [showInfraForm, setShowInfraForm] = useState(false)
+  const [showProfileDialog, setShowProfileDialog] = useState(false)
   const [selectedSistema, setSelectedSistema] = useState<{ id: string; nome: string } | null>(null)
   const [infraCategory, setInfraCategory] = useState<string>("")
 
@@ -116,6 +126,13 @@ export function Header() {
     }
   }
 
+  const handleLogout = () => {
+    // Limpar qualquer dado de sessão/localStorage se necessário
+    localStorage.removeItem("user")
+    // Redirecionar para a página de login
+    window.location.href = "/login"
+  }
+
   return (
     <>
       <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 z-40 transition-all duration-300">
@@ -134,39 +151,35 @@ export function Header() {
             <Plus className="w-4 h-4 mr-2" />
             Novo Chamado
           </Button>
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-          <Search className="w-5 h-5" />
-        </Button>
-
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-          <Clock className="w-5 h-5" />
-        </Button>
-
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-        </Button>
-
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-            />
-          </svg>
-        </Button>
 
         <div className="flex items-center gap-2">
-          <Avatar className="w-8 h-8 cursor-pointer">
-            <AvatarImage src="/abstract-geometric-shapes.png" alt="Jackson Felipe" />
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm">JF</AvatarFallback>
-          </Avatar>
-          <div className="hidden md:flex flex-col">
-            <span className="text-sm font-medium text-foreground">Jackson Felipe</span>
-            <span className="text-xs text-muted-foreground">Usuário</span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center gap-2 h-auto p-2">
+                <Avatar className="w-8 h-8 cursor-pointer">
+                  <AvatarImage src="/abstract-geometric-shapes.png" alt="Jackson Felipe" />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm">JF</AvatarFallback>
+                </Avatar>
+                <div className="hidden md:flex flex-col items-start">
+                  <span className="text-sm font-medium text-foreground">Jackson Felipe</span>
+                  <span className="text-xs text-muted-foreground">Usuário</span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setShowProfileDialog(true)}>
+                <User className="w-4 h-4 mr-2" />
+                Meu Perfil
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
@@ -188,6 +201,11 @@ export function Header() {
         sistemaId={selectedSistema.id}
         sistemaNome={selectedSistema.nome}
         onSubmit={handleTicketSubmit}
+        onBack={() => {
+          setShowTicketForm(false)
+          setSelectedSistema(null)
+          setShowSectorDialog(true)
+        }}
       />
     )}
 
@@ -195,6 +213,10 @@ export function Header() {
       open={showRelatorioForm}
       onOpenChange={setShowRelatorioForm}
       onSubmit={handleRelatorioSubmit}
+      onBack={() => {
+        setShowRelatorioForm(false)
+        setShowSectorDialog(true)
+      }}
     />
 
     <InfraFormDialog
@@ -202,6 +224,16 @@ export function Header() {
       onOpenChange={handleInfraFormClose}
       onSubmit={handleInfraSubmit}
       preSelectedCategory={infraCategory}
+      onBack={() => {
+        setShowInfraForm(false)
+        setInfraCategory("")
+        setShowSectorDialog(true)
+      }}
+    />
+
+    <UserProfileDialog
+      open={showProfileDialog}
+      onOpenChange={setShowProfileDialog}
     />
   </>
   )

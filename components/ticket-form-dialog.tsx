@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Paperclip, X, Upload, Clock, AlertCircle, AlertTriangle, Zap } from "lucide-react"
+import { Paperclip, X, Upload, Clock, AlertCircle, AlertTriangle, Zap, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +21,7 @@ interface TicketFormDialogProps {
   sistemaId: string
   sistemaNome: string
   onSubmit: (data: TicketFormData) => void
+  onBack?: () => void
 }
 
 export interface TicketFormData {
@@ -134,7 +135,8 @@ export function TicketFormDialog({
   onOpenChange, 
   sistemaId,
   sistemaNome,
-  onSubmit 
+  onSubmit,
+  onBack
 }: TicketFormDialogProps) {
   const [formData, setFormData] = useState({
     assunto: "",
@@ -223,6 +225,17 @@ export function TicketFormDialog({
         {/* Header com cor do sistema */}
         <div className={`bg-gradient-to-r ${sistemaCor.from} ${sistemaCor.to} p-6 text-white rounded-t-lg`}>
           <div className="flex items-center gap-4">
+            {onBack && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onBack}
+                className="h-10 w-10 text-white hover:bg-white/20 flex-shrink-0"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            )}
             {sistemaLogo && (
               <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center p-2">
                 <Image
