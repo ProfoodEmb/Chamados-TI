@@ -1,12 +1,33 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { mockTickets, filterTickets, type FilterType } from "@/lib/mock-tickets"
+import { type FilterType } from "@/lib/mock-tickets"
+
+interface Ticket {
+  id: string
+  number: string
+  subject: string
+  category: string
+  urgency: "low" | "medium" | "high" | "critical"
+  status: string
+  createdAt: string
+  updatedAt: string
+  requester: {
+    id: string
+    name: string
+    email: string
+  }
+  assignedTo?: {
+    id: string
+    name: string
+    email: string
+  } | null
+}
 
 const urgencyColors = {
   critical: "bg-red-500",
@@ -29,14 +50,110 @@ interface TicketsTableProps {
 
 export function TicketsTable({ activeFilter }: TicketsTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
+  useEffect(() => {
+    fetchTickets()
+  }, [])
+
+  const fetchTickets = async () => {
+    try {
+      const response = await fetch("/api/tickets")
+      if (response.ok) {
+        const data = await response.json()
+        setTickets(data)
+      }
+    } catch (error) {
+      console.error("Erro ao buscar chamados:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Escutar evento de criação de chamado e polling a cada 5 segundos
+  useEffect(() => {
+    const handleTicketCreated = () => {
+      console.log("Evento ticketCreated recebido na tabela - atualizando tickets...")
+      fetchTickets()
+    }
+
+    window.addEventListener('ticketCreated', handleTicketCreated)
+    
+    // Polling a cada 5 segundos para garantir atualização
+    const interval = setInterval(() => {
+      fetchTickets()
+    }, 5000)
+
+    return () => {
+      window.removeEventListener('ticketCreated', handleTicketCreated)
+      clearInterval(interval)
+    }
+  }, [])
+
   const filteredTickets = useMemo(() => {
-    return filterTickets(mockTickets, activeFilter, searchTerm)
-  }, [activeFilter, searchTerm])
+    let filtered = tickets
+
+    // Aplicar filtro por status
+    switch (activeFilter) {
+      case "pending":
+        filtered = tickets.filter(ticket => ticket.status === "Pendente" || ticket.status === "Aberto")
+        break
+      case "closed":
+        filtered = tickets.filter(ticket => ticket.status === "Fechado")
+        break
+      case "resolved":
+        filtered = tickets.filter(ticket => ticket.status === "Resolvido")
+        break
+      case "awaiting-approval":
+        filtered = tickets.filter(ticket => ticket.status === "Aguardando Aprovação")
+        break
+      case "all":
+      default:
+        filtered = tickets
+        break
+    }
+
+    // Aplicar busca por texto
+    if (searchTerm && searchTerm.length >= 3) {
+      const search = searchTerm.toLowerCase()
+      filtered = filtered.filter(ticket =>
+        ticket.number.toLowerCase().includes(search) ||
+        ticket.subject.toLowerCase().includes(search) ||
+        ticket.requester.name.toLowerCase().includes(search) ||
+        ticket.category.toLowerCase().includes(search) ||
+        ticket.status.toLowerCase().includes(search)
+      )
+    }
+
+    return filtered
+  }, [tickets, activeFilter, searchTerm])
 
   const handleRowClick = (ticketId: string) => {
     router.push(`/tickets/${ticketId}`)
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando chamados...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -101,8 +218,8 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
                     <td className="py-2 px-2 text-xs text-foreground max-w-[120px] truncate" title={ticket.subject}>
                       {ticket.subject}
                     </td>
-                    <td className="py-2 px-2 text-xs text-muted-foreground hidden md:table-cell max-w-[100px] truncate" title={ticket.responsible}>
-                      {ticket.responsible}
+                    <td className="py-2 px-2 text-xs text-muted-foreground hidden md:table-cell max-w-[100px] truncate" title={ticket.assignedTo?.name || "Não atribuído"}>
+                      {ticket.assignedTo?.name || "Não atribuído"}
                     </td>
                     <td className="py-2 px-2 text-xs text-muted-foreground hidden lg:table-cell max-w-[80px] truncate" title={ticket.category}>
                       {ticket.category}
@@ -112,11 +229,11 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
                         <div className={`w-1 h-4 rounded-full ${urgencyColors[ticket.urgency]}`} title={ticket.urgency} />
                       </div>
                     </td>
-                    <td className="py-2 px-2 text-xs text-muted-foreground hidden sm:table-cell">{ticket.lastAction}</td>
+                    <td className="py-2 px-2 text-xs text-muted-foreground hidden sm:table-cell">{formatDate(ticket.updatedAt)}</td>
                     <td className="py-2 px-2">
                       <Badge 
                         variant="secondary" 
-                        className={`text-xs px-1 py-0 text-white ${statusColors[ticket.status]}`}
+                        className={`text-xs px-1 py-0 text-white ${statusColors[ticket.status as keyof typeof statusColors]}`}
                       >
                         {ticket.status}
                       </Badge>

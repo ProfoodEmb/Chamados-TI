@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Inbox, PlayCircle, Eye, CheckCircle2, User as UserIcon, Clock } from "lucide-react"
-import { mockTickets, type Ticket } from "@/lib/mock-tickets"
 
 interface User {
   id: string
@@ -17,14 +16,38 @@ interface User {
   team: string
 }
 
+interface Ticket {
+  id: string
+  number: string
+  subject: string
+  category: string
+  urgency: "low" | "medium" | "high" | "critical"
+  status: string
+  kanbanStatus: string
+  createdAt: string
+  updatedAt: string
+  team: string | null
+  requester: {
+    id: string
+    name: string
+    email: string
+  }
+  assignedTo?: {
+    id: string
+    name: string
+    email: string
+  } | null
+  assignedToId: string | null
+}
+
 export default function KanbanPage() {
   const [user, setUser] = useState<User | null>(null)
-  const [tickets, setTickets] = useState<Ticket[]>(mockTickets)
+  const [tickets, setTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const init = async () => {
       try {
         const response = await fetch("/api/auth/get-session")
         const session = await response.json()
@@ -38,23 +61,58 @@ export default function KanbanPage() {
                            userRole === "func_sistemas"
           
           if (!authorized) {
-            // Redirecionar para home se não for autorizado
             window.location.href = "/"
             return
           }
           
           setUser(session.user)
           setIsAuthorized(true)
+          
+          // Buscar tickets
+          await fetchTickets()
         }
       } catch (error) {
-        console.error("Erro ao buscar sessão:", error)
+        console.error("Erro ao inicializar:", error)
         window.location.href = "/"
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchUser()
+    init()
+  }, [])
+
+  // Função para buscar tickets
+  const fetchTickets = async () => {
+    try {
+      const ticketsResponse = await fetch("/api/tickets")
+      if (ticketsResponse.ok) {
+        const ticketsData = await ticketsResponse.json()
+        setTickets(ticketsData)
+      }
+    } catch (error) {
+      console.error("Erro ao buscar tickets:", error)
+    }
+  }
+
+  // Escutar evento de criação de chamado e polling a cada 5 segundos
+  useEffect(() => {
+    const handleTicketCreated = () => {
+      console.log("Evento ticketCreated recebido no Kanban - atualizando tickets...")
+      fetchTickets()
+    }
+
+    window.addEventListener('ticketCreated', handleTicketCreated)
+    
+    // Polling a cada 5 segundos para garantir atualização
+    const interval = setInterval(() => {
+      fetchTickets()
+    }, 5000)
+
+    return () => {
+      window.removeEventListener('ticketCreated', handleTicketCreated)
+      clearInterval(interval)
+    }
   }, [])
 
   const urgencyColors = {
@@ -80,19 +138,19 @@ export default function KanbanPage() {
     }
     
     if (user.role === "lider_infra") {
-      return tickets.filter(t => t.team === "infra" || t.team === "automacao")
+      return tickets.filter((t: Ticket) => t.team === "infra" || t.team === "automacao")
     }
     
     if (user.role === "lider_sistemas") {
-      return tickets.filter(t => t.team === "sistemas" || t.team === "automacao")
+      return tickets.filter((t: Ticket) => t.team === "sistemas" || t.team === "automacao")
     }
     
     if (user.role === "func_infra") {
-      return tickets.filter(t => t.assignedTo === user.id)
+      return tickets.filter((t: Ticket) => t.assignedToId === user.id)
     }
     
     if (user.role === "func_sistemas") {
-      return tickets.filter(t => t.assignedTo === user.id)
+      return tickets.filter((t: Ticket) => t.assignedToId === user.id)
     }
     
     return []
@@ -100,10 +158,18 @@ export default function KanbanPage() {
 
   const filteredTickets = getFilteredTickets()
 
-  const inboxTickets = filteredTickets.filter(t => t.kanbanStatus === "inbox")
-  const inProgressTickets = filteredTickets.filter(t => t.kanbanStatus === "in_progress")
-  const reviewTickets = filteredTickets.filter(t => t.kanbanStatus === "review")
-  const doneTickets = filteredTickets.filter(t => t.kanbanStatus === "done")
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit'
+    })
+  }
+
+  const inboxTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "inbox")
+  const inProgressTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "in_progress")
+  const reviewTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "review")
+  const doneTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "done")
 
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
     <div className="bg-card border border-border rounded-lg p-4 mb-3 hover:shadow-md transition-shadow cursor-pointer">
@@ -120,7 +186,7 @@ export default function KanbanPage() {
       
       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
         <UserIcon className="w-3 h-3" />
-        <span>{ticket.requester}</span>
+        <span>{ticket.requester.name}</span>
       </div>
 
       {ticket.team && (
@@ -134,7 +200,7 @@ export default function KanbanPage() {
           {ticket.assignedTo ? (
             <Avatar className="w-6 h-6">
               <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {ticket.responsible.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                {ticket.assignedTo.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
               </AvatarFallback>
             </Avatar>
           ) : (
@@ -146,7 +212,7 @@ export default function KanbanPage() {
         
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="w-3 h-3" />
-          <span>{ticket.createdAt.split(" ")[0]}</span>
+          <span>{formatDate(ticket.createdAt)}</span>
         </div>
       </div>
     </div>

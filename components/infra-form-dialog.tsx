@@ -27,7 +27,6 @@ export interface InfraFormData {
   problema: string
   descricao: string
   patrimonio?: string
-  localizacao?: string
   urgencia: string
   attachments: File[]
 }
@@ -90,7 +89,6 @@ export function InfraFormDialog({
     problema: "",
     descricao: "",
     patrimonio: "",
-    localizacao: "",
     urgencia: "",
   })
   const [attachments, setAttachments] = useState<File[]>([])
@@ -141,18 +139,7 @@ export function InfraFormDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validação condicional baseada na categoria
-    const isWifiOrOutros = preSelectedCategory === "Rede e conectividade" || preSelectedCategory === "Outro problema"
-    
-    if (!formData.problema || !formData.descricao || !formData.urgencia) {
-      return
-    }
-    
-    if (isWifiOrOutros && !formData.localizacao) {
-      return
-    }
-    
-    if (!isWifiOrOutros && !formData.patrimonio) {
+    if (!formData.problema || !formData.descricao || !formData.urgencia || !formData.patrimonio) {
       return
     }
 
@@ -160,7 +147,6 @@ export function InfraFormDialog({
       problema: formData.problema,
       descricao: formData.descricao,
       patrimonio: formData.patrimonio,
-      localizacao: formData.localizacao,
       urgencia: formData.urgencia,
       attachments,
     })
@@ -169,7 +155,6 @@ export function InfraFormDialog({
       problema: "",
       descricao: "",
       patrimonio: "",
-      localizacao: "",
       urgencia: "",
     })
     setAttachments([])
@@ -181,7 +166,6 @@ export function InfraFormDialog({
         problema: "",
         descricao: "",
         patrimonio: "",
-        localizacao: "",
         urgencia: "",
       })
       setAttachments([])
@@ -267,15 +251,14 @@ export function InfraFormDialog({
               />
             </div>
 
-            {/* Patrimônio da Impressora, Código do Equipamento ou Localização */}
-            {preSelectedCategory !== "Rede e conectividade" && preSelectedCategory !== "Outro problema" && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label className="text-base font-semibold text-gray-700">
-                    {preSelectedCategory === "Manutenção" 
-                      ? "Código do equipamento" 
-                      : "Patrimônio da impressora"} <span className="text-red-500">*</span>
-                  </Label>
+            {/* Patrimônio da Impressora ou Código do Equipamento */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-base font-semibold text-gray-700">
+                  {preSelectedCategory === "Manutenção" 
+                    ? "Código do equipamento" 
+                    : "Patrimônio da impressora"} <span className="text-red-500">*</span>
+                </Label>
                   <button
                     type="button"
                     onClick={() => {
@@ -352,26 +335,6 @@ export function InfraFormDialog({
                   required
                 />
               </div>
-            )}
-
-            {/* Localização - apenas para Wi-Fi e Outros */}
-            {(preSelectedCategory === "Rede e conectividade" || preSelectedCategory === "Outro problema") && (
-              <div className="space-y-2">
-                <Label className="text-base font-semibold text-gray-700">
-                  Localização <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  placeholder="Ex: Sala 201, 2º andar, Setor Financeiro"
-                  value={formData.localizacao}
-                  onChange={(e) => handleInputChange("localizacao", e.target.value)}
-                  className="h-12 border-2 border-gray-200 hover:border-blue-400 focus:border-blue-500 transition-colors"
-                  required
-                />
-                <p className="text-sm text-gray-500">
-                  Informe onde está ocorrendo o problema para facilitar o atendimento
-                </p>
-              </div>
-            )}
 
             {/* Nível de Urgência */}
             <div className="space-y-3">
@@ -538,9 +501,7 @@ export function InfraFormDialog({
                 !formData.problema || 
                 !formData.descricao || 
                 !formData.urgencia ||
-                ((preSelectedCategory === "Rede e conectividade" || preSelectedCategory === "Outro problema") 
-                  ? !formData.localizacao 
-                  : !formData.patrimonio)
+                !formData.patrimonio
               }
               className="h-11 px-6 bg-blue-600 hover:bg-blue-700"
             >

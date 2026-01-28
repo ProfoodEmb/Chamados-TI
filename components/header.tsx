@@ -35,6 +35,11 @@ export function Header() {
   const [selectedSistema, setSelectedSistema] = useState<{ id: string; nome: string } | null>(null)
   const [infraCategory, setInfraCategory] = useState<string>("")
   const [user, setUser] = useState<User | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -125,24 +130,103 @@ export function Header() {
     setShowTicketForm(true)
   }
 
-  const handleTicketSubmit = (data: TicketFormData) => {
-    console.log("Chamado criado:", data)
-    setShowTicketForm(false)
-    setSelectedSistema(null)
-    // Aqui você pode enviar os dados para o backend ou adicionar ao estado global
+  const handleTicketSubmit = async (data: TicketFormData) => {
+    try {
+      const response = await fetch("/api/tickets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subject: `${data.sistema} - ${data.problema}`,
+          description: data.descricao,
+          category: "Sistemas",
+          urgency: data.urgencia,
+          service: data.sistema,
+          anydesk: data.anydesk || null,
+          team: "sistemas",
+        }),
+      })
+
+      if (response.ok) {
+        setShowTicketForm(false)
+        setSelectedSistema(null)
+        // Emitir evento customizado para atualizar a lista de chamados
+        console.log("Disparando evento ticketCreated...")
+        window.dispatchEvent(new CustomEvent('ticketCreated'))
+      } else {
+        console.error("Erro ao criar chamado")
+        alert("Erro ao criar chamado. Tente novamente.")
+      }
+    } catch (error) {
+      console.error("Erro ao criar chamado:", error)
+      alert("Erro ao criar chamado. Tente novamente.")
+    }
   }
 
-  const handleRelatorioSubmit = (data: RelatorioFormData) => {
-    console.log("Relatório solicitado:", data)
-    setShowRelatorioForm(false)
-    // Aqui você pode enviar os dados para o backend
+  const handleRelatorioSubmit = async (data: RelatorioFormData) => {
+    try {
+      const response = await fetch("/api/tickets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subject: `Relatório - ${data.tipoRelatorio}`,
+          description: data.descricao,
+          category: "Relatórios",
+          urgency: data.urgencia,
+          service: "Relatórios",
+          team: "sistemas",
+        }),
+      })
+
+      if (response.ok) {
+        setShowRelatorioForm(false)
+        // Emitir evento customizado para atualizar a lista de chamados
+        console.log("Disparando evento ticketCreated...")
+        window.dispatchEvent(new CustomEvent('ticketCreated'))
+      } else {
+        console.error("Erro ao criar chamado")
+        alert("Erro ao criar chamado. Tente novamente.")
+      }
+    } catch (error) {
+      console.error("Erro ao criar chamado:", error)
+      alert("Erro ao criar chamado. Tente novamente.")
+    }
   }
 
-  const handleInfraSubmit = (data: InfraFormData) => {
-    console.log("Chamado de infraestrutura criado:", data)
-    setShowInfraForm(false)
-    setInfraCategory("")
-    // Aqui você pode enviar os dados para o backend
+  const handleInfraSubmit = async (data: InfraFormData) => {
+    try {
+      const response = await fetch("/api/tickets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subject: `${data.problema}${data.patrimonio ? ` - Patrimônio: ${data.patrimonio}` : ''}`,
+          description: data.descricao,
+          category: "Infraestrutura",
+          urgency: data.urgencia,
+          service: data.problema,
+          team: "infra",
+        }),
+      })
+
+      if (response.ok) {
+        setShowInfraForm(false)
+        setInfraCategory("")
+        // Emitir evento customizado para atualizar a lista de chamados
+        console.log("Disparando evento ticketCreated...")
+        window.dispatchEvent(new CustomEvent('ticketCreated'))
+      } else {
+        console.error("Erro ao criar chamado")
+        alert("Erro ao criar chamado. Tente novamente.")
+      }
+    } catch (error) {
+      console.error("Erro ao criar chamado:", error)
+      alert("Erro ao criar chamado. Tente novamente.")
+    }
   }
 
   const handleInfraFormClose = (open: boolean) => {
@@ -158,6 +242,25 @@ export function Header() {
     await signOut()
     // Redirecionar para a página de login
     window.location.href = "/login"
+  }
+
+  // Evitar erro de hidratação renderizando apenas no cliente
+  if (!mounted) {
+    return (
+      <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 z-40 transition-all duration-300">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full" />
+          <span className="text-sm text-muted-foreground">Sistema online</span>
+        </div>
+        <div className="flex items-center gap-2 md:gap-3">
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Chamado
+          </Button>
+          <div className="w-8 h-8 rounded-full bg-muted" />
+        </div>
+      </header>
+    )
   }
 
   return (

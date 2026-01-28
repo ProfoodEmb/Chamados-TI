@@ -7,8 +7,28 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Filter, Download, UserPlus, Clock, CheckCircle2, AlertCircle, XCircle } from "lucide-react"
-import { mockTickets } from "@/lib/mock-tickets"
+import { Search, Download, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+
+interface Ticket {
+  id: string
+  number: string
+  subject: string
+  category: string
+  urgency: "low" | "medium" | "high" | "critical"
+  status: string
+  createdAt: string
+  updatedAt: string
+  requester: {
+    id: string
+    name: string
+    email: string
+  }
+  assignedTo?: {
+    id: string
+    name: string
+    email: string
+  } | null
+}
 
 export default function TIPage() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -16,10 +36,11 @@ export default function TIPage() {
   const [urgencyFilter, setUrgencyFilter] = useState("all")
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [tickets, setTickets] = useState<Ticket[]>([])
 
-  // Verificar se o usuário tem permissão para acessar esta página
+  // Verificar autorização e buscar tickets
   useEffect(() => {
-    const checkAuthorization = async () => {
+    const init = async () => {
       try {
         const response = await fetch("/api/auth/get-session")
         const session = await response.json()
@@ -33,22 +54,57 @@ export default function TIPage() {
                            userRole === "func_sistemas"
           
           if (!authorized) {
-            // Redirecionar para home se não for autorizado
             window.location.href = "/"
             return
           }
           
           setIsAuthorized(true)
+          
+          // Buscar tickets
+          await fetchTickets()
         }
       } catch (error) {
-        console.error("Erro ao verificar autorização:", error)
+        console.error("Erro ao inicializar:", error)
         window.location.href = "/"
       } finally {
         setIsLoading(false)
       }
     }
 
-    checkAuthorization()
+    init()
+  }, [])
+
+  // Função para buscar tickets
+  const fetchTickets = async () => {
+    try {
+      const ticketsResponse = await fetch("/api/tickets")
+      if (ticketsResponse.ok) {
+        const ticketsData = await ticketsResponse.json()
+        setTickets(ticketsData)
+      }
+    } catch (error) {
+      console.error("Erro ao buscar tickets:", error)
+    }
+  }
+
+  // Escutar evento de criação de chamado e polling a cada 5 segundos
+  useEffect(() => {
+    const handleTicketCreated = () => {
+      console.log("Evento ticketCreated recebido - atualizando tickets...")
+      fetchTickets()
+    }
+
+    window.addEventListener('ticketCreated', handleTicketCreated)
+    
+    // Polling a cada 5 segundos para garantir atualização
+    const interval = setInterval(() => {
+      fetchTickets()
+    }, 5000)
+
+    return () => {
+      window.removeEventListener('ticketCreated', handleTicketCreated)
+      clearInterval(interval)
+    }
   }, [])
 
   const statusColors = {
@@ -74,23 +130,34 @@ export default function TIPage() {
   }
 
   // Estatísticas
-  const totalTickets = mockTickets.length
-  const pendingTickets = mockTickets.filter(t => t.status === "Pendente" || t.status === "Aberto").length
-  const resolvedTickets = mockTickets.filter(t => t.status === "Resolvido").length
-  const criticalTickets = mockTickets.filter(t => t.urgency === "critical").length
+  const totalTickets = tickets.length
+  const pendingTickets = tickets.filter((t: Ticket) => t.status === "Pendente" || t.status === "Aberto").length
+  const resolvedTickets = tickets.filter((t: Ticket) => t.status === "Resolvido").length
+  const criticalTickets = tickets.filter((t: Ticket) => t.urgency === "critical").length
 
   // Filtrar tickets
-  const filteredTickets = mockTickets.filter(ticket => {
+  const filteredTickets = tickets.filter((ticket: Ticket) => {
     const matchesSearch = searchTerm === "" || 
       ticket.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.requester.toLowerCase().includes(searchTerm.toLowerCase())
+      ticket.requester.name.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
     const matchesUrgency = urgencyFilter === "all" || ticket.urgency === urgencyFilter
     
     return matchesSearch && matchesStatus && matchesUrgency
   })
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
 
   // Mostrar loading enquanto verifica autorização
   if (isLoading) {
@@ -235,7 +302,7 @@ export default function TIPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTickets.map((ticket) => (
+                    {filteredTickets.map((ticket: Ticket) => (
                       <tr key={ticket.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                         <td className="p-4">
                           <span className="font-mono text-sm font-medium text-foreground">#{ticket.number}</span>
@@ -247,10 +314,10 @@ export default function TIPage() {
                           </div>
                         </td>
                         <td className="p-4">
-                          <span className="text-sm text-foreground">{ticket.requester}</span>
+                          <span className="text-sm text-foreground">{ticket.requester.name}</span>
                         </td>
                         <td className="p-4">
-                          <span className="text-sm text-foreground">{ticket.responsible}</span>
+                          <span className="text-sm text-foreground">{ticket.assignedTo?.name || "Não atribuído"}</span>
                         </td>
                         <td className="p-4">
                           <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} border`}>
@@ -258,12 +325,12 @@ export default function TIPage() {
                           </Badge>
                         </td>
                         <td className="p-4">
-                          <Badge className={`${statusColors[ticket.status]} text-white`}>
+                          <Badge className={`${statusColors[ticket.status as keyof typeof statusColors]} text-white`}>
                             {ticket.status}
                           </Badge>
                         </td>
                         <td className="p-4">
-                          <span className="text-sm text-muted-foreground">{ticket.lastAction}</span>
+                          <span className="text-sm text-muted-foreground">{formatDate(ticket.updatedAt)}</span>
                         </td>
                         <td className="p-4">
                           <div className="flex gap-2">

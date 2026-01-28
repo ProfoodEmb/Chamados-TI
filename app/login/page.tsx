@@ -151,19 +151,6 @@ export default function LoginPage() {
               </div>
             )}
           </form>
-
-          {/* Dica de logins */}
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-800 font-semibold mb-2">Logins disponíveis:</p>
-            <div className="space-y-1 text-xs text-blue-700">
-              <p>• admin / admin123 (Administrador)</p>
-              <p>• lider_infra / lider123 (Líder Infra)</p>
-              <p>• func_infra / func1234 (Funcionário Infra)</p>
-              <p>• lider_sistemas / lider123 (Líder Sistemas)</p>
-              <p>• func_sistemas / func1234 (Funcionário Sistemas)</p>
-              <p>• usuario / usuario123 (Usuário)</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
