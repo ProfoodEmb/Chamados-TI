@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, Ticket, LayoutGrid, Settings, BarChart3 } from "lucide-react"
+import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -52,7 +52,7 @@ export function Sidebar() {
 
     if (isTIUser) {
       // Menu para usuários T.I.
-      return [
+      const baseItems = [
         {
           icon: BarChart3,
           href: "/ti",
@@ -69,6 +69,17 @@ export function Sidebar() {
           label: "Chamados",
         },
       ]
+
+      // Adicionar "Usuários" apenas para lider_infra
+      if (user.role === "lider_infra") {
+        baseItems.push({
+          icon: Users,
+          href: "/ti/usuarios",
+          label: "Usuários",
+        })
+      }
+
+      return baseItems
     } else {
       // Menu para usuários comuns
       return [

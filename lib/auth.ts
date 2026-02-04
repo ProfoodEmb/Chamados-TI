@@ -36,6 +36,18 @@ export const auth = betterAuth({
         type: "string",
         required: true,
       },
+      setor: {
+        type: "string",
+        required: false,
+      },
+      empresa: {
+        type: "string",
+        required: false,
+      },
+      status: {
+        type: "string",
+        required: false,
+      },
     },
   },
 })

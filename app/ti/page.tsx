@@ -9,6 +9,15 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
 import { useSimplePolling } from "@/lib/use-simple-polling"
+import { AssignTicketDialog } from "@/components/assign-ticket-dialog"
+
+interface User {
+  id: string
+  name: string
+  email: string
+  role: string
+  team: string
+}
 
 interface Ticket {
   id: string
@@ -38,7 +47,9 @@ export default function TIPage() {
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [tickets, setTickets] = useState<Ticket[]>([])
-
+  const [user, setUser] = useState<User | null>(null)
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const [showAssignDialog, setShowAssignDialog] = useState(false)
   // Verificar autorização e buscar tickets
   useEffect(() => {
     const init = async () => {
@@ -59,6 +70,7 @@ export default function TIPage() {
             return
           }
           
+          setUser(session.user) // Salvar dados do usuário
           setIsAuthorized(true)
           
           // Buscar tickets
@@ -86,6 +98,18 @@ export default function TIPage() {
     } catch (error) {
       console.error("Erro ao buscar tickets:", error)
     }
+  }
+
+  // Função para abrir diálogo de atribuição
+  const handleAssignTicket = (ticket: Ticket) => {
+    setSelectedTicket(ticket)
+    setShowAssignDialog(true)
+  }
+
+  // Função para recarregar tickets após atribuição
+  const handleTicketAssigned = () => {
+    // O polling vai atualizar automaticamente
+    console.log("Ticket atribuído com sucesso!")
   }
 
   // Sistema de tempo real com polling simples
@@ -315,10 +339,12 @@ export default function TIPage() {
                 </Select>
 
                 {/* Botões de Ação */}
-                <Button variant="outline" className="gap-2">
-                  <Download className="w-4 h-4" />
-                  Exportar
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="gap-2">
+                    <Download className="w-4 h-4" />
+                    Exportar
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -378,9 +404,16 @@ export default function TIPage() {
                             >
                               Ver
                             </Button>
-                            <Button variant="ghost" size="sm">
-                              Atribuir
-                            </Button>
+                            {/* Botão Atribuir - apenas para líderes */}
+                            {(user?.role === "lider_infra" || user?.role === "lider_sistemas" || user?.role === "admin") && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleAssignTicket(ticket)}
+                              >
+                                Atribuir
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -398,6 +431,15 @@ export default function TIPage() {
           </div>
         </main>
       </div>
+
+      {/* Diálogo de Atribuição */}
+      <AssignTicketDialog
+        open={showAssignDialog}
+        onOpenChange={setShowAssignDialog}
+        ticket={selectedTicket}
+        currentUser={user}
+        onTicketAssigned={handleTicketAssigned}
+      />
     </div>
   )
 }

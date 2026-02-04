@@ -22,9 +22,18 @@ export default function LoginPage() {
     setError("")
     
     try {
-      // Fazer login com Better Auth usando username@empresa.com como email
+      let emailToUse = username
+      
+      // Se não contém @, assumir que é username e adicionar @empresa.com
+      if (!username.includes('@')) {
+        emailToUse = `${username}@empresa.com`
+      }
+      
+      console.log('Tentando login com email:', emailToUse)
+      
+      // Fazer login com Better Auth
       const result = await signIn.email({
-        email: `${username}@empresa.com`,
+        email: emailToUse,
         password: password,
       })
 
@@ -83,14 +92,14 @@ export default function LoginPage() {
             {/* Username */}
             <div className="space-y-2">
               <Label htmlFor="username" className="text-sm font-medium text-gray-700">
-                Usuário
+                Usuário ou Email
               </Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="username"
                   type="text"
-                  placeholder="Digite seu usuário"
+                  placeholder="Digite seu usuário ou email"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="pl-10 h-12"

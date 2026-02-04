@@ -130,3 +130,21 @@
     @apply bg-background text-foreground;
   }
 }
+/* Fix para dropdowns em modais */
+[data-radix-select-content] {
+  z-index: 9999 !important;
+  position: fixed !important;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* Garantir que o modal tenha z-index correto */
+[data-radix-dialog-overlay] {
+  z-index: 50 !important;
+}
+
+[data-radix-dialog-content] {
+  z-index: 51 !important;
+}

@@ -13,6 +13,8 @@ async function main() {
       email: 'admin@empresa.com',
       role: 'admin',
       team: 'admin',
+      setor: 'ti',
+      empresa: 'profood',
     },
     {
       username: 'lider_infra',
@@ -21,6 +23,8 @@ async function main() {
       email: 'lider_infra@empresa.com',
       role: 'lider_infra',
       team: 'infra',
+      setor: 'ti',
+      empresa: 'profood',
     },
     {
       username: 'func_infra',
@@ -29,6 +33,8 @@ async function main() {
       email: 'func_infra@empresa.com',
       role: 'func_infra',
       team: 'infra',
+      setor: 'ti',
+      empresa: 'profood',
     },
     {
       username: 'lider_sistemas',
@@ -37,6 +43,8 @@ async function main() {
       email: 'lider_sistemas@empresa.com',
       role: 'lider_sistemas',
       team: 'sistemas',
+      setor: 'ti',
+      empresa: 'tuicial',
     },
     {
       username: 'func_sistemas',
@@ -45,6 +53,8 @@ async function main() {
       email: 'func_sistemas@empresa.com',
       role: 'func_sistemas',
       team: 'sistemas',
+      setor: 'ti',
+      empresa: 'tuicial',
     },
     {
       username: 'usuario',
@@ -53,6 +63,8 @@ async function main() {
       email: 'usuario@empresa.com',
       role: 'user',
       team: 'user',
+      setor: 'vendas',
+      empresa: 'profood',
     },
   ]
 
@@ -77,6 +89,9 @@ async function main() {
           username: userData.username,
           role: userData.role,
           team: userData.team,
+          setor: userData.setor,
+          empresa: userData.empresa,
+          status: 'ativo', // Status padrão
         }
       })
       console.log(`✅ Usuário criado: ${userData.username}`)

@@ -24,6 +24,9 @@ model User {
   username      String    @unique
   role          String    // admin, lider_infra, func_infra, lider_sistemas, func_sistemas
   team          String    // admin, infra, sistemas
+  setor         String?   // Setor da pessoa (ex: Financeiro, RH, Vendas, etc.)
+  empresa       String?   // profood ou tuicial
+  status        String    @default("ativo") // ativo, suspenso, inativo
 
   // Relações Better Auth
   sessions      Session[]
