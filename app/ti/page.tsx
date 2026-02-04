@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Download, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
+import { useSimplePolling } from "@/lib/use-simple-polling"
 
 interface Ticket {
   id: string
@@ -87,7 +88,17 @@ export default function TIPage() {
     }
   }
 
-  // Escutar evento de criação de chamado e polling a cada 5 segundos
+  // Sistema de tempo real com polling simples
+  const { isActive, lastUpdate, forceUpdate, interval } = useSimplePolling({
+    onUpdate: (data) => {
+      console.log('Atualização recebida via polling:', data)
+      fetchTickets()
+    },
+    enabled: isAuthorized,
+    interval: 8000 // 8 segundos
+  })
+
+  // Escutar evento de criação de chamado (fallback)
   useEffect(() => {
     const handleTicketCreated = () => {
       console.log("Evento ticketCreated recebido - atualizando tickets...")
@@ -95,15 +106,9 @@ export default function TIPage() {
     }
 
     window.addEventListener('ticketCreated', handleTicketCreated)
-    
-    // Polling a cada 5 segundos para garantir atualização
-    const interval = setInterval(() => {
-      fetchTickets()
-    }, 5000)
 
     return () => {
       window.removeEventListener('ticketCreated', handleTicketCreated)
-      clearInterval(interval)
     }
   }, [])
 
@@ -185,8 +190,40 @@ export default function TIPage() {
           <div className="p-6">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold text-foreground">Dashboard T.I.</h1>
-              <p className="text-muted-foreground">Gerencie todos os chamados do sistema</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">Dashboard T.I.</h1>
+                  <p className="text-muted-foreground">Gerencie todos os chamados do sistema</p>
+                </div>
+                
+                {/* Indicador de polling */}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-50 border border-green-200">
+                    {isActive ? (
+                      <>
+                        <Wifi className="w-4 h-4 text-green-600" />
+                        <span className="text-sm text-green-600">
+                          Polling ({interval}s)
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <WifiOff className="w-4 h-4 text-red-600" />
+                        <span className="text-sm text-red-600">Desconectado</span>
+                      </>
+                    )}
+                    <span className="text-sm text-green-500">({lastUpdate})</span>
+                  </div>
+                  
+                  <button 
+                    onClick={forceUpdate}
+                    className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
+                  >
+                    <Clock className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-blue-600">Atualizar</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Cards de Estatísticas */}

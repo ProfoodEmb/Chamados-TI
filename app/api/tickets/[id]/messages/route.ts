@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { notifyTicketUpdate, ensureSocketIO } from "@/lib/socket-server"
 
 // POST - Criar mensagem
 export async function POST(
@@ -65,6 +66,18 @@ export async function POST(
         }
       }
     })
+
+    // Garantir que Socket.IO esteja inicializado
+    ensureSocketIO()
+
+    // Notificar sobre nova mensagem
+    const notified = notifyTicketUpdate({
+      type: 'message_created',
+      ticketId,
+      message: message
+    })
+
+    console.log('📢 Notificação de mensagem enviada:', notified ? 'Sucesso' : 'Falhou')
 
     return NextResponse.json(message, { status: 201 })
   } catch (error) {

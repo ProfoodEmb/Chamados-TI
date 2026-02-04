@@ -16,7 +16,12 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 dias
     updateAge: 60 * 60 * 24, // atualiza a cada 1 dia
   },
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://192.168.3.115:3000",
+    "http://localhost:3001",
+    "http://192.168.3.115:3001"
+  ],
   user: {
     additionalFields: {
       username: {

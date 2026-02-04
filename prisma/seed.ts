@@ -9,7 +9,7 @@ async function main() {
     {
       username: 'admin',
       password: 'admin123',
-      name: 'Administrador Geral',
+      name: 'Vinicius Mathues',
       email: 'admin@empresa.com',
       role: 'admin',
       team: 'admin',
@@ -17,7 +17,7 @@ async function main() {
     {
       username: 'lider_infra',
       password: 'lider123',
-      name: 'João Silva',
+      name: 'Jackson Felipe',
       email: 'lider_infra@empresa.com',
       role: 'lider_infra',
       team: 'infra',
@@ -25,7 +25,7 @@ async function main() {
     {
       username: 'func_infra',
       password: 'func1234',
-      name: 'Maria Santos',
+      name: 'Gustavo Americano',
       email: 'func_infra@empresa.com',
       role: 'func_infra',
       team: 'infra',
@@ -33,7 +33,7 @@ async function main() {
     {
       username: 'lider_sistemas',
       password: 'lider123',
-      name: 'Pedro Costa',
+      name: 'Antony Gouvea',
       email: 'lider_sistemas@empresa.com',
       role: 'lider_sistemas',
       team: 'sistemas',
@@ -41,7 +41,7 @@ async function main() {
     {
       username: 'func_sistemas',
       password: 'func1234',
-      name: 'Ana Oliveira',
+      name: 'Danilo Oliveira',
       email: 'func_sistemas@empresa.com',
       role: 'func_sistemas',
       team: 'sistemas',
@@ -49,7 +49,7 @@ async function main() {
     {
       username: 'usuario',
       password: 'usuario123',
-      name: 'Jackson Felipe',
+      name: 'Usuário Comum',
       email: 'usuario@empresa.com',
       role: 'user',
       team: 'user',

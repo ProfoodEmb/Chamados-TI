@@ -138,12 +138,11 @@ export function Header() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          subject: `${data.sistema} - ${data.problema}`,
+          subject: `${data.sistemaNome} - ${data.assunto}`,
           description: data.descricao,
           category: "Sistemas",
           urgency: data.urgencia,
-          service: data.sistema,
-          anydesk: data.anydesk || null,
+          service: data.sistemaNome,
           team: "sistemas",
         }),
       })
@@ -175,7 +174,7 @@ export function Header() {
           subject: `Relatório - ${data.tipoRelatorio}`,
           description: data.descricao,
           category: "Relatórios",
-          urgency: data.urgencia,
+          urgency: "medium", // Padrão para relatórios
           service: "Relatórios",
           team: "sistemas",
         }),

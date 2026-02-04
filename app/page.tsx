@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { NoticeBoard } from "@/components/notice-board"
 import { Badge } from "@/components/ui/badge"
+import { Wifi, WifiOff, Clock } from "lucide-react"
+import { useSimplePolling } from "@/lib/use-simple-polling"
 
 interface Ticket {
   id: string
@@ -83,7 +85,17 @@ export default function Home() {
     }
   }
 
-  // Escutar evento de criação de chamado e polling a cada 5 segundos
+  // Sistema de tempo real com polling simples
+  const { isActive, lastUpdate, forceUpdate, interval } = useSimplePolling({
+    onUpdate: (data) => {
+      console.log('Atualização recebida via polling:', data)
+      fetchTickets()
+    },
+    enabled: !!user,
+    interval: 10000 // 10 segundos
+  })
+
+  // Escutar evento de criação de chamado (fallback)
   useEffect(() => {
     const handleTicketCreated = () => {
       console.log("Evento ticketCreated recebido na Home - atualizando tickets...")
@@ -91,15 +103,9 @@ export default function Home() {
     }
 
     window.addEventListener('ticketCreated', handleTicketCreated)
-    
-    // Polling a cada 5 segundos para garantir atualização
-    const interval = setInterval(() => {
-      fetchTickets()
-    }, 5000)
 
     return () => {
       window.removeEventListener('ticketCreated', handleTicketCreated)
-      clearInterval(interval)
     }
   }, [])
 
@@ -140,7 +146,26 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-foreground">Meus chamados</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-semibold text-foreground">Meus chamados</h2>
+                  {/* Indicador de polling */}
+                  <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-green-50 border border-green-200">
+                    {isActive ? (
+                      <>
+                        <Wifi className="w-3 h-3 text-green-600" />
+                        <span className="text-xs text-green-600">
+                          Polling ({interval}s)
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <WifiOff className="w-3 h-3 text-red-600" />
+                        <span className="text-xs text-red-600">Desconectado</span>
+                      </>
+                    )}
+                    <span className="text-xs text-green-500">({lastUpdate})</span>
+                  </div>
+                </div>
                 <p className="text-xs text-muted-foreground">{tickets.length} chamados</p>
               </div>
             </div>

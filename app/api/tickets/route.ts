@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { notifyTicketUpdate, ensureSocketIO } from "@/lib/socket-server"
 
 // GET - Listar chamados
 export async function GET(request: NextRequest) {
@@ -185,6 +186,17 @@ export async function POST(request: NextRequest) {
         authorId: session.user.id,
       }
     })
+
+    // Garantir que Socket.IO esteja inicializado
+    ensureSocketIO()
+
+    // Notificar via Socket.IO sobre novo ticket
+    const notified = notifyTicketUpdate({
+      type: 'ticket_created',
+      ticket: ticket
+    })
+
+    console.log('📢 Notificação enviada:', notified ? 'Sucesso' : 'Falhou')
 
     return NextResponse.json(ticket, { status: 201 })
   } catch (error) {
