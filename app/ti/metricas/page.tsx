@@ -1,0 +1,137 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
+import { Button } from "@/components/ui/button"
+import { MetricsDashboard } from "@/components/metrics-dashboard"
+import { RefreshCw, Download, Calendar } from "lucide-react"
+
+interface User {
+  id: string
+  name: string
+  email: string
+  username: string
+  role: string
+  team: string
+}
+
+export default function MetricasPage() {
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const response = await fetch("/api/auth/get-session")
+        const session = await response.json()
+        
+        if (session?.user) {
+          const userRole = session.user.role
+          const authorized = userRole === "admin" || 
+                           userRole === "lider_infra" || 
+                           userRole === "lider_sistemas"
+          
+          if (!authorized) {
+            window.location.href = "/ti"
+            return
+          }
+          
+          setUser(session.user)
+          setIsAuthorized(true)
+        }
+      } catch (error) {
+        console.error("Erro ao inicializar:", error)
+        window.location.href = "/ti"
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    init()
+  }, [])
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1)
+  }
+
+  const handleExport = () => {
+    // TODO: Implementar exportação de relatório
+    alert("Funcionalidade de exportação será implementada em breve!")
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando métricas...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized || !user) {
+    return null
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-y-auto pt-16 md:pl-16">
+          <div className="p-6">
+            {/* Header */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground">Métricas e Relatórios</h1>
+                  <p className="text-muted-foreground">
+                    Dashboard completo de performance e estatísticas dos chamados
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleRefresh}
+                    className="gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Atualizar
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleExport}
+                    className="gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Exportar
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-2"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Período
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Dashboard de Métricas */}
+            <MetricsDashboard key={refreshKey} />
+          </div>
+        </main>
+      </div>
+    </div>
+  )
+}

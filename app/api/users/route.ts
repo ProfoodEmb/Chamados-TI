@@ -20,8 +20,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é líder de infraestrutura
-    if (session.user.role !== "lider_infra") {
+    // Verificar se é usuário de TI (para listagem básica no Kanban)
+    const isITUser = session.user.role === "admin" || 
+                     session.user.role === "lider_infra" || 
+                     session.user.role === "func_infra" || 
+                     session.user.role === "lider_sistemas" || 
+                     session.user.role === "func_sistemas"
+
+    if (!isITUser) {
       console.log('❌ [API Users] Acesso negado. Role:', session.user.role)
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
@@ -78,7 +84,7 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ [API Users] Query executada com sucesso. Usuários encontrados:', users.length)
 
-    return NextResponse.json({ users })
+    return NextResponse.json(users)
 
   } catch (error) {
     console.error("❌ [API Users] Erro ao listar usuários:", error)

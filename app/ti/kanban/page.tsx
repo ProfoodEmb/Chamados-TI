@@ -11,6 +11,7 @@ import { DroppableColumn } from "@/components/kanban-droppable-column"
 import { KanbanTicketModal } from "@/components/kanban-ticket-modal"
 import { useSimplePolling } from "@/lib/use-simple-polling"
 
+import { KanbanFilters } from "@/components/kanban-filters"
 import {
   DndContext,
   DragEndEvent,
@@ -70,6 +71,14 @@ export default function KanbanPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [showTicketDetail, setShowTicketDetail] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+
+  // Estados dos filtros
+  const [searchTerm, setSearchTerm] = useState("")
+  const [teamFilter, setTeamFilter] = useState("") // Será definido baseado no usuário
+  const [urgencyFilter, setUrgencyFilter] = useState("all")
+  const [assigneeFilter, setAssigneeFilter] = useState("all")
+  const [dateFilter, setDateFilter] = useState("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -171,6 +180,16 @@ export default function KanbanPage() {
           
           setUser(session.user)
           setIsAuthorized(true)
+          
+          // Definir filtro padrão baseado na equipe do usuário
+          if (session.user.role === "lider_infra" || session.user.role === "func_infra") {
+            setTeamFilter("infra")
+          } else if (session.user.role === "lider_sistemas" || session.user.role === "func_sistemas") {
+            setTeamFilter("sistemas")
+          } else {
+            // Admin vê todos por padrão
+            setTeamFilter("all")
+          }
         }
       } catch (error) {
         console.error("Erro ao inicializar:", error)
@@ -197,26 +216,123 @@ export default function KanbanPage() {
     critical: "Crítica",
   }
 
-  // Filtrar tickets baseado na permissão do usuário - memoizado para performance
+  // Filtrar tickets baseado nos filtros aplicados
   const getFilteredTickets = () => {
     if (!user || !tickets) return []
     
-    if (user.role === "admin") {
-      return tickets
+    let filtered = tickets
+
+    // Filtro por busca
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase()
+      filtered = filtered.filter((t: Ticket) => 
+        t.number.toLowerCase().includes(search) ||
+        t.subject.toLowerCase().includes(search) ||
+        t.description?.toLowerCase().includes(search) ||
+        t.requester.name.toLowerCase().includes(search)
+      )
+    }
+
+    // Filtro por equipe
+    if (teamFilter !== "all") {
+      filtered = filtered.filter((t: Ticket) => t.team === teamFilter)
+    }
+
+    // Filtro por urgência
+    if (urgencyFilter !== "all") {
+      filtered = filtered.filter((t: Ticket) => t.urgency === urgencyFilter)
+    }
+
+    // Filtro por responsável
+    if (assigneeFilter !== "all") {
+      if (assigneeFilter === "unassigned") {
+        filtered = filtered.filter((t: Ticket) => !t.assignedToId)
+      } else if (assigneeFilter === "jackson") {
+        filtered = filtered.filter((t: Ticket) => 
+          t.assignedTo?.name.toLowerCase().includes("jackson")
+        )
+      } else if (assigneeFilter === "gustavo") {
+        filtered = filtered.filter((t: Ticket) => 
+          t.assignedTo?.name.toLowerCase().includes("gustavo")
+        )
+      } else if (assigneeFilter === "danilo") {
+        filtered = filtered.filter((t: Ticket) => 
+          t.assignedTo?.name.toLowerCase().includes("danilo")
+        )
+      } else if (assigneeFilter === "antony") {
+        filtered = filtered.filter((t: Ticket) => 
+          t.assignedTo?.name.toLowerCase().includes("antony")
+        )
+      } else if (assigneeFilter === "rafael") {
+        filtered = filtered.filter((t: Ticket) => 
+          t.assignedTo?.name.toLowerCase().includes("rafael")
+        )
+      }
+    }
+
+    // Filtro por data
+    if (dateFilter !== "all") {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      
+      filtered = filtered.filter((t: Ticket) => {
+        const ticketDate = new Date(t.createdAt)
+        
+        switch (dateFilter) {
+          case "today":
+            return ticketDate >= today
+          case "week":
+            const weekAgo = new Date(today)
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return ticketDate >= weekAgo
+          case "month":
+            const monthAgo = new Date(today)
+            monthAgo.setMonth(monthAgo.getMonth() - 1)
+            return ticketDate >= monthAgo
+          default:
+            return true
+        }
+      })
+    }
+
+    // Filtro por categoria
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((t: Ticket) => t.category === categoryFilter)
     }
     
-    if (user.role === "lider_infra" || user.role === "func_infra") {
-      return tickets.filter((t: Ticket) => t.team === "infra" || t.team === "automacao")
-    }
-    
-    if (user.role === "lider_sistemas" || user.role === "func_sistemas") {
-      return tickets.filter((t: Ticket) => t.team === "sistemas" || t.team === "automacao")
-    }
-    
-    return []
+    return filtered
   }
 
   const filteredTickets = getFilteredTickets()
+
+  // Contar filtros ativos
+  const getActiveFiltersCount = () => {
+    let count = 0
+    if (searchTerm) count++
+    if (teamFilter !== "all") count++
+    if (urgencyFilter !== "all") count++
+    if (assigneeFilter !== "all") count++
+    if (dateFilter !== "all") count++
+    if (categoryFilter !== "all") count++
+    return count
+  }
+
+  // Limpar todos os filtros
+  const clearAllFilters = () => {
+    setSearchTerm("")
+    // Resetar filtro de equipe baseado no usuário
+    if (user?.role === "lider_infra" || user?.role === "func_infra") {
+      setTeamFilter("infra")
+    } else if (user?.role === "lider_sistemas" || user?.role === "func_sistemas") {
+      setTeamFilter("sistemas")
+    } else {
+      setTeamFilter("all")
+    }
+    setUrgencyFilter("all")
+    setAssigneeFilter("all")
+    setDateFilter("all")
+    setCategoryFilter("all")
+  }
 
   // Memoizar as listas de tickets por coluna para evitar recálculos
   const inboxTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "inbox")
@@ -379,69 +495,72 @@ export default function KanbanPage() {
         ref={setNodeRef}
         style={style}
         className={`
-          bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm
+          bg-white border border-gray-200 rounded-lg p-3 mb-2 shadow-sm
           hover:shadow-md transition-all duration-200
-          ${isDragging || isSortableDragging ? 'shadow-lg scale-105 rotate-2' : ''}
-          ${isOverlay ? 'shadow-2xl border-blue-500' : ''}
+          ${isDragging || isSortableDragging ? 'shadow-lg scale-105 rotate-1' : ''}
+          ${isOverlay ? 'shadow-2xl border-blue-500 bg-blue-50' : ''}
         `}
       >
         {/* Header com Drag Handle */}
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded text-[10px]">
               #{ticket.number}
             </span>
             {/* Drag Handle otimizado */}
             <div 
               {...attributes}
               {...listeners}
-              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded transition-colors"
               title="Arrastar ticket"
             >
               <div className="grid grid-cols-2 gap-0.5 w-3 h-3">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                  <div key={i} className="w-0.5 h-0.5 bg-gray-400 rounded-full"></div>
                 ))}
               </div>
             </div>
           </div>
-          <Badge variant="outline" className={`${urgencyClass} text-xs border`}>
+          <Badge variant="outline" className={`${urgencyClass} text-[10px] border px-1 py-0`}>
             {urgencyText}
           </Badge>
         </div>
         
         {/* Conteúdo - Completamente clicável */}
         <div 
-          className="space-y-2 cursor-pointer hover:bg-gray-50 rounded p-2 -m-2"
+          className="space-y-2 cursor-pointer hover:bg-gray-50 rounded p-1 -m-1 transition-colors"
           onClick={handleCardClick}
         >
           <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
             {ticket.subject}
           </h4>
           
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <UserIcon className="w-3 h-3" />
-            <span className="truncate">{ticket.requester.name}</span>
+          <div className="flex items-center gap-1 text-xs text-gray-600">
+            <UserIcon className="w-3 h-3 shrink-0" />
+            <span className="text-gray-500">Solicitado por:</span>
+            <span className="truncate font-medium">{ticket.requester.name}</span>
           </div>
           
-          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+            <div className="flex items-center gap-1">
               {ticket.assignedTo ? (
                 <div className="flex items-center gap-1">
-                  <Avatar className="w-6 h-6">
-                    <AvatarFallback className="bg-blue-500 text-white text-xs">
+                  <Avatar className="w-5 h-5">
+                    <AvatarFallback className="bg-blue-500 text-white text-[10px]">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs text-gray-600 truncate max-w-16">
+                  <span className="text-xs text-gray-500">Responsável:</span>
+                  <span className="text-xs text-gray-900 font-medium truncate max-w-14">
                     {firstName}
                   </span>
                 </div>
               ) : (
                 <div className="flex items-center gap-1">
-                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                    <UserIcon className="w-3 h-3 text-gray-400" />
+                  <div className="w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
+                    <UserIcon className="w-2.5 h-2.5 text-gray-400" />
                   </div>
+                  <span className="text-xs text-gray-500">Responsável:</span>
                   <span className="text-xs text-gray-400">Não atribuído</span>
                 </div>
               )}
@@ -482,11 +601,11 @@ export default function KanbanPage() {
         <main className="flex-1 overflow-hidden pt-16 md:pl-16">
           <div className="h-full flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-border bg-card">
+            <div className="p-4 border-b border-border bg-card">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground">Quadro Kanban</h1>
-                  <p className="text-sm text-muted-foreground">
+                  <h1 className="text-xl font-bold text-foreground">Quadro Kanban</h1>
+                  <p className="text-xs text-muted-foreground">
                     {user.role === "admin" && "Visualizando todos os chamados"}
                     {user.role === "lider_infra" && "Equipe de Infraestrutura"}
                     {user.role === "lider_sistemas" && "Equipe de Sistemas"}
@@ -495,9 +614,9 @@ export default function KanbanPage() {
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   {/* Indicador de Status do Sistema */}
-                  <div className="flex items-center gap-2 text-sm">
+                  <div className="flex items-center gap-2 text-xs">
                     {pollingStatus === 'active' && (
                       <>
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -529,19 +648,36 @@ export default function KanbanPage() {
                   >
                     Atualizar
                   </Button>
-                  
-                  <Button variant="outline" size="sm">
-                    Filtros
-                  </Button>
                 </div>
               </div>
             </div>
 
+            {/* Filtros Avançados */}
+            <div className="px-4">
+              <KanbanFilters
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                teamFilter={teamFilter}
+                onTeamFilterChange={setTeamFilter}
+                urgencyFilter={urgencyFilter}
+                onUrgencyFilterChange={setUrgencyFilter}
+                assigneeFilter={assigneeFilter}
+                onAssigneeFilterChange={setAssigneeFilter}
+                dateFilter={dateFilter}
+                onDateFilterChange={setDateFilter}
+                categoryFilter={categoryFilter}
+                onCategoryFilterChange={setCategoryFilter}
+                users={[]}
+                onClearFilters={clearAllFilters}
+                activeFiltersCount={getActiveFiltersCount()}
+              />
+            </div>
+
             {/* Kanban Board */}
-            <div className="flex-1 overflow-hidden p-6">
+            <div className="flex-1 overflow-hidden p-4">
               <div className="h-full">
                 {/* Kanban Columns */}
-                <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
+                <div className="h-full">
                   <DndContext
                     sensors={sensors}
                     collisionDetection={closestCenter}
@@ -549,7 +685,7 @@ export default function KanbanPage() {
                     onDragOver={handleDragOver}
                     onDragEnd={handleDragEnd}
                   >
-                    <div className="flex gap-6 min-w-max pb-6">
+                    <div className="grid grid-cols-4 gap-4 h-full pb-4">
                       <DroppableColumn
                         id="inbox"
                         title="Caixa de Entrada"
@@ -579,7 +715,7 @@ export default function KanbanPage() {
                         title="Em Revisão"
                         icon={Eye}
                         tickets={reviewTickets}
-                        color="bg-gradient-to-r from-yellow-600 to-yellow-500"
+                        color="bg-gradient-to-r from-orange-600 to-orange-500"
                       >
                         {reviewTickets.map((ticket: Ticket) => (
                           <TicketCard key={ticket.id} ticket={ticket} />
@@ -601,7 +737,7 @@ export default function KanbanPage() {
 
                     <DragOverlay>
                       {activeTicket ? (
-                        <div className="rotate-6 scale-105">
+                        <div className="rotate-3 scale-105 shadow-2xl">
                           <TicketCard ticket={activeTicket} isOverlay={true} />
                         </div>
                       ) : null}

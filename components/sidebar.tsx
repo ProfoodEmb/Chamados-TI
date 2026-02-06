@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users, Megaphone, Plus } from "lucide-react"
+import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users, Megaphone, Plus, TrendingUp } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -76,6 +76,15 @@ export function Sidebar() {
         href: "/criar-aviso",
         label: "Avisos",
       })
+
+      // Adicionar "Métricas" para líderes e admin
+      if (user.role === "admin" || user.role === "lider_infra" || user.role === "lider_sistemas") {
+        baseItems.push({
+          icon: TrendingUp,
+          href: "/ti/metricas",
+          label: "Métricas",
+        })
+      }
 
       // Adicionar "Usuários" apenas para lider_infra
       if (user.role === "lider_infra") {

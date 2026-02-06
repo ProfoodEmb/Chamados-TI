@@ -34,15 +34,15 @@ export function DroppableColumn({
   const { setNodeRef, isOver } = useDroppable({ id })
 
   return (
-    <div className="flex-1 min-w-80 max-w-sm">
+    <div className="w-full h-full">
       {/* Header da coluna */}
-      <div className={`${color} rounded-t-lg p-4 shadow-sm`}>
+      <div className={`${color} rounded-t-lg p-3 shadow-sm`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Icon className="w-5 h-5 text-white" />
-            <h3 className="font-semibold text-white">{title}</h3>
+            <Icon className="w-4 h-4 text-white" />
+            <h3 className="font-semibold text-white text-sm">{title}</h3>
           </div>
-          <Badge className="bg-white/20 text-white border-0 font-semibold">
+          <Badge className="bg-white/20 text-white border-0 font-semibold text-xs">
             {tickets.length}
           </Badge>
         </div>
@@ -52,7 +52,7 @@ export function DroppableColumn({
       <div 
         ref={setNodeRef}
         className={`
-          bg-gray-50 p-4 min-h-125 max-h-[70vh]
+          bg-gray-50 p-3 min-h-96 h-[calc(100vh-280px)]
           overflow-y-auto border-l border-r border-b border-gray-200 rounded-b-lg
           transition-all duration-200
           ${isOver ? 'bg-blue-50 border-blue-300 shadow-inner' : ''}
@@ -61,11 +61,11 @@ export function DroppableColumn({
         <SortableContext items={tickets.map(t => t.id)} strategy={verticalListSortingStrategy}>
           {tickets.length === 0 ? (
             <div className={`
-              text-center py-12 transition-all duration-200
+              text-center py-8 transition-all duration-200
               ${isOver ? 'text-blue-600' : 'text-gray-400'}
             `}>
               <Icon className={`
-                w-12 h-12 mx-auto mb-3 transition-all duration-200
+                w-8 h-8 mx-auto mb-2 transition-all duration-200
                 ${isOver ? 'opacity-60 scale-110' : 'opacity-30'}
               `} />
               <p className="text-sm font-medium">
