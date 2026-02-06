@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Paperclip, X, Upload, Clock, AlertCircle, AlertTriangle, Zap, Printer, HelpCircle, Wrench, Wifi, ArrowLeft } from "lucide-react"
+import { Paperclip, X, Upload, Clock, AlertCircle, AlertTriangle, Zap, Printer, HelpCircle, Wrench, Wifi, ArrowLeft, DollarSign } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
@@ -139,7 +139,10 @@ export function InfraFormDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.problema || !formData.descricao || !formData.urgencia || !formData.patrimonio) {
+    // Para orçamento e Wi-Fi, não exigir patrimônio
+    const isPatrimonioRequired = preSelectedCategory !== "Orçamento" && preSelectedCategory !== "Rede e conectividade"
+    
+    if (!formData.problema || !formData.descricao || !formData.urgencia || (isPatrimonioRequired && !formData.patrimonio)) {
       return
     }
 
@@ -201,6 +204,8 @@ export function InfraFormDialog({
                 <Wrench className="w-8 h-8 text-white" />
               ) : preSelectedCategory === "Rede e conectividade" ? (
                 <Wifi className="w-8 h-8 text-white" />
+              ) : preSelectedCategory === "Orçamento" ? (
+                <DollarSign className="w-8 h-8 text-white" />
               ) : (
                 <Printer className="w-8 h-8 text-white" />
               )}
@@ -251,90 +256,92 @@ export function InfraFormDialog({
               />
             </div>
 
-            {/* Patrimônio da Impressora ou Código do Equipamento */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Label className="text-base font-semibold text-gray-700">
-                  {preSelectedCategory === "Manutenção" 
-                    ? "Código do equipamento" 
-                    : "Patrimônio da impressora"} <span className="text-red-500">*</span>
-                </Label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (preSelectedCategory === "Manutenção") {
-                        setShowEquipamentoGuide(!showEquipamentoGuide)
-                      } else {
-                        setShowPatrimonioGuide(!showPatrimonioGuide)
-                      }
-                    }}
-                    className="text-blue-500 hover:text-blue-700 transition-colors"
-                    title={preSelectedCategory === "Manutenção" 
-                      ? "Ver exemplo de onde encontrar o código" 
-                      : "Ver exemplo de onde encontrar o patrimônio"}
-                  >
-                    <HelpCircle className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                {showPatrimonioGuide && preSelectedCategory !== "Manutenção" && (
-                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-blue-900 mb-1">Onde encontrar o patrimônio?</h4>
-                        <p className="text-sm text-blue-700">
-                          O número do patrimônio geralmente está em uma etiqueta colada na impressora.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="relative w-full h-64 bg-white rounded-lg overflow-hidden border-2 border-blue-300">
-                      <Image
-                        src="/patrimonio-impressora.jpeg"
-                        alt="Exemplo de onde encontrar o patrimônio da impressora"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
+            {/* Patrimônio da Impressora ou Código do Equipamento - Não mostrar para Orçamento e Wi-Fi */}
+            {preSelectedCategory !== "Orçamento" && preSelectedCategory !== "Rede e conectividade" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label className="text-base font-semibold text-gray-700">
+                    {preSelectedCategory === "Manutenção" 
+                      ? "Código do equipamento" 
+                      : "Patrimônio da impressora"} <span className="text-red-500">*</span>
+                  </Label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (preSelectedCategory === "Manutenção") {
+                          setShowEquipamentoGuide(!showEquipamentoGuide)
+                        } else {
+                          setShowPatrimonioGuide(!showPatrimonioGuide)
+                        }
+                      }}
+                      className="text-blue-500 hover:text-blue-700 transition-colors"
+                      title={preSelectedCategory === "Manutenção" 
+                        ? "Ver exemplo de onde encontrar o código" 
+                        : "Ver exemplo de onde encontrar o patrimônio"}
+                    >
+                      <HelpCircle className="w-5 h-5" />
+                    </button>
                   </div>
-                )}
+                  
+                  {showPatrimonioGuide && preSelectedCategory !== "Manutenção" && (
+                    <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <HelpCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-900 mb-1">Onde encontrar o patrimônio?</h4>
+                          <p className="text-sm text-blue-700">
+                            O número do patrimônio geralmente está em uma etiqueta colada na impressora.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="relative w-full h-64 bg-white rounded-lg overflow-hidden border-2 border-blue-300">
+                        <Image
+                          src="/patrimonio-impressora.jpeg"
+                          alt="Exemplo de onde encontrar o patrimônio da impressora"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-                {showEquipamentoGuide && preSelectedCategory === "Manutenção" && (
-                  <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                        <HelpCircle className="w-5 h-5 text-white" />
+                  {showEquipamentoGuide && preSelectedCategory === "Manutenção" && (
+                    <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                          <HelpCircle className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-900 mb-1">Onde encontrar o código?</h4>
+                          <p className="text-sm text-blue-700">
+                            O código do equipamento geralmente está em uma etiqueta colada no equipamento.
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-blue-900 mb-1">Onde encontrar o código?</h4>
-                        <p className="text-sm text-blue-700">
-                          O código do equipamento geralmente está em uma etiqueta colada no equipamento.
-                        </p>
+                      <div className="relative w-full h-64 bg-white rounded-lg overflow-hidden border-2 border-blue-300">
+                        <Image
+                          src="/etiqueta de equipamento.jpeg"
+                          alt="Exemplo de onde encontrar o código do equipamento"
+                          fill
+                          className="object-contain"
+                        />
                       </div>
                     </div>
-                    <div className="relative w-full h-64 bg-white rounded-lg overflow-hidden border-2 border-blue-300">
-                      <Image
-                        src="/etiqueta de equipamento.jpeg"
-                        alt="Exemplo de onde encontrar o código do equipamento"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                <Input
-                  placeholder={preSelectedCategory === "Manutenção" 
-                    ? "Digite o código do equipamento" 
-                    : "Numero do Patrimio da impressora"}
-                  value={formData.patrimonio}
-                  onChange={(e) => handleInputChange("patrimonio", e.target.value)}
-                  className="h-12 border-2 border-gray-200 hover:border-blue-400 focus:border-blue-500 transition-colors"
-                  required
-                />
-              </div>
+                  )}
+                  
+                  <Input
+                    placeholder={preSelectedCategory === "Manutenção" 
+                      ? "Digite o código do equipamento" 
+                      : "Numero do Patrimio da impressora"}
+                    value={formData.patrimonio}
+                    onChange={(e) => handleInputChange("patrimonio", e.target.value)}
+                    className="h-12 border-2 border-gray-200 hover:border-blue-400 focus:border-blue-500 transition-colors"
+                    required
+                  />
+                </div>
+            )}
 
             {/* Nível de Urgência */}
             <div className="space-y-3">
@@ -501,7 +508,7 @@ export function InfraFormDialog({
                 !formData.problema || 
                 !formData.descricao || 
                 !formData.urgencia ||
-                !formData.patrimonio
+                (preSelectedCategory !== "Orçamento" && preSelectedCategory !== "Rede e conectividade" && !formData.patrimonio)
               }
               className="h-11 px-6 bg-blue-600 hover:bg-blue-700"
             >

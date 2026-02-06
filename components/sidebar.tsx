@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users } from "lucide-react"
+import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users, Megaphone, Plus } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -70,6 +70,13 @@ export function Sidebar() {
         },
       ]
 
+      // Adicionar "Avisos" para todos os usuários T.I.
+      baseItems.push({
+        icon: Megaphone,
+        href: "/criar-aviso",
+        label: "Avisos",
+      })
+
       // Adicionar "Usuários" apenas para lider_infra
       if (user.role === "lider_infra") {
         baseItems.push({
@@ -92,6 +99,11 @@ export function Sidebar() {
           icon: Ticket,
           href: "/tickets",
           label: "Meus Chamados",
+        },
+        {
+          icon: Megaphone,
+          href: "/criar-aviso",
+          label: "Avisos",
         },
       ]
     }

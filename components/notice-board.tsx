@@ -1,22 +1,223 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Megaphone } from "lucide-react"
+import { Megaphone, Info, AlertTriangle, Wrench, Sparkles, Trash2, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/confirm-dialog"
+import { useNoticesPolling } from "@/lib/use-notices-polling"
+import { NoticeToast } from "@/components/notice-toast"
+
+interface Notice {
+  id: string
+  title: string
+  content: string
+  type: "info" | "warning" | "maintenance" | "update"
+  priority: "low" | "medium" | "high" | "critical"
+  level: "general" | "urgent" | "critical_system"
+  targetSectors: string | null
+  scheduledFor: string | null
+  publishedAt: string | null
+  expiresAt: string | null
+  active: boolean
+  createdAt: string
+  author: {
+    id: string
+    name: string
+    role: string
+  }
+}
+
+interface User {
+  id: string
+  name: string
+  role: string
+  setor?: string
+}
 
 export function NoticeBoard() {
-  const notices = [
-    {
-      title: "Manutenção programada",
-      description: "O sistema estará indisponível no dia 28/01 das 22h de 02h.",
-      time: "Hoje",
+  const [notices, setNotices] = useState<Notice[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [noticeToDelete, setNoticeToDelete] = useState<string | null>(null)
+  const [showToast, setShowToast] = useState(false)
+  const [toastNotice, setToastNotice] = useState<any>(null)
+
+  // Sistema de tempo real para avisos
+  const { isActive: isPollingActive } = useNoticesPolling({
+    enabled: !isLoading,
+    onUpdate: (data) => {
+      console.log('🔄 NoticeBoard recebeu onUpdate:', data.noticeCount, 'avisos')
+      if (data.hasChanges && data.notices) {
+        console.log('📢 Atualizando mural de avisos em tempo real')
+        console.log('📋 Novos avisos:', data.notices.map((n: any) => n.title))
+        setNotices(data.notices)
+      }
     },
-    {
-      title: "Nova versão disponível",
-      description: "Atualizamos o módulo de relatórios com novos recursos.",
-      time: "Ontem",
+    onNewNotice: (notice) => {
+      console.log('🆕 Novo aviso no mural:', notice.title)
+      setToastNotice(notice)
+      setShowToast(true)
+      // Forçar atualização da lista também
+      fetchNotices()
     },
-  ]
+    interval: 3000 // 3 segundos para teste mais rápido
+  })
+
+  useEffect(() => {
+    fetchUser()
+    fetchNotices()
+  }, [])
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch("/api/auth/get-session")
+      const session = await response.json()
+      if (session?.user) {
+        setUser(session.user)
+      }
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error)
+    }
+  }
+
+  const fetchNotices = async () => {
+    try {
+      const response = await fetch('/api/notices')
+      if (response.ok) {
+        const data = await response.json()
+        setNotices(data)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar avisos:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const deleteNotice = async (noticeId: string) => {
+    setNoticeToDelete(noticeId)
+    setShowConfirmDialog(true)
+  }
+
+  const confirmDeleteNotice = async () => {
+    if (!noticeToDelete) return
+
+    try {
+      const response = await fetch(`/api/notices/${noticeToDelete}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        console.log('✅ Aviso excluído com sucesso')
+        fetchNotices() // Recarregar lista
+      } else {
+        const error = await response.json()
+        alert('Erro ao excluir aviso: ' + error.error)
+      }
+    } catch (error) {
+      console.error('Erro ao excluir aviso:', error)
+      alert('Erro ao excluir aviso')
+    } finally {
+      setNoticeToDelete(null)
+    }
+  }
+
+  const getNoticeIcon = (type: string) => {
+    switch (type) {
+      case "info":
+        return Info
+      case "warning":
+        return AlertTriangle
+      case "maintenance":
+        return Wrench
+      case "update":
+        return Sparkles
+      default:
+        return Info
+    }
+  }
+
+  const getNoticeColor = (type: string) => {
+    // Cores baseadas no tipo
+    switch (type) {
+      case "info":
+        return "bg-blue-50 border-blue-200 hover:bg-blue-100"
+      case "warning":
+        return "bg-yellow-50 border-yellow-200 hover:bg-yellow-100"
+      case "maintenance":
+        return "bg-orange-50 border-orange-200 hover:bg-orange-100"
+      case "update":
+        return "bg-green-50 border-green-200 hover:bg-green-100"
+      default:
+        return "bg-gray-50 border-gray-200 hover:bg-gray-100"
+    }
+  }
+
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case "high":
+        return "🔴 "
+      case "medium":
+        return "🟡 "
+      case "low":
+        return "🟢 "
+      default:
+        return ""
+    }
+  }
+
+  const getLevelLabel = (level: string) => {
+    // Removido - não usar mais níveis
+    return ""
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) {
+      return "Agora"
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h atrás`
+    } else if (diffInHours < 48) {
+      return "Ontem"
+    } else {
+      const days = Math.floor(diffInHours / 24)
+      return `${days} dias atrás`
+    }
+  }
+
+  const formatScheduledDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  // Filtrar avisos por setor se aplicável
+  const filteredNotices = notices.filter(notice => {
+    if (!notice.targetSectors) return true // Aviso para todos
+    
+    try {
+      const targetSectors = JSON.parse(notice.targetSectors)
+      if (!user?.setor) return true // Se usuário não tem setor, mostra todos
+      
+      return targetSectors.includes(user.setor) || targetSectors.includes("T.I.")
+    } catch {
+      return true // Em caso de erro no JSON, mostra o aviso
+    }
+  })
+
+  // Verificar se usuário pode excluir aviso
+  const canDeleteNotice = (notice: Notice) => {
+    if (!user) return false
+    return user.role === "admin" || user.id === notice.author.id
+  }
 
   return (
     <div className="bg-card rounded-xl border border-border p-6">
@@ -31,23 +232,98 @@ export function NoticeBoard() {
       </div>
 
       <div className="space-y-3 mb-4">
-        {notices.map((notice, index) => (
-          <Link key={index} href="/avisos">
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="text-sm font-semibold text-foreground">
-                  {notice.title}
-                </h3>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {notice.time}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {notice.description}
-              </p>
+        {isLoading ? (
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+              <div className="h-3 bg-gray-300 rounded w-full"></div>
             </div>
-          </Link>
-        ))}
+          </div>
+        ) : filteredNotices.length > 0 ? (
+          filteredNotices.slice(0, 3).map((notice) => {
+            const Icon = getNoticeIcon(notice.type)
+            const isScheduled = notice.scheduledFor && new Date(notice.scheduledFor) > new Date()
+            
+            return (
+              <div key={notice.id} className="relative">
+                <Link href="/avisos">
+                  <div className={`p-4 border rounded-lg transition-colors cursor-pointer ${getNoticeColor(notice.type)}`}>
+                    {/* Conteúdo do aviso */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Icon className="w-4 h-4 text-gray-600" />
+                        <h3 className="text-sm font-semibold text-foreground">
+                          {getPriorityLabel(notice.priority)}{notice.title}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isScheduled && (
+                          <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                            <Calendar className="w-3 h-3" />
+                            <span>Programado</span>
+                          </div>
+                        )}
+                        {notice.expiresAt && (
+                          <div className="flex items-center gap-1 text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
+                            <Clock className="w-3 h-3" />
+                            <span>Expira</span>
+                          </div>
+                        )}
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatDate(notice.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {notice.content.length > 100 
+                        ? `${notice.content.substring(0, 100)}...` 
+                        : notice.content
+                      }
+                    </p>
+                    
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Por: {notice.author.name}
+                      </span>
+                      
+                      {/* Informações de programação */}
+                      {(isScheduled || notice.expiresAt) && (
+                        <div className="text-xs text-muted-foreground">
+                          {isScheduled && (
+                            <div>📅 {formatScheduledDate(notice.scheduledFor!)}</div>
+                          )}
+                          {notice.expiresAt && (
+                            <div>⏰ Expira: {formatScheduledDate(notice.expiresAt)}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+                
+                {/* Botão de exclusão */}
+                {canDeleteNotice(notice) && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      deleteNotice(notice.id)
+                    }}
+                    className="absolute top-2 right-2 p-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Excluir aviso"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            )
+          })
+        ) : (
+          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+            <p className="text-sm text-muted-foreground">Nenhum aviso disponível</p>
+          </div>
+        )}
       </div>
 
       <Link href="/avisos">
@@ -58,6 +334,29 @@ export function NoticeBoard() {
           Ver todos os avisos
         </Button>
       </Link>
+
+      {/* Dialog de confirmação de exclusão */}
+      <ConfirmDialog
+        open={showConfirmDialog}
+        onOpenChange={setShowConfirmDialog}
+        title="Excluir aviso"
+        message="Tem certeza que deseja excluir este aviso? Esta ação não pode ser desfeita."
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDeleteNotice}
+      />
+
+      {/* Toast de novo aviso */}
+      {showToast && toastNotice && (
+        <NoticeToast
+          notice={toastNotice}
+          onClose={() => {
+            setShowToast(false)
+            setToastNotice(null)
+          }}
+        />
+      )}
     </div>
   )
 }

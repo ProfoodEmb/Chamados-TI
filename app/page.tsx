@@ -23,7 +23,10 @@ interface User {
 }
 
 const statusColors = {
-  "Aberto": "bg-blue-500",
+  "Aberto": "bg-gray-500",           // Caixa de Entrada - Cinza
+  "Em Andamento": "bg-blue-500",     // Em Andamento - Azul
+  "Em Revisão": "bg-yellow-500",     // Em Revisão - Amarelo
+  "Concluído": "bg-green-500",       // Concluído - Verde
   "Pendente": "bg-yellow-500",
   "Fechado": "bg-gray-500",
   "Resolvido": "bg-green-500",

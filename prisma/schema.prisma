@@ -6,11 +6,31 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // Tabelas do Better Auth
+model Notice {
+  id            String    @id @default(cuid())
+  title         String
+  content       String
+  type          String    // "info", "warning", "maintenance", "update"
+  priority      String    // "low", "medium", "high", "critical"
+  level         String    @default("general") // "general", "urgent", "critical_system"
+  targetSectors String?   // JSON array of sectors, null = all sectors
+  scheduledFor  DateTime? // When to publish the notice, null = immediate
+  publishedAt   DateTime? // When it was actually published
+  expiresAt     DateTime? // When to automatically hide/expire
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("notices")
+}
+
 model User {
   id            String    @id @default(uuid())
   name          String
@@ -37,6 +57,7 @@ model User {
   ticketsAssigned  Ticket[]     @relation("TicketAssigned")
   messages         Message[]
   attachments      Attachment[]
+  notices          Notice[]     // Avisos criados pelo usuário
 }
 
 model Session {

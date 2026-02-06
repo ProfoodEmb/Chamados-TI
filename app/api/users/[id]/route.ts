@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma"
 // PATCH - Atualizar status do usuário (só para lider_infra)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -23,7 +23,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const { status } = body
 
@@ -71,7 +71,7 @@ export async function PATCH(
 // DELETE - Deletar usuário (só para lider_infra)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verificar autenticação
@@ -88,7 +88,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     // Não permitir deletar a si mesmo
     if (id === session.user.id) {

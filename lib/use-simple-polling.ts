@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 
 interface PollingOptions {
   onUpdate?: (data: any) => void
@@ -7,11 +7,15 @@ interface PollingOptions {
 }
 
 export function useSimplePolling(options: PollingOptions = {}) {
-  const { onUpdate, enabled = true, interval = 10000 } = options // 10 segundos por padrão
+  const { onUpdate, enabled = true, interval = 15000 } = options // 15 segundos por padrão
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isActive, setIsActive] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const lastTicketCountRef = useRef<number>(0)
+  const lastTicketHashRef = useRef<string>('')
+  const isCheckingRef = useRef<boolean>(false) // Prevenir múltiplas chamadas simultâneas
+
+  // Memoizar a função de callback para evitar re-criações
+  const memoizedOnUpdate = useCallback(onUpdate || (() => {}), [onUpdate])
 
   useEffect(() => {
     if (!enabled) {
@@ -19,45 +23,74 @@ export function useSimplePolling(options: PollingOptions = {}) {
       return
     }
 
-    console.log('🔄 Iniciando sistema de polling simples...')
+    console.log('🔄 Iniciando sistema de polling otimizado...')
     setIsActive(true)
     
-    // Função para verificar atualizações
+    // Função otimizada para verificar atualizações
     const checkForUpdates = async () => {
+      // Evitar múltiplas chamadas simultâneas
+      if (isCheckingRef.current) {
+        console.log('⏳ Polling já em andamento, pulando...')
+        return
+      }
+
+      isCheckingRef.current = true
+
       try {
         console.log('🔍 Verificando atualizações via polling...')
         
-        // Buscar tickets para verificar se houve mudanças
-        const response = await fetch('/api/tickets')
+        // Usar AbortController para cancelar requisições se necessário
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8s timeout
+
+        const response = await fetch('/api/tickets', {
+          signal: controller.signal,
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        })
+
+        clearTimeout(timeoutId)
+
         if (response.ok) {
           const tickets = await response.json()
-          const currentCount = tickets.length
           
-          // Se o número de tickets mudou, notificar
-          if (lastTicketCountRef.current > 0 && currentCount !== lastTicketCountRef.current) {
-            console.log('📢 Mudança detectada via polling:', { 
-              anterior: lastTicketCountRef.current, 
-              atual: currentCount 
-            })
-            onUpdate?.({ 
+          // Criar hash otimizado dos tickets para detectar mudanças
+          const ticketHash = tickets
+            .map((t: any) => `${t.id}-${t.kanbanStatus}-${t.updatedAt}`)
+            .sort() // Ordenar para consistência
+            .join('|')
+          
+          // Se houve mudanças nos tickets, notificar
+          if (lastTicketHashRef.current && ticketHash !== lastTicketHashRef.current) {
+            console.log('📢 Mudanças detectadas via polling')
+            memoizedOnUpdate({ 
               type: 'polling_update', 
               timestamp: new Date(),
-              ticketCount: currentCount,
-              previousCount: lastTicketCountRef.current
+              ticketCount: tickets.length,
+              hasChanges: true
             })
+          } else if (lastTicketHashRef.current) {
+            // Polling normal sem mudanças - não fazer nada para economizar recursos
+            console.log('✅ Polling - sem mudanças')
           }
           
-          lastTicketCountRef.current = currentCount
+          lastTicketHashRef.current = ticketHash
         }
         
         setLastUpdate(new Date())
       } catch (error) {
-        console.error('❌ Erro no polling:', error)
+        if ((error as Error).name !== 'AbortError') {
+          console.error('❌ Erro no polling:', error)
+        }
+      } finally {
+        isCheckingRef.current = false
       }
     }
 
-    // Primeira verificação imediata
-    checkForUpdates()
+    // Primeira verificação com delay para não sobrecarregar
+    setTimeout(checkForUpdates, 1000)
 
     // Configurar intervalo
     intervalRef.current = setInterval(checkForUpdates, interval)
@@ -65,13 +98,13 @@ export function useSimplePolling(options: PollingOptions = {}) {
     // Escutar eventos de foco da janela para atualizar imediatamente
     const handleFocus = () => {
       console.log('👁️ Janela focada - verificando atualizações')
-      checkForUpdates()
+      setTimeout(checkForUpdates, 500) // Pequeno delay
     }
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         console.log('👁️ Página visível - verificando atualizações')
-        checkForUpdates()
+        setTimeout(checkForUpdates, 500)
       }
     }
 
@@ -83,21 +116,22 @@ export function useSimplePolling(options: PollingOptions = {}) {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [enabled, interval, onUpdate])
+  }, [enabled, interval, memoizedOnUpdate])
 
   const cleanup = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
+    isCheckingRef.current = false
     setIsActive(false)
   }
 
-  const forceUpdate = () => {
+  const forceUpdate = useCallback(() => {
     console.log('🔄 Atualização forçada via polling')
     setLastUpdate(new Date())
-    onUpdate?.({ type: 'force_update', timestamp: new Date() })
-  }
+    memoizedOnUpdate({ type: 'force_update', timestamp: new Date() })
+  }, [memoizedOnUpdate])
 
   const formatLastUpdate = () => {
     const now = new Date()

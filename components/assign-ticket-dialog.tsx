@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { UserCheck, Users } from "lucide-react"
+import { UserCheck, Users, CheckCircle2, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -48,6 +48,8 @@ export function AssignTicketDialog({
   const [selectedUserId, setSelectedUserId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingMembers, setIsLoadingMembers] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [assignedUserName, setAssignedUserName] = useState("")
 
   // Carregar membros da equipe
   useEffect(() => {
@@ -64,11 +66,9 @@ export function AssignTicketDialog({
       const data = await response.json()
 
       if (response.ok) {
-        // Filtrar apenas membros ativos da equipe (excluindo líderes se necessário)
+        // Incluir todos os membros da equipe, incluindo líderes
         const members = data.users.filter((user: User) => 
-          user.team === currentUser.team && 
-          user.status === "ativo" &&
-          user.id !== currentUser.id // Não incluir o próprio líder
+          user.team === currentUser.team
         )
         setTeamMembers(members)
       } else {
@@ -98,9 +98,15 @@ export function AssignTicketDialog({
 
       if (response.ok) {
         const assignedUser = teamMembers.find(user => user.id === selectedUserId)
-        alert(`Ticket #${ticket.number} atribuído para ${assignedUser?.name} com sucesso!`)
-        onOpenChange(false)
-        onTicketAssigned?.()
+        setAssignedUserName(assignedUser?.name || "")
+        setShowSuccess(true)
+        
+        // Fechar modal de sucesso após 3 segundos
+        setTimeout(() => {
+          setShowSuccess(false)
+          onOpenChange(false)
+          onTicketAssigned?.()
+        }, 3000)
       } else {
         alert(`Erro ao atribuir ticket: ${data.error}`)
       }
@@ -115,6 +121,8 @@ export function AssignTicketDialog({
   const handleClose = (open: boolean) => {
     if (!open) {
       setSelectedUserId("")
+      setShowSuccess(false)
+      setAssignedUserName("")
     }
     onOpenChange(open)
   }
@@ -140,6 +148,66 @@ export function AssignTicketDialog({
   }
 
   if (!ticket) return null
+
+  // Modal de Sucesso
+  if (showSuccess) {
+    return (
+      <Dialog open={true} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-[450px] border-0 p-0 gap-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            Ticket Atribuído com Sucesso
+          </DialogTitle>
+          
+          {/* Animação de fundo */}
+          <div className="relative bg-gradient-to-br from-green-500 via-green-600 to-emerald-600 p-8 text-white overflow-hidden">
+            {/* Efeitos visuais de fundo */}
+            <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-emerald-400/20"></div>
+            <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
+            
+            {/* Conteúdo */}
+            <div className="relative text-center space-y-6">
+              {/* Ícone animado */}
+              <div className="mx-auto w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center animate-success-bounce">
+                <CheckCircle2 className="w-12 h-12 text-white animate-success-pulse" />
+              </div>
+              
+              {/* Título */}
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold flex items-center justify-center gap-2">
+                  <Sparkles className="w-6 h-6 animate-success-sparkle" />
+                  Sucesso!
+                  <Sparkles className="w-6 h-6 animate-success-sparkle" />
+                </h2>
+                <p className="text-white/90 text-lg">Ticket atribuído com sucesso</p>
+              </div>
+              
+              {/* Informações */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-2">
+                <p className="text-sm text-white/80">Ticket #{ticket.number}</p>
+                <p className="font-semibold text-lg">{ticket.subject}</p>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <p className="text-white/90">
+                    Atribuído para <span className="font-bold">{assignedUserName}</span>
+                  </p>
+                </div>
+              </div>
+              
+              {/* Indicador de fechamento automático */}
+              <div className="flex items-center justify-center gap-2 text-white/70 text-sm">
+                <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse"></div>
+                <span>Fechando automaticamente...</span>
+                <div className="w-2 h-2 bg-white/50 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

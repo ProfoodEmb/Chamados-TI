@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
 import { useSimplePolling } from "@/lib/use-simple-polling"
 import { AssignTicketDialog } from "@/components/assign-ticket-dialog"
+import { NoticeBoard } from "@/components/notice-board"
 
 interface User {
   id: string
   name: string
   email: string
+  username: string
   role: string
   team: string
 }
@@ -23,9 +25,14 @@ interface Ticket {
   id: string
   number: string
   subject: string
+  description?: string
   category: string
   urgency: "low" | "medium" | "high" | "critical"
   status: string
+  kanbanStatus?: string
+  team?: string | null
+  service?: string | null
+  anydesk?: string | null
   createdAt: string
   updatedAt: string
   requester: {
@@ -33,11 +40,8 @@ interface Ticket {
     name: string
     email: string
   }
-  assignedTo?: {
-    id: string
-    name: string
-    email: string
-  } | null
+  assignedTo?: User | null
+  assignedToId?: string | null
 }
 
 export default function TIPage() {
@@ -137,7 +141,10 @@ export default function TIPage() {
   }, [])
 
   const statusColors = {
-    "Aberto": "bg-blue-500",
+    "Aberto": "bg-gray-500",           // Caixa de Entrada - Cinza
+    "Em Andamento": "bg-blue-500",     // Em Andamento - Azul
+    "Em Revisão": "bg-yellow-500",     // Em Revisão - Amarelo
+    "Concluído": "bg-green-500",       // Concluído - Verde
     "Pendente": "bg-yellow-500",
     "Fechado": "bg-gray-500",
     "Resolvido": "bg-green-500",
@@ -295,151 +302,162 @@ export default function TIPage() {
               </div>
             </div>
 
-            {/* Filtros e Ações */}
-            <div className="bg-card border border-border rounded-xl p-4 mb-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* Busca */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar por número, assunto ou solicitante..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
+            {/* Grid - Tabela de Chamados e Mural de Avisos */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
+              {/* Seção Principal - Filtros e Tabela */}
+              <div className="space-y-6">
+                {/* Filtros e Ações */}
+                <div className="bg-card border border-border rounded-xl p-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Busca */}
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por número, assunto ou solicitante..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+
+                    {/* Filtro de Status */}
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-48">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        <SelectItem value="Aberto">Aberto</SelectItem>
+                        <SelectItem value="Pendente">Pendente</SelectItem>
+                        <SelectItem value="Resolvido">Resolvido</SelectItem>
+                        <SelectItem value="Fechado">Fechado</SelectItem>
+                        <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Filtro de Urgência */}
+                    <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
+                      <SelectTrigger className="w-full md:w-48">
+                        <SelectValue placeholder="Urgência" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas Urgências</SelectItem>
+                        <SelectItem value="low">Baixa</SelectItem>
+                        <SelectItem value="medium">Média</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="critical">Crítica</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Botões de Ação */}
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="gap-2">
+                        <Download className="w-4 h-4" />
+                        Exportar
+                      </Button>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Filtro de Status */}
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
-                    <SelectItem value="Aberto">Aberto</SelectItem>
-                    <SelectItem value="Pendente">Pendente</SelectItem>
-                    <SelectItem value="Resolvido">Resolvido</SelectItem>
-                    <SelectItem value="Fechado">Fechado</SelectItem>
-                    <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Tabela de Chamados */}
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-muted/50 border-b border-border">
+                        <tr>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Número</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Assunto</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Solicitante</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Responsável</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Urgência</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Status</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Última Ação</th>
+                          <th className="text-left p-4 text-sm font-semibold text-foreground">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredTickets.map((ticket: Ticket) => (
+                          <tr key={ticket.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                            <td className="p-4">
+                              <span className="font-mono text-sm font-medium text-foreground">#{ticket.number}</span>
+                            </td>
+                            <td className="p-4">
+                              <div className="max-w-xs">
+                                <p className="text-sm font-medium text-foreground truncate">{ticket.subject}</p>
+                                <p className="text-xs text-muted-foreground">{ticket.category}</p>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-sm text-foreground">{ticket.requester.name}</span>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-sm text-foreground">{ticket.assignedTo?.name || "Não atribuído"}</span>
+                            </td>
+                            <td className="p-4">
+                              <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} border`}>
+                                {urgencyLabels[ticket.urgency]}
+                              </Badge>
+                            </td>
+                            <td className="p-4">
+                              <Badge className={`${statusColors[ticket.status as keyof typeof statusColors]} text-white`}>
+                                {ticket.status}
+                              </Badge>
+                            </td>
+                            <td className="p-4">
+                              <span className="text-sm text-muted-foreground">{formatDate(ticket.updatedAt)}</span>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.location.href = `/tickets/${ticket.id}`}
+                                >
+                                  Ver
+                                </Button>
+                                {/* Botão Atribuir - apenas para líderes */}
+                                {(user?.role === "lider_infra" || user?.role === "lider_sistemas" || user?.role === "admin") && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => handleAssignTicket(ticket)}
+                                  >
+                                    Atribuir
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
 
-                {/* Filtro de Urgência */}
-                <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="Urgência" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas Urgências</SelectItem>
-                    <SelectItem value="low">Baixa</SelectItem>
-                    <SelectItem value="medium">Média</SelectItem>
-                    <SelectItem value="high">Alta</SelectItem>
-                    <SelectItem value="critical">Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                {/* Botões de Ação */}
-                <div className="flex gap-2">
-                  <Button variant="outline" className="gap-2">
-                    <Download className="w-4 h-4" />
-                    Exportar
-                  </Button>
+                  {filteredTickets.length === 0 && (
+                    <div className="p-8 text-center">
+                      <p className="text-muted-foreground">Nenhum chamado encontrado</p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
 
-            {/* Tabela de Chamados */}
-            <div className="bg-card border border-border rounded-xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/50 border-b border-border">
-                    <tr>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Número</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Assunto</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Solicitante</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Responsável</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Urgência</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Status</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Última Ação</th>
-                      <th className="text-left p-4 text-sm font-semibold text-foreground">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTickets.map((ticket: Ticket) => (
-                      <tr key={ticket.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                        <td className="p-4">
-                          <span className="font-mono text-sm font-medium text-foreground">#{ticket.number}</span>
-                        </td>
-                        <td className="p-4">
-                          <div className="max-w-xs">
-                            <p className="text-sm font-medium text-foreground truncate">{ticket.subject}</p>
-                            <p className="text-xs text-muted-foreground">{ticket.category}</p>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <span className="text-sm text-foreground">{ticket.requester.name}</span>
-                        </td>
-                        <td className="p-4">
-                          <span className="text-sm text-foreground">{ticket.assignedTo?.name || "Não atribuído"}</span>
-                        </td>
-                        <td className="p-4">
-                          <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} border`}>
-                            {urgencyLabels[ticket.urgency]}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <Badge className={`${statusColors[ticket.status as keyof typeof statusColors]} text-white`}>
-                            {ticket.status}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <span className="text-sm text-muted-foreground">{formatDate(ticket.updatedAt)}</span>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => window.location.href = `/tickets/${ticket.id}`}
-                            >
-                              Ver
-                            </Button>
-                            {/* Botão Atribuir - apenas para líderes */}
-                            {(user?.role === "lider_infra" || user?.role === "lider_sistemas" || user?.role === "admin") && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => handleAssignTicket(ticket)}
-                              >
-                                Atribuir
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {filteredTickets.length === 0 && (
-                <div className="p-8 text-center">
-                  <p className="text-muted-foreground">Nenhum chamado encontrado</p>
-                </div>
-              )}
+              {/* Mural de Avisos */}
+              <NoticeBoard />
             </div>
           </div>
         </main>
       </div>
 
       {/* Diálogo de Atribuição */}
-      <AssignTicketDialog
-        open={showAssignDialog}
-        onOpenChange={setShowAssignDialog}
-        ticket={selectedTicket}
-        currentUser={user}
-        onTicketAssigned={handleTicketAssigned}
-      />
+      {user && (
+        <AssignTicketDialog
+          open={showAssignDialog}
+          onOpenChange={setShowAssignDialog}
+          ticket={selectedTicket}
+          currentUser={user}
+          onTicketAssigned={handleTicketAssigned}
+        />
+      )}
     </div>
   )
 }

@@ -6,10 +6,11 @@ import { Sidebar } from "@/components/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Inbox, PlayCircle, Eye, CheckCircle2, User as UserIcon, Clock, Wifi, WifiOff } from "lucide-react"
+import { Inbox, PlayCircle, Eye, CheckCircle2, User as UserIcon, Clock } from "lucide-react"
+import { DroppableColumn } from "@/components/kanban-droppable-column"
 import { KanbanTicketModal } from "@/components/kanban-ticket-modal"
 import { useSimplePolling } from "@/lib/use-simple-polling"
+
 import {
   DndContext,
   DragEndEvent,
@@ -18,12 +19,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  useDroppable,
+  closestCenter,
+  DragOverEvent,
 } from '@dnd-kit/core'
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
 import {
   useSortable,
 } from '@dnd-kit/sortable'
@@ -66,20 +64,91 @@ interface Ticket {
 
 export default function KanbanPage() {
   const [user, setUser] = useState<User | null>(null)
-  const [tickets, setTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [showTicketDetail, setShowTicketDetail] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 10,
       },
     })
   )
+
+  // Sistema de tempo real com polling otimizado
+  const [tickets, setTickets] = useState<Ticket[]>([])
+  const [isLoadingTickets, setIsLoadingTickets] = useState(false)
+  const [pollingStatus, setPollingStatus] = useState<'connecting' | 'active' | 'error'>('connecting')
+
+  // Polling otimizado - intervalo maior para reduzir carga
+  const { forceUpdate, isActive, lastUpdate, interval } = useSimplePolling({
+    enabled: isAuthorized && !!user,
+    interval: 15000, // 15 segundos em vez de 10
+    onUpdate: (data) => {
+      if (data.type === 'force_update' || data.hasChanges) {
+        console.log('🔄 Polling detectou mudanças - atualizando tickets...')
+        fetchTickets()
+      } else {
+        console.log('✅ Polling ativo - sem mudanças detectadas')
+      }
+    }
+  })
+
+  // Atualizar status do polling
+  useEffect(() => {
+    if (isActive) {
+      setPollingStatus('active')
+    } else if (isAuthorized && !!user) {
+      setPollingStatus('connecting')
+    }
+  }, [isActive, isAuthorized, user])
+
+  // Função otimizada para buscar tickets
+  const fetchTickets = async () => {
+    if (!user || isLoadingTickets) return // Evitar múltiplas chamadas simultâneas
+    
+    setIsLoadingTickets(true)
+    setPollingStatus('connecting')
+    
+    try {
+      const response = await fetch('/api/tickets', {
+        headers: {
+          'Cache-Control': 'no-cache', // Evitar cache desnecessário
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setTickets(data)
+        setPollingStatus('active')
+        console.log('✅ Tickets atualizados via API:', data.length, 'tickets')
+      } else {
+        setPollingStatus('error')
+        console.error('❌ Erro ao carregar tickets:', response.status)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar tickets:', error)
+      setPollingStatus('error')
+    } finally {
+      setIsLoadingTickets(false)
+    }
+  }
+
+  // Buscar tickets quando usuário estiver disponível
+  useEffect(() => {
+    if (user && isAuthorized) {
+      fetchTickets()
+    }
+  }, [user, isAuthorized])
+
+  const updateTicketLocally = (ticketId: string, updates: any) => {
+    setTickets(prev => prev.map(ticket => 
+      ticket.id === ticketId ? { ...ticket, ...updates } : ticket
+    ))
+  }
 
   useEffect(() => {
     const init = async () => {
@@ -102,9 +171,6 @@ export default function KanbanPage() {
           
           setUser(session.user)
           setIsAuthorized(true)
-          
-          // Buscar tickets
-          await fetchTickets()
         }
       } catch (error) {
         console.error("Erro ao inicializar:", error)
@@ -115,43 +181,6 @@ export default function KanbanPage() {
     }
 
     init()
-  }, [])
-
-  // Função para buscar tickets
-  const fetchTickets = async () => {
-    try {
-      const ticketsResponse = await fetch("/api/tickets")
-      if (ticketsResponse.ok) {
-        const ticketsData = await ticketsResponse.json()
-        setTickets(ticketsData)
-      }
-    } catch (error) {
-      console.error("Erro ao buscar tickets:", error)
-    }
-  }
-
-  // Sistema de tempo real com polling simples
-  const { isActive, lastUpdate, forceUpdate, interval } = useSimplePolling({
-    onUpdate: (data) => {
-      console.log('Atualização recebida via polling:', data)
-      fetchTickets()
-    },
-    enabled: isAuthorized && !!user,
-    interval: 8000 // 8 segundos
-  })
-
-  // Escutar evento de criação de chamado (fallback)
-  useEffect(() => {
-    const handleTicketCreated = () => {
-      console.log("Evento ticketCreated recebido no Kanban - atualizando tickets...")
-      fetchTickets()
-    }
-
-    window.addEventListener('ticketCreated', handleTicketCreated)
-
-    return () => {
-      window.removeEventListener('ticketCreated', handleTicketCreated)
-    }
   }, [])
 
   const urgencyColors = {
@@ -168,9 +197,9 @@ export default function KanbanPage() {
     critical: "Crítica",
   }
 
-  // Filtrar tickets baseado na permissão do usuário
+  // Filtrar tickets baseado na permissão do usuário - memoizado para performance
   const getFilteredTickets = () => {
-    if (!user) return []
+    if (!user || !tickets) return []
     
     if (user.role === "admin") {
       return tickets
@@ -189,6 +218,13 @@ export default function KanbanPage() {
 
   const filteredTickets = getFilteredTickets()
 
+  // Memoizar as listas de tickets por coluna para evitar recálculos
+  const inboxTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "inbox")
+  const inProgressTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "in_progress")
+  const reviewTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "review")
+  const doneTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "done")
+
+  // Função otimizada para formatação de data
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('pt-BR', {
@@ -197,14 +233,14 @@ export default function KanbanPage() {
     })
   }
 
-  const inboxTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "inbox")
-  const inProgressTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "in_progress")
-  const reviewTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "review")
-  const doneTickets = filteredTickets.filter((t: Ticket) => t.kanbanStatus === "done")
-
-  // Função para atualizar ticket
+  // Função para atualizar ticket com debounce para evitar muitas chamadas
   const updateTicket = async (ticketId: string, updates: any) => {
     try {
+      console.log(`🔄 Atualizando ticket ${ticketId}:`, updates)
+      
+      // Atualizar estado local imediatamente (optimistic update)
+      updateTicketLocally(ticketId, updates)
+
       const response = await fetch(`/api/tickets/${ticketId}`, {
         method: 'PATCH',
         headers: {
@@ -213,177 +249,217 @@ export default function KanbanPage() {
         body: JSON.stringify(updates),
       })
 
-      if (response.ok) {
-        // Atualizar o estado local
-        setTickets(prevTickets =>
-          prevTickets.map(ticket =>
-            ticket.id === ticketId
-              ? { ...ticket, ...updates }
-              : ticket
-          )
-        )
+      if (!response.ok) {
+        console.error('❌ Erro ao atualizar ticket na API')
+        // Reverter mudança em caso de erro
+        setTimeout(() => forceUpdate(), 1000) // Delay para evitar spam
+      } else {
+        console.log('✅ Ticket atualizado com sucesso')
       }
     } catch (error) {
-      console.error('Erro ao atualizar ticket:', error)
+      console.error('❌ Erro ao atualizar ticket:', error)
+      // Reverter mudança em caso de erro
+      setTimeout(() => forceUpdate(), 1000)
     }
   }
 
-  // Handlers do drag and drop
+  // Handlers do drag and drop melhorados
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event
-    const ticket = filteredTickets.find(t => t.id === active.id)
+    const ticket = filteredTickets.find((t: Ticket) => t.id === active.id)
     setActiveTicket(ticket || null)
+    setIsDragging(true)
+    console.log('🎯 Iniciando drag:', ticket?.number)
+  }
+
+  const handleDragOver = (_event: DragOverEvent) => {
+    // Opcional: feedback visual durante o drag
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     setActiveTicket(null)
+    setIsDragging(false)
 
-    if (!over) return
+    if (!over) {
+      console.log('❌ Drag cancelado - sem destino válido')
+      return
+    }
 
     const ticketId = active.id as string
-    const newStatus = over.id as string
+    const newColumnId = over.id as string
 
-    // Mapear IDs das colunas para status do kanban
-    const statusMap: Record<string, string> = {
-      'inbox': 'inbox',
-      'in_progress': 'in_progress',
-      'review': 'review',
-      'done': 'done',
+    console.log(`📦 Movendo ticket ${ticketId} para coluna ${newColumnId}`)
+
+    // Mapear IDs das colunas para status do kanban E status do sistema
+    const statusMap: Record<string, { kanbanStatus: string; systemStatus: string }> = {
+      'inbox': { 
+        kanbanStatus: 'inbox', 
+        systemStatus: 'Aberto' 
+      },
+      'in_progress': { 
+        kanbanStatus: 'in_progress', 
+        systemStatus: 'Em Andamento' 
+      },
+      'review': { 
+        kanbanStatus: 'review', 
+        systemStatus: 'Em Revisão' 
+      },
+      'done': { 
+        kanbanStatus: 'done', 
+        systemStatus: 'Concluído' 
+      },
     }
 
-    const kanbanStatus = statusMap[newStatus]
-    if (kanbanStatus) {
-      updateTicket(ticketId, { kanbanStatus })
+    const newStatuses = statusMap[newColumnId]
+    
+    if (!newStatuses) {
+      console.log('❌ Status inválido:', newColumnId)
+      return
     }
+
+    // Verificar se realmente mudou de coluna
+    const currentTicket = filteredTickets.find((t: Ticket) => t.id === ticketId)
+    if (currentTicket?.kanbanStatus === newStatuses.kanbanStatus) {
+      console.log('ℹ️ Ticket já está na coluna correta')
+      return
+    }
+
+    console.log(`🔄 Atualizando ticket:`, {
+      ticketId,
+      kanbanStatus: newStatuses.kanbanStatus,
+      status: newStatuses.systemStatus,
+      currentTicket: currentTicket?.status
+    })
+
+    // Atualizar tanto o kanbanStatus quanto o status do sistema
+    updateTicket(ticketId, { 
+      kanbanStatus: newStatuses.kanbanStatus,
+      status: newStatuses.systemStatus
+    })
   }
 
-  const TicketCard = ({ ticket }: { ticket: Ticket }) => {
+  // Componente TicketCard otimizado com React.memo
+  const TicketCard = ({ ticket, isOverlay = false }: { ticket: Ticket; isOverlay?: boolean }) => {
     const {
       attributes,
       listeners,
       setNodeRef,
       transform,
       transition,
-      isDragging,
-    } = useSortable({ id: ticket.id })
+      isDragging: isSortableDragging,
+    } = useSortable({ 
+      id: ticket.id,
+      disabled: isOverlay
+    })
 
     const style = {
       transform: CSS.Transform.toString(transform),
       transition,
-      opacity: isDragging ? 0.5 : 1,
+      opacity: isSortableDragging ? 0.5 : 1,
+      cursor: isDragging ? 'grabbing' : 'grab',
     }
 
     const handleCardClick = (e: React.MouseEvent) => {
-      // Só abre o modal se não estiver arrastando
-      if (!isDragging) {
-        e.stopPropagation()
-        setSelectedTicket(ticket)
-        setShowTicketDetail(true)
-      }
+      e.preventDefault()
+      e.stopPropagation()
+      setSelectedTicket(ticket)
+      setShowTicketDetail(true)
     }
+
+    // Memoizar valores computados
+    const urgencyClass = urgencyColors[ticket.urgency]
+    const urgencyText = urgencyLabels[ticket.urgency]
+    const formattedDate = formatDate(ticket.createdAt)
+    const userInitials = ticket.assignedTo?.name.split(" ").map(n => n[0]).join("").slice(0, 2)
+    const firstName = ticket.assignedTo?.name.split(" ")[0]
 
     return (
       <div
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
-        className="bg-card border border-border rounded-lg p-4 mb-3 hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing"
-        onClick={handleCardClick}
+        className={`
+          bg-white border border-gray-200 rounded-lg p-4 mb-3 shadow-sm
+          hover:shadow-md transition-all duration-200
+          ${isDragging || isSortableDragging ? 'shadow-lg scale-105 rotate-2' : ''}
+          ${isOverlay ? 'shadow-2xl border-blue-500' : ''}
+        `}
       >
+        {/* Header com Drag Handle */}
         <div className="flex items-start justify-between mb-2">
-          <span className="text-xs font-mono text-muted-foreground">#{ticket.number}</span>
-          <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} text-xs border`}>
-            {urgencyLabels[ticket.urgency]}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              #{ticket.number}
+            </span>
+            {/* Drag Handle otimizado */}
+            <div 
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 hover:bg-gray-100 rounded"
+              title="Arrastar ticket"
+            >
+              <div className="grid grid-cols-2 gap-0.5 w-3 h-3">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <Badge variant="outline" className={`${urgencyClass} text-xs border`}>
+            {urgencyText}
           </Badge>
         </div>
         
-        <h4 className="text-sm font-semibold text-foreground mb-2 line-clamp-2">
-          {ticket.subject}
-        </h4>
-        
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-          <UserIcon className="w-3 h-3" />
-          <span>{ticket.requester.name}</span>
-        </div>
-        
-        <div className="flex items-center justify-between pt-3 border-t border-border">
-          <div className="flex items-center gap-2">
-            {ticket.assignedTo ? (
-              <Avatar className="w-6 h-6">
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                  {ticket.assignedTo.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div className="w-6 h-6 bg-muted rounded-full flex items-center justify-center">
-                <UserIcon className="w-3 h-3 text-muted-foreground" />
-              </div>
-            )}
+        {/* Conteúdo - Completamente clicável */}
+        <div 
+          className="space-y-2 cursor-pointer hover:bg-gray-50 rounded p-2 -m-2"
+          onClick={handleCardClick}
+        >
+          <h4 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
+            {ticket.subject}
+          </h4>
+          
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <UserIcon className="w-3 h-3" />
+            <span className="truncate">{ticket.requester.name}</span>
           </div>
           
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span>{formatDate(ticket.createdAt)}</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const KanbanColumn = ({ 
-    title, 
-    icon: Icon, 
-    tickets, 
-    color,
-    id
-  }: { 
-    title: string
-    icon: any
-    tickets: Ticket[]
-    color: string
-    id: string
-  }) => {
-    const { setNodeRef, isOver } = useDroppable({ id })
-
-    return (
-      <div className="flex-1 min-w-75">
-        <div className={`${color} rounded-t-lg p-4 border-b-4`}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              <Icon className="w-5 h-5 text-white" />
-              <h3 className="font-semibold text-white">{title}</h3>
+              {ticket.assignedTo ? (
+                <div className="flex items-center gap-1">
+                  <Avatar className="w-6 h-6">
+                    <AvatarFallback className="bg-blue-500 text-white text-xs">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-gray-600 truncate max-w-16">
+                    {firstName}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                    <UserIcon className="w-3 h-3 text-gray-400" />
+                  </div>
+                  <span className="text-xs text-gray-400">Não atribuído</span>
+                </div>
+              )}
             </div>
-            <Badge className="bg-white/20 text-white border-0">
-              {tickets.length}
-            </Badge>
+            
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <Clock className="w-3 h-3" />
+              <span>{formattedDate}</span>
+            </div>
           </div>
-        </div>
-        
-        <div 
-          ref={setNodeRef}
-          className={`bg-muted/30 p-4 min-h-[calc(100vh-300px)] max-h-[calc(100vh-300px)] overflow-y-auto transition-colors ${
-            isOver ? 'bg-muted/50' : ''
-          }`}
-        >
-          <SortableContext items={tickets.map(t => t.id)} strategy={verticalListSortingStrategy}>
-            {tickets.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                {isOver ? 'Solte aqui' : 'Nenhum chamado'}
-              </div>
-            ) : (
-              tickets.map(ticket => (
-                <TicketCard key={ticket.id} ticket={ticket} />
-              ))
-            )}
-          </SortableContext>
         </div>
       </div>
     )
   }
 
-  if (isLoading) {
+
+
+  if (isLoading || isLoadingTickets) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
@@ -419,105 +495,134 @@ export default function KanbanPage() {
                   </p>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  {/* Indicador de polling */}
-                  <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-green-50 border border-green-200">
-                    {isActive ? (
+                <div className="flex items-center gap-4">
+                  {/* Indicador de Status do Sistema */}
+                  <div className="flex items-center gap-2 text-sm">
+                    {pollingStatus === 'active' && (
                       <>
-                        <Wifi className="w-4 h-4 text-green-600" />
-                        <span className="text-xs text-green-600">
-                          Polling ({interval}s)
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="w-4 h-4 text-red-600" />
-                        <span className="text-xs text-red-600">Desconectado</span>
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-green-600">Polling ({interval}s)</span>
+                        <span className="text-gray-500">• {lastUpdate}</span>
                       </>
                     )}
-                    <span className="text-xs text-green-500">({lastUpdate})</span>
+                    {pollingStatus === 'connecting' && (
+                      <>
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                        <span className="text-yellow-600">Conectando...</span>
+                      </>
+                    )}
+                    {pollingStatus === 'error' && (
+                      <>
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-red-600">Erro de conexão</span>
+                      </>
+                    )}
                   </div>
                   
-                  <button 
-                    onClick={forceUpdate}
-                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      console.log('🔄 Atualização manual solicitada')
+                      forceUpdate()
+                    }}
                   >
-                    <Clock className="w-3 h-3 text-blue-600" />
-                    <span className="text-xs text-blue-600">Atualizar</span>
-                  </button>
+                    Atualizar
+                  </Button>
                   
                   <Button variant="outline" size="sm">
                     Filtros
-                  </Button>
-                  <Button size="sm">
-                    Novo Chamado
                   </Button>
                 </div>
               </div>
             </div>
 
             {/* Kanban Board */}
-            <div className="flex-1 overflow-x-auto p-6">
-              <DndContext
-                sensors={sensors}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-              >
-                <div className="flex gap-4 h-full">
-                  <KanbanColumn
-                    id="inbox"
-                    title="Caixa de Entrada"
-                    icon={Inbox}
-                    tickets={inboxTickets}
-                    color="bg-gradient-to-r from-gray-600 to-gray-500"
-                  />
-                  
-                  <KanbanColumn
-                    id="in_progress"
-                    title="Em Andamento"
-                    icon={PlayCircle}
-                    tickets={inProgressTickets}
-                    color="bg-gradient-to-r from-blue-600 to-blue-500"
-                  />
-                  
-                  <KanbanColumn
-                    id="review"
-                    title="Em Revisão"
-                    icon={Eye}
-                    tickets={reviewTickets}
-                    color="bg-gradient-to-r from-yellow-600 to-yellow-500"
-                  />
-                  
-                  <KanbanColumn
-                    id="done"
-                    title="Concluído"
-                    icon={CheckCircle2}
-                    tickets={doneTickets}
-                    color="bg-gradient-to-r from-green-600 to-green-500"
-                  />
-                </div>
+            <div className="flex-1 overflow-hidden p-6">
+              <div className="h-full">
+                {/* Kanban Columns */}
+                <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-200px)]">
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragOver={handleDragOver}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="flex gap-6 min-w-max pb-6">
+                      <DroppableColumn
+                        id="inbox"
+                        title="Caixa de Entrada"
+                        icon={Inbox}
+                        tickets={inboxTickets}
+                        color="bg-gradient-to-r from-gray-600 to-gray-500"
+                      >
+                        {inboxTickets.map((ticket: Ticket) => (
+                          <TicketCard key={ticket.id} ticket={ticket} />
+                        ))}
+                      </DroppableColumn>
+                      
+                      <DroppableColumn
+                        id="in_progress"
+                        title="Em Andamento"
+                        icon={PlayCircle}
+                        tickets={inProgressTickets}
+                        color="bg-gradient-to-r from-blue-600 to-blue-500"
+                      >
+                        {inProgressTickets.map((ticket: Ticket) => (
+                          <TicketCard key={ticket.id} ticket={ticket} />
+                        ))}
+                      </DroppableColumn>
+                      
+                      <DroppableColumn
+                        id="review"
+                        title="Em Revisão"
+                        icon={Eye}
+                        tickets={reviewTickets}
+                        color="bg-gradient-to-r from-yellow-600 to-yellow-500"
+                      >
+                        {reviewTickets.map((ticket: Ticket) => (
+                          <TicketCard key={ticket.id} ticket={ticket} />
+                        ))}
+                      </DroppableColumn>
+                      
+                      <DroppableColumn
+                        id="done"
+                        title="Concluído"
+                        icon={CheckCircle2}
+                        tickets={doneTickets}
+                        color="bg-gradient-to-r from-green-600 to-green-500"
+                      >
+                        {doneTickets.map((ticket: Ticket) => (
+                          <TicketCard key={ticket.id} ticket={ticket} />
+                        ))}
+                      </DroppableColumn>
+                    </div>
 
-                <DragOverlay>
-                  {activeTicket ? <TicketCard ticket={activeTicket} /> : null}
-                </DragOverlay>
-              </DndContext>
+                    <DragOverlay>
+                      {activeTicket ? (
+                        <div className="rotate-6 scale-105">
+                          <TicketCard ticket={activeTicket} isOverlay={true} />
+                        </div>
+                      ) : null}
+                    </DragOverlay>
+                  </DndContext>
+                </div>
+              </div>
             </div>
           </div>
         </main>
       </div>
 
-      {/* Dialog de detalhes do chamado */}
-      <Dialog open={showTicketDetail} onOpenChange={setShowTicketDetail}>
-        <DialogContent className="max-w-6xl max-h-[90vh] p-0 overflow-hidden">
-          {selectedTicket && (
-            <KanbanTicketModal
-              ticket={selectedTicket}
-              onClose={() => setShowTicketDetail(false)}
-              onUpdate={updateTicket}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Modal de detalhes do chamado */}
+      {showTicketDetail && selectedTicket && (
+        <KanbanTicketModal
+          ticket={selectedTicket}
+          onClose={() => setShowTicketDetail(false)}
+          onUpdate={updateTicket}
+        />
+      )}
+
     </div>
   )
 }

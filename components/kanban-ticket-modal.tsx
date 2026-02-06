@@ -1,13 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo, useEffect } from "react"
+import { X, User, Calendar, Send, Paperclip } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
-import { ChevronDown, ChevronRight, User, Calendar, Tag, AlertCircle } from "lucide-react"
+
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
+interface Message {
+  id: string
+  content: string
+  role: string
+  createdAt: string
+  author: {
+    id: string
+    name: string
+    email: string
+  }
+}
 
 interface Ticket {
   id: string
@@ -17,316 +33,312 @@ interface Ticket {
   category: string
   urgency: "low" | "medium" | "high" | "critical"
   status: string
-  createdAt: string
+  kanbanStatus: string
   team: string | null
-  requester: {
-    id: string
-    name: string
-    email: string
-  }
-  assignedTo?: {
-    id: string
-    name: string
-    email: string
-  } | null
+  createdAt: string
+  updatedAt: string
+  service?: string | null
+  requester: User
+  assignedTo?: User | null
+  messages?: Message[]
 }
 
 interface KanbanTicketModalProps {
   ticket: Ticket
   onClose: () => void
-  onUpdate?: (ticketId: string, updates: any) => void
+  onUpdate: (ticketId: string, updates: any) => void
 }
 
-const urgencyLabels = {
-  low: "Baixa",
-  medium: "Média", 
-  high: "Alta",
-  critical: "Crítica",
-}
+// Componente memoizado para melhor performance
+export const KanbanTicketModal = memo(function KanbanTicketModal({ ticket, onClose, onUpdate }: KanbanTicketModalProps) {
+  const [newComment, setNewComment] = useState("")
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false)
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
 
-const urgencyColors = {
-  low: "text-green-600",
-  medium: "text-yellow-600",
-  high: "text-orange-600", 
-  critical: "text-red-600",
-}
+  const urgencyColors = {
+    low: "bg-green-100 text-green-700 border-green-300",
+    medium: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    high: "bg-orange-100 text-orange-700 border-orange-300",
+    critical: "bg-red-100 text-red-700 border-red-300",
+  }
 
-const statusOptions = [
-  "Aberto",
-  "Em Andamento", 
-  "Pendente",
-  "Em Revisão",
-  "Resolvido",
-  "Fechado"
-]
+  const urgencyLabels = {
+    low: "Baixa",
+    medium: "Média",
+    high: "Alta",
+    critical: "Crítica",
+  }
 
-export function KanbanTicketModal({ ticket, onClose, onUpdate }: KanbanTicketModalProps) {
-  const [description, setDescription] = useState(ticket.description || "")
-  const [status, setStatus] = useState(ticket.status)
-  const [urgency, setUrgency] = useState(ticket.urgency)
-  const [assignedTo, setAssignedTo] = useState(ticket.assignedTo?.id || "")
-  const [expandedSections, setExpandedSections] = useState({
-    description: true,
-    fields: true,
-    info: true
+  // Memoizar valores computados
+  const formattedDate = new Date(ticket.createdAt).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit'
   })
+  
+  const urgencyClass = urgencyColors[ticket.urgency]
+  const urgencyLabel = urgencyLabels[ticket.urgency]
+  const userInitials = ticket.assignedTo?.name.split(" ").map(n => n[0]).join("").slice(0, 2)
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }))
-  }
-
-  const handleSave = async () => {
-    if (onUpdate) {
-      await onUpdate(ticket.id, {
-        description,
-        status,
-        urgency,
-        assignedToId: assignedTo || null
-      })
+  // Buscar detalhes do ticket incluindo mensagens
+  useEffect(() => {
+    const fetchTicketDetails = async () => {
+      setIsLoadingMessages(true)
+      try {
+        const response = await fetch(`/api/tickets/${ticket.id}`)
+        if (response.ok) {
+          const ticketData = await response.json()
+          setMessages(ticketData.messages || [])
+        } else {
+          console.error('Erro ao buscar mensagens do ticket')
+        }
+      } catch (error) {
+        console.error('Erro ao buscar mensagens:', error)
+      } finally {
+        setIsLoadingMessages(false)
+      }
     }
-    onClose()
+
+    fetchTicketDetails()
+  }, [ticket.id])
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || isSendingMessage) return
+
+    setIsSendingMessage(true)
+    try {
+      const response = await fetch(`/api/tickets/${ticket.id}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: newComment.trim()
+        })
+      })
+
+      if (response.ok) {
+        const newMessage = await response.json()
+        setMessages(prev => [...prev, newMessage])
+        setNewComment("")
+        console.log('✅ Comentário adicionado com sucesso')
+      } else {
+        const error = await response.json()
+        console.error('❌ Erro ao adicionar comentário:', error.error)
+        alert('Erro ao adicionar comentário: ' + error.error)
+      }
+    } catch (error) {
+      console.error('❌ Erro ao enviar comentário:', error)
+      alert('Erro ao enviar comentário')
+    } finally {
+      setIsSendingMessage(false)
+    }
   }
 
-  const formatDate = (dateString: string) => {
+  const formatMessageDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
-  const getTeamMembers = () => {
-    if (ticket.team === 'infra') {
-      return [
-        { id: 'lider_infra', name: 'Jackson Felipe (Líder)' },
-        { id: 'func_infra', name: 'Gustavo Americano' },
-      ]
-    } else if (ticket.team === 'sistemas') {
-      return [
-        { id: 'lider_sistemas', name: 'Antony Gouvea (Líder)' },
-        { id: 'func_sistemas', name: 'Danilo Oliveira' },
-      ]
-    }
-    return []
-  }
-
   return (
-    <div className="flex h-full">
-      {/* Lado esquerdo - Conteúdo principal */}
-      <div className="flex-1 p-6 space-y-6">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+        
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between p-6 border-b bg-gray-50">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
-              <span className="text-white text-xs font-bold">T</span>
-            </div>
-            <span className="text-sm text-muted-foreground">#{ticket.number}</span>
+            <span className="text-sm text-gray-500">#{ticket.number}</span>
+            <span className={`px-2 py-1 rounded text-xs font-medium ${urgencyClass}`}>
+              {urgencyLabel}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className={`${urgencyColors[ticket.urgency]}`}>
-              {urgencyLabels[ticket.urgency]}
-            </Badge>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              ✕
-            </Button>
-          </div>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
         {/* Título */}
-        <div>
-          <h1 className="text-xl font-semibold text-foreground mb-2">{ticket.subject}</h1>
+        <div className="px-6 py-4 border-b">
+          <h1 className="text-xl font-semibold text-gray-900">{ticket.subject}</h1>
+          <p className="text-sm text-gray-600 mt-1">{ticket.description || "Equipamento de rede danificado necessita substituição"}</p>
         </div>
 
-        {/* Seção Descrição */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection('description')}
-            className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
-          >
-            {expandedSections.description ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-            Descrição
-          </button>
-          
-          {expandedSections.description && (
-            <div className="pl-6">
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Adicione uma descrição..."
-                className="min-h-30 resize-none"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-border my-4" />
-
-        {/* Seção Subtarefas */}
-        <div className="space-y-3">
-          <button
-            onClick={() => toggleSection('fields')}
-            className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
-          >
-            {expandedSections.fields ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-            Campos personalizados
-          </button>
-          
-          {expandedSections.fields && (
-            <div className="pl-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* Conteúdo Principal */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            <div className="grid grid-cols-2 gap-8">
+              
+              {/* Coluna Esquerda - Informações */}
+              <div className="space-y-6">
                 
-                <div>
-                  <Label className="text-sm text-muted-foreground">Prioridade</Label>
-                  <Select value={urgency} onValueChange={(value: any) => setUrgency(value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Baixa</SelectItem>
-                      <SelectItem value="medium">Média</SelectItem>
-                      <SelectItem value="high">Alta</SelectItem>
-                      <SelectItem value="critical">Crítica</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Botões de ação */}
-        <div className="flex gap-2 pt-4">
-          <Button onClick={handleSave}>Salvar</Button>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-        </div>
-      </div>
-
-      {/* Lado direito - Informações */}
-      <div className="w-80 border-l border-border p-6 bg-muted/20">
-        <div className="space-y-6">
-          {/* Status */}
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Status</span>
-            <Badge variant="secondary">{status}</Badge>
-          </div>
-
-          <div className="border-t border-border my-4" />
-
-          {/* Seção Informações */}
-          <div className="space-y-4">
-            <button
-              onClick={() => toggleSection('info')}
-              className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary w-full justify-start"
-            >
-              {expandedSections.info ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-              Informações
-            </button>
-
-            {expandedSections.info && (
-              <div className="space-y-4 pl-6">
-                {/* Responsável */}
+                {/* Solicitante */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Responsável</span>
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">Solicitante</span>
                   </div>
-                  <Select value={assignedTo} onValueChange={setAssignedTo}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Não atribuído" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">Não atribuído</SelectItem>
-                      {getTeamMembers().map((member) => (
-                        <SelectItem key={member.id} value={member.id}>
-                          {member.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <p className="font-medium text-gray-900">{ticket.requester.name}</p>
+                </div>
+
+                {/* Data */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">Data</span>
+                  </div>
+                  <p className="font-medium text-gray-900">{formattedDate}</p>
                 </div>
 
                 {/* Prioridade */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Prioridade</span>
+                    <span className="text-sm text-gray-500">Prioridade</span>
                   </div>
-                  <div className={`text-sm font-medium ${urgencyColors[urgency]}`}>
-                    {urgencyLabels[urgency]}
-                  </div>
-                </div>
-
-                {/* Data de criação */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Data de criação</span>
-                  </div>
-                  <div className="text-sm">{formatDate(ticket.createdAt)}</div>
-                </div>
-
-                {/* Setor */}
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Tag className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Setor</span>
-                  </div>
-                  <Badge variant="outline">
-                    {ticket.team === "infra" ? "Infraestrutura" : ticket.team === "sistemas" ? "Sistemas" : "Geral"}
+                  <Badge className={`${urgencyClass} font-medium`}>
+                    {urgencyLabel}
                   </Badge>
                 </div>
 
-                {/* Solicitante */}
+                {/* Patrimônio */}
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Solicitante</span>
+                    <span className="text-sm text-gray-500">Patrimônio</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-6 h-6">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                        {ticket.requester.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                  <p className="font-medium text-gray-900">{ticket.service || "TUI00054"}</p>
+                </div>
+
+              </div>
+
+              {/* Coluna Direita - Responsável */}
+              <div>
+                <div className="mb-4">
+                  <span className="text-sm text-gray-500">Responsável</span>
+                </div>
+                
+                {ticket.assignedTo ? (
+                  <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback className="bg-blue-500 text-white">
+                        {userInitials}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{ticket.requester.name}</span>
+                    <div>
+                      <p className="font-medium text-gray-900">{ticket.assignedTo.name}</p>
+                      <p className="text-sm text-gray-500">Atribuído</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User className="w-5 h-5 text-gray-400" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-600">Não atribuído</p>
+                        <p className="text-sm text-gray-500">Nenhum responsável definido</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
+
+        {/* Seção de Comentários */}
+        <div className="border-t bg-gray-50">
+          <div className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm text-gray-500">Comentários</span>
+              {messages.length > 0 && (
+                <span className="text-xs text-gray-400">({messages.length})</span>
+              )}
+            </div>
+            
+            {/* Lista de Comentários */}
+            <div className="max-h-60 overflow-y-auto mb-4">
+              {isLoadingMessages ? (
+                <div className="text-center py-4">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">Carregando comentários...</p>
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 text-sm">Nenhum comentário ainda</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div key={message.id} className="flex gap-3">
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarFallback className="bg-blue-500 text-white text-xs">
+                          {message.author.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="bg-white rounded-lg p-3 shadow-sm border">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm text-gray-900">
+                              {message.author.name}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {formatMessageDate(message.createdAt)}
+                            </span>
+                            {message.role === 'support' && (
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                                Suporte
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                            {message.content}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Input para novo comentário */}
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Textarea
+                  placeholder="Adicionar comentário..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="min-h-20 resize-none"
+                  disabled={isSendingMessage}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleAddComment}
+                  disabled={!newComment.trim() || isSendingMessage}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {isSendingMessage ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                </Button>
+                <Button variant="outline" size="sm" disabled={isSendingMessage}>
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )
-}
+})

@@ -111,21 +111,33 @@ export async function PATCH(
     const body = await request.json()
     const { status, kanbanStatus, assignedToId, urgency } = body
 
+    console.log('🔄 API PATCH recebeu:', { 
+      ticketId: id, 
+      status, 
+      kanbanStatus, 
+      assignedToId, 
+      urgency 
+    })
+
     // Apenas equipe T.I. pode atualizar
     const userRole = session.user.role
     if (!userRole.includes("admin") && !userRole.includes("lider") && !userRole.includes("func")) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 })
     }
 
+    const updateData = {
+      ...(status && { status }),
+      ...(kanbanStatus && { kanbanStatus }),
+      ...(assignedToId !== undefined && { assignedToId }),
+      ...(urgency && { urgency }),
+      updatedAt: new Date(),
+    }
+
+    console.log('🔄 Dados para atualização:', updateData)
+
     const ticket = await prisma.ticket.update({
       where: { id },
-      data: {
-        ...(status && { status }),
-        ...(kanbanStatus && { kanbanStatus }),
-        ...(assignedToId !== undefined && { assignedToId }),
-        ...(urgency && { urgency }),
-        updatedAt: new Date(),
-      },
+      data: updateData,
       include: {
         requester: {
           select: {
