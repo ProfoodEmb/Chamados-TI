@@ -52,10 +52,12 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       const data = await response.json()
 
       if (response.ok) {
-        setUsers(data.users)
-        setFilteredUsers(data.users)
+        setUsers(data.users || [])
+        setFilteredUsers(data.users || [])
       } else {
         console.error("Erro ao carregar usuários:", data.error)
+        setUsers([])
+        setFilteredUsers([])
       }
     } catch (error) {
       console.error("Erro ao carregar usuários:", error)

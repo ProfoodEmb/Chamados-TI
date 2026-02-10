@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ [API Users] Query executada com sucesso. Usuários encontrados:', users.length)
 
-    return NextResponse.json(users)
+    return NextResponse.json({ users })
 
   } catch (error) {
     console.error("❌ [API Users] Erro ao listar usuários:", error)

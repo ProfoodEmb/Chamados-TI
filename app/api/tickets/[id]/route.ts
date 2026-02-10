@@ -109,20 +109,74 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { status, kanbanStatus, assignedToId, urgency } = body
+    const { status, kanbanStatus, assignedToId, urgency, rating, feedback } = body
 
     console.log('🔄 API PATCH recebeu:', { 
       ticketId: id, 
       status, 
       kanbanStatus, 
       assignedToId, 
-      urgency 
+      urgency,
+      rating,
+      feedback,
+      userId: session.user.id,
+      userRole: session.user.role
     })
 
-    // Apenas equipe T.I. pode atualizar
+    // Buscar o ticket para verificar permissões
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      select: {
+        requesterId: true,
+      }
+    })
+
+    if (!ticket) {
+      return NextResponse.json({ error: "Chamado não encontrado" }, { status: 404 })
+    }
+
+    const userId = session.user.id
     const userRole = session.user.role
-    if (!userRole.includes("admin") && !userRole.includes("lider") && !userRole.includes("func")) {
+    const isRequester = ticket.requesterId === userId
+    const isTIUser = userRole === "admin" || userRole.includes("lider") || userRole.includes("func")
+
+    console.log('🔐 Verificação de permissões:', {
+      userId,
+      userRole,
+      requesterId: ticket.requesterId,
+      isRequester,
+      isTIUser
+    })
+
+    // Verificar permissões específicas
+    // Usuário comum pode: enviar feedback (rating/feedback) e reabrir seu próprio chamado
+    // T.I. pode: fazer qualquer atualização
+    if (!isTIUser && !isRequester) {
+      console.log('❌ Sem permissão: não é T.I. nem solicitante')
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 })
+    }
+
+    // Se for usuário comum, só pode atualizar rating, feedback ou reabrir
+    if (isRequester && !isTIUser) {
+      console.log('👤 Usuário comum tentando atualizar')
+      const allowedUpdates = ['rating', 'feedback', 'status', 'kanbanStatus']
+      const requestedUpdates = Object.keys(body)
+      const hasInvalidUpdate = requestedUpdates.some(key => !allowedUpdates.includes(key))
+      
+      console.log('📝 Updates solicitados:', requestedUpdates)
+      
+      if (hasInvalidUpdate) {
+        console.log('❌ Update inválido detectado')
+        return NextResponse.json({ error: "Sem permissão para esta atualização" }, { status: 403 })
+      }
+
+      // Se está mudando status, só pode reabrir (Aberto)
+      if (status && status !== "Aberto") {
+        console.log('❌ Tentando mudar status para algo diferente de Aberto:', status)
+        return NextResponse.json({ error: "Usuário só pode reabrir chamados" }, { status: 403 })
+      }
+      
+      console.log('✅ Permissão concedida para usuário comum')
     }
 
     const updateData = {
@@ -130,12 +184,14 @@ export async function PATCH(
       ...(kanbanStatus && { kanbanStatus }),
       ...(assignedToId !== undefined && { assignedToId }),
       ...(urgency && { urgency }),
+      ...(rating !== undefined && { rating }),
+      ...(feedback !== undefined && { feedback }),
       updatedAt: new Date(),
     }
 
     console.log('🔄 Dados para atualização:', updateData)
 
-    const ticket = await prisma.ticket.update({
+    const updatedTicket = await prisma.ticket.update({
       where: { id },
       data: updateData,
       include: {
@@ -162,12 +218,12 @@ export async function PATCH(
     // Notificar via Socket.IO sobre atualização do ticket
     const notified = notifyTicketUpdate({
       type: 'ticket_updated',
-      ticket: ticket
+      ticket: updatedTicket
     })
 
     console.log('📢 Notificação de atualização enviada:', notified ? 'Sucesso' : 'Falhou')
 
-    return NextResponse.json(ticket)
+    return NextResponse.json(updatedTicket)
   } catch (error) {
     console.error("Erro ao atualizar chamado:", error)
     return NextResponse.json({ error: "Erro ao atualizar chamado" }, { status: 500 })

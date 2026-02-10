@@ -7,7 +7,7 @@ interface PollingOptions {
 }
 
 export function useSimplePolling(options: PollingOptions = {}) {
-  const { onUpdate, enabled = true, interval = 15000 } = options // 15 segundos por padrão
+  const { onUpdate, enabled = true, interval = 20000 } = options // 20 segundos por padrão
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isActive, setIsActive] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)

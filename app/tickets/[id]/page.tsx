@@ -58,6 +58,7 @@ export default function TicketDetailPage() {
   const params = useParams()
   const ticketId = params?.id as string
   const [ticket, setTicket] = useState<Ticket | null>(null)
+  const [currentUser, setCurrentUser] = useState<{ id: string; team: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,8 +77,24 @@ export default function TicketDetailPage() {
   useEffect(() => {
     if (ticketId) {
       fetchTicket()
+      fetchCurrentUser()
     }
   }, [ticketId])
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/auth/get-session')
+      if (response.ok) {
+        const data = await response.json()
+        setCurrentUser({
+          id: data.user.id,
+          team: data.user.team,
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error)
+    }
+  }
 
   const fetchTicket = async () => {
     try {
@@ -123,7 +140,7 @@ export default function TicketDetailPage() {
   return (
     <div className="h-full flex flex-col">
       {/* Indicador de tempo real para chat */}
-      <div className="px-4 py-2 bg-muted/30 border-b border-border">
+      <div className="px-4 py-2 bg-muted/30 border-b border-border flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Chat em Tempo Real</span>
@@ -156,8 +173,8 @@ export default function TicketDetailPage() {
       </div>
       
       {/* Componente de ticket */}
-      <div className="flex-1 overflow-hidden">
-        <TicketDetail ticket={ticket} onMessageSent={forceUpdate} />
+      <div className="flex-1 min-h-0">
+        <TicketDetail ticket={ticket} onMessageSent={forceUpdate} currentUser={currentUser || undefined} />
       </div>
     </div>
   )

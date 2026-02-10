@@ -8,7 +8,7 @@ interface NoticesPollingOptions {
 }
 
 export function useNoticesPolling(options: NoticesPollingOptions = {}) {
-  const { onUpdate, onNewNotice, enabled = true, interval = 10000 } = options // 10 segundos para avisos
+  const { onUpdate, onNewNotice, enabled = true, interval = 20000 } = options // 20 segundos para avisos
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isActive, setIsActive] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)

@@ -81,10 +81,10 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
 
     window.addEventListener('ticketCreated', handleTicketCreated)
     
-    // Polling a cada 5 segundos para garantir atualização
+    // Polling a cada 20 segundos para garantir atualização
     const interval = setInterval(() => {
       fetchTickets()
-    }, 5000)
+    }, 20000)
 
     return () => {
       window.removeEventListener('ticketCreated', handleTicketCreated)

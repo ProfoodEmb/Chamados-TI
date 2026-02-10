@@ -128,6 +128,42 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-size: 16px; /* Tamanho base para zoom 100% */
+  }
+  html {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-size: 16px; /* Tamanho base para zoom 100% */
+  }
+  /* Ajustar tamanhos de texto para melhor legibilidade em 100% */
+  h1 {
+    @apply text-2xl;
+  }
+  h2 {
+    @apply text-xl;
+  }
+  h3 {
+    @apply text-lg;
+  }
+  p, span, div {
+    @apply text-base;
+  }
+  /* Esconder scrollbar mas manter funcionalidade */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
   }
 }
 /* Fix para dropdowns em modais */

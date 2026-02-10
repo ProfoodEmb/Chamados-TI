@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
     }
 
     const userId = session.user.id
-    const userRole = session.user.role
+    const userRole = session.user.role || "user"
+    const userTeam = session.user.team || null
 
     // Buscar chamados baseado no role
     let tickets
@@ -53,13 +54,14 @@ export async function GET(request: NextRequest) {
       })
     } else if (userRole.includes("lider") || userRole.includes("func")) {
       // Equipe T.I. vê chamados da sua equipe
-      const userTeam = session.user.team
       tickets = await prisma.ticket.findMany({
-        where: {
+        where: userTeam ? {
           OR: [
             { team: userTeam },
             { assignedToId: userId }
           ]
+        } : {
+          assignedToId: userId
         },
         include: {
           requester: {
@@ -148,8 +150,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 })
     }
 
-    // Gerar número do chamado (timestamp + random)
-    const ticketNumber = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+    // Gerar número do chamado sequencial
+    const lastTicket = await prisma.ticket.findFirst({
+      orderBy: {
+        createdAt: 'desc'
+      },
+      select: {
+        number: true
+      }
+    })
+
+    let ticketNumber = '000001'
+    if (lastTicket) {
+      const lastNumber = parseInt(lastTicket.number)
+      ticketNumber = String(lastNumber + 1).padStart(6, '0')
+    }
 
     // Criar chamado
     const ticket = await prisma.ticket.create({

@@ -29,8 +29,10 @@ export default function RootLayout({
               <Header />
             </>
           )}
-          <main className={isLoginPage ? "" : "ml-0 md:ml-16 pt-16 transition-all duration-300"}>
-            {children}
+          <main className={isLoginPage ? "" : "ml-0 md:ml-16 pt-16 transition-all duration-300 h-screen flex flex-col"}>
+            <div className="flex-1 overflow-hidden">
+              {children}
+            </div>
           </main>
         </div>
         <Analytics />

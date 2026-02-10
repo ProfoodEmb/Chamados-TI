@@ -8,11 +8,12 @@ interface TicketPollingOptions {
 }
 
 export function useTicketPolling(options: TicketPollingOptions) {
-  const { ticketId, onUpdate, enabled = true, interval = 5000 } = options // 5 segundos para chat
+  const { ticketId, onUpdate, enabled = true, interval = 20000 } = options // 20 segundos para chat
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isActive, setIsActive] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const lastMessageCountRef = useRef<number>(0)
+  const lastAttachmentCountRef = useRef<number>(0)
 
   useEffect(() => {
     if (!enabled || !ticketId) {
@@ -26,16 +27,20 @@ export function useTicketPolling(options: TicketPollingOptions) {
     // Função para verificar atualizações do ticket
     const checkForUpdates = async () => {
       try {
-        console.log('🔍 Verificando mensagens do ticket via polling...')
+        console.log('🔍 Verificando mensagens e anexos do ticket via polling...')
         
-        // Buscar ticket completo com mensagens
+        // Buscar ticket completo com mensagens e anexos
         const response = await fetch(`/api/tickets/${ticketId}`)
         if (response.ok) {
           const ticket = await response.json()
           const currentMessageCount = ticket.messages?.length || 0
+          const currentAttachmentCount = ticket.attachments?.length || 0
           
-          // Se o número de mensagens mudou, notificar
-          if (lastMessageCountRef.current > 0 && currentMessageCount !== lastMessageCountRef.current) {
+          // Se o número de mensagens ou anexos mudou, notificar
+          const messagesChanged = lastMessageCountRef.current > 0 && currentMessageCount !== lastMessageCountRef.current
+          const attachmentsChanged = lastAttachmentCountRef.current > 0 && currentAttachmentCount !== lastAttachmentCountRef.current
+          
+          if (messagesChanged) {
             console.log('💬 Nova mensagem detectada via polling:', { 
               anterior: lastMessageCountRef.current, 
               atual: currentMessageCount 
@@ -43,12 +48,21 @@ export function useTicketPolling(options: TicketPollingOptions) {
             onUpdate?.(ticket)
           }
           
+          if (attachmentsChanged) {
+            console.log('📎 Novo anexo detectado via polling:', { 
+              anterior: lastAttachmentCountRef.current, 
+              atual: currentAttachmentCount 
+            })
+            onUpdate?.(ticket)
+          }
+          
           // Se é a primeira vez, apenas definir o ticket
-          if (lastMessageCountRef.current === 0) {
+          if (lastMessageCountRef.current === 0 && lastAttachmentCountRef.current === 0) {
             onUpdate?.(ticket)
           }
           
           lastMessageCountRef.current = currentMessageCount
+          lastAttachmentCountRef.current = currentAttachmentCount
         }
         
         setLastUpdate(new Date())

@@ -215,6 +215,67 @@ export async function GET() {
       avgResolutionTime = Math.round(totalTime / resolvedTickets.length / (1000 * 60 * 60)) // em horas
     }
 
+    // 13. Avaliações dos TIs (rating médio por responsável)
+    const ratingsData = await prisma.ticket.findMany({
+      where: {
+        rating: {
+          not: null
+        },
+        assignedToId: {
+          not: null
+        }
+      },
+      select: {
+        assignedToId: true,
+        rating: true,
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            team: true
+          }
+        }
+      }
+    })
+
+    // Agrupar avaliações por TI
+    const ratingsByTI: Record<string, { name: string; team: string; ratings: number[]; totalTickets: number }> = {}
+    
+    ratingsData.forEach(ticket => {
+      if (ticket.assignedToId && ticket.rating && ticket.assignedTo) {
+        if (!ratingsByTI[ticket.assignedToId]) {
+          ratingsByTI[ticket.assignedToId] = {
+            name: ticket.assignedTo.name,
+            team: ticket.assignedTo.team,
+            ratings: [],
+            totalTickets: 0
+          }
+        }
+        ratingsByTI[ticket.assignedToId].ratings.push(ticket.rating)
+        ratingsByTI[ticket.assignedToId].totalTickets++
+      }
+    })
+
+    // Calcular média e formatar
+    const tiRatings = Object.entries(ratingsByTI).map(([id, data]) => {
+      const avgRating = data.ratings.reduce((sum, r) => sum + r, 0) / data.ratings.length
+      return {
+        tiId: id,
+        tiName: data.name,
+        team: data.team,
+        avgRating: Math.round(avgRating * 10) / 10, // 1 casa decimal
+        totalRatings: data.ratings.length,
+        totalTickets: data.totalTickets,
+        ratings: {
+          5: data.ratings.filter(r => r === 5).length,
+          4: data.ratings.filter(r => r === 4).length,
+          3: data.ratings.filter(r => r === 3).length,
+          2: data.ratings.filter(r => r === 2).length,
+          1: data.ratings.filter(r => r === 1).length,
+        }
+      }
+    }).sort((a, b) => b.avgRating - a.avgRating) // Ordenar por melhor avaliação
+
     const metrics = {
       summary: {
         resolvedToday,
@@ -241,7 +302,8 @@ export async function GET() {
       })),
       ticketsBySector: ticketsBySectorFormatted,
       performanceByAssignee: performanceWithNames,
-      trendLast7Days: last7Days
+      trendLast7Days: last7Days,
+      tiRatings: tiRatings
     }
 
     console.log('✅ [API Metrics] Métricas calculadas com sucesso')

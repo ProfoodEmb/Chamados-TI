@@ -115,6 +115,8 @@ model Ticket {
   team          String?  // infra, sistemas, automacao
   service       String?
   anydesk       String?
+  rating        Int?     // Avaliação de 1 a 5 estrelas
+  feedback      String?  // Comentário do feedback
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

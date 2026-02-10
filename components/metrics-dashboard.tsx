@@ -13,7 +13,8 @@ import {
   Building,
   Tag,
   Calendar,
-  Target
+  Target,
+  Star
 } from "lucide-react"
 
 interface MetricsData {
@@ -31,6 +32,21 @@ interface MetricsData {
   ticketsBySector: Array<{ sector: string; count: number }>
   performanceByAssignee: Array<{ assigneeId: string; assigneeName: string; ticketCount: number }>
   trendLast7Days: Array<{ date: string; created: number; resolved: number }>
+  tiRatings: Array<{
+    tiId: string
+    tiName: string
+    team: string
+    avgRating: number
+    totalRatings: number
+    totalTickets: number
+    ratings: {
+      5: number
+      4: number
+      3: number
+      2: number
+      1: number
+    }
+  }>
 }
 
 export function MetricsDashboard() {
@@ -172,6 +188,83 @@ export function MetricsDashboard() {
 
       {/* Gráficos e Estatísticas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Avaliações dos TIs */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Avaliações dos Atendentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {metrics.tiRatings.length === 0 ? (
+                <div className="col-span-full text-center py-8 text-muted-foreground">
+                  Nenhuma avaliação registrada ainda
+                </div>
+              ) : (
+                metrics.tiRatings.map((ti, index) => (
+                  <div key={ti.tiId} className="p-4 border rounded-lg bg-gradient-to-br from-white to-gray-50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {index < 3 && (
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                              index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                              index === 1 ? 'bg-gray-100 text-gray-700' :
+                              'bg-orange-100 text-orange-700'
+                            }`}>
+                              {index + 1}
+                            </div>
+                          )}
+                          <h4 className="font-semibold text-sm">{ti.tiName}</h4>
+                        </div>
+                        <Badge variant="outline" className={getTeamColor(ti.team)} size="sm">
+                          {ti.team === 'infra' ? 'Infraestrutura' : 'Sistemas'}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                          <span className="text-2xl font-bold text-yellow-600">{ti.avgRating}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">{ti.totalRatings} avaliações</p>
+                      </div>
+                    </div>
+                    
+                    {/* Distribuição de estrelas */}
+                    <div className="space-y-1">
+                      {[5, 4, 3, 2, 1].map((stars) => {
+                        const count = ti.ratings[stars as keyof typeof ti.ratings]
+                        const percentage = ti.totalRatings > 0 ? (count / ti.totalRatings) * 100 : 0
+                        return (
+                          <div key={stars} className="flex items-center gap-2 text-xs">
+                            <div className="flex items-center gap-1 w-12">
+                              <span className="text-muted-foreground">{stars}</span>
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            </div>
+                            <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-yellow-400 transition-all"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-muted-foreground w-8 text-right">{count}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    
+                    <div className="mt-3 pt-3 border-t text-xs text-muted-foreground">
+                      {ti.totalTickets} chamados atendidos
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Performance por Responsável */}
         <Card>
           <CardHeader>

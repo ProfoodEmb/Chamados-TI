@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { ArrowLeft, Send, Paperclip, Download, X, Image, FileText } from "lucide-react"
+import { ArrowLeft, Send, Paperclip, Download, X, Image, FileText, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { TicketFeedbackDialog } from "@/components/ticket-feedback-dialog"
 
 interface Attachment {
   id: string
@@ -41,10 +42,14 @@ interface Ticket {
   urgency: "low" | "medium" | "high" | "critical"
   status: string
   createdAt: string
+  rating?: number | null
+  feedback?: string | null
   requester: {
+    id: string
     name: string
   }
   assignedTo?: {
+    id: string
     name: string
   } | null
   service?: string
@@ -71,15 +76,20 @@ const urgencyLabels = {
 interface TicketDetailProps {
   ticket: Ticket
   onMessageSent?: () => void
+  currentUser?: {
+    id: string
+    team: string
+  }
 }
 
-export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
+export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetailProps) {
   const [newMessage, setNewMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
-  const [attachments, setAttachments] = useState<Attachment[]>(ticket.attachments || [])
+  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const hasShownFeedbackDialog = useRef(false)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -87,11 +97,33 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
 
   useEffect(() => {
     scrollToBottom()
-  }, [ticket.messages])
+  }, [ticket.messages, ticket.attachments])
 
+  // Mostrar diálogo quando status mudar para "Aguardando Aprovação"
   useEffect(() => {
-    setAttachments(ticket.attachments || [])
-  }, [ticket.attachments])
+    console.log('Status check:', {
+      status: ticket.status,
+      currentUserId: currentUser?.id,
+      requesterId: ticket.requester.id,
+      hasShown: hasShownFeedbackDialog.current,
+      shouldShow: ticket.status === "Aguardando Aprovação" && currentUser?.id === ticket.requester.id
+    })
+    
+    if (
+      ticket.status === "Aguardando Aprovação" && 
+      currentUser?.id === ticket.requester.id &&
+      !hasShownFeedbackDialog.current
+    ) {
+      console.log('Mostrando diálogo de feedback')
+      setShowFeedbackDialog(true)
+      hasShownFeedbackDialog.current = true
+    }
+    
+    // Reset quando o status mudar para algo diferente
+    if (ticket.status !== "Aguardando Aprovação" && ticket.status !== "Resolvido") {
+      hasShownFeedbackDialog.current = false
+    }
+  }, [ticket.status, currentUser?.id, ticket.requester.id])
 
   const handleFileUpload = async (file: File) => {
     if (!file) return
@@ -109,7 +141,7 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
 
       if (response.ok) {
         const attachment = await response.json()
-        setAttachments(prev => [attachment, ...prev])
+        // Não precisa mais atualizar estado local, o polling vai buscar
         if (onMessageSent) {
           onMessageSent()
         }
@@ -206,6 +238,82 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
     }
   }
 
+  const handleRequestClose = async () => {
+    try {
+      const response = await fetch(`/api/tickets/${ticket.id}/request-close`, {
+        method: "POST",
+      })
+
+      if (response.ok) {
+        if (onMessageSent) {
+          onMessageSent()
+        }
+      } else {
+        const error = await response.json()
+        alert(error.error || "Erro ao solicitar finalização")
+      }
+    } catch (error) {
+      console.error("Erro ao solicitar finalização:", error)
+      alert("Erro ao solicitar finalização")
+    }
+  }
+
+  const handleRespondClose = async (accept: boolean) => {
+    try {
+      const response = await fetch(`/api/tickets/${ticket.id}/respond-close`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ accept }),
+      })
+
+      if (response.ok) {
+        if (onMessageSent) {
+          onMessageSent()
+        }
+      } else {
+        const error = await response.json()
+        alert(error.error || "Erro ao responder")
+      }
+    } catch (error) {
+      console.error("Erro ao responder:", error)
+      alert("Erro ao responder")
+    }
+  }
+
+  const handleSubmitRating = async (rating: number, feedback: string) => {
+    try {
+      const response = await fetch(`/api/tickets/${ticket.id}/rate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rating, feedback }),
+      })
+
+      if (response.ok) {
+        if (onMessageSent) {
+          onMessageSent()
+        }
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || "Erro ao avaliar")
+      }
+    } catch (error) {
+      console.error("Erro ao avaliar:", error)
+      throw error
+    }
+  }
+
+  const handleReopenTicket = async () => {
+    await handleRespondClose(false)
+  }
+
+  const handleConfirmResolved = async () => {
+    await handleRespondClose(true)
+  }
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -216,9 +324,9 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full overflow-hidden">
       {/* Sidebar com informações do chamado */}
-      <div className="w-72 border-r border-border bg-card shrink-0 overflow-y-auto">
+      <div className="w-72 border-r border-border bg-card shrink-0">
         <div className="p-4">
           <Link href="/tickets" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
             <ArrowLeft className="w-4 h-4" />
@@ -280,84 +388,123 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
       {/* Área principal com chat */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header do chamado */}
-        <div className="p-4 border-b border-border bg-card">
-          <h1 className="text-lg font-semibold">{ticket.subject}</h1>
-          <p className="text-sm text-muted-foreground">
-            Chamado aberto por <span className="font-medium">{ticket.requester.name}</span> em {formatDate(ticket.createdAt)}
-          </p>
+        <div className="p-4 border-b border-border bg-card flex-shrink-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-lg font-semibold">{ticket.subject}</h1>
+              <p className="text-sm text-muted-foreground">
+                Chamado aberto por <span className="font-medium">{ticket.requester.name}</span> em {formatDate(ticket.createdAt)}
+              </p>
+            </div>
+            
+            {/* Botão de finalizar para TI */}
+            {currentUser && 
+             (currentUser.team === "infra" || currentUser.team === "sistemas" || currentUser.team === "admin") &&
+             ticket.status === "Aberto" && (
+              <Button
+                onClick={handleRequestClose}
+                variant="default"
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 shrink-0"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Finalizar Chamado
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Mensagens */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
-          {/* Anexos */}
-          {attachments.length > 0 && (
-            <div className="bg-card border border-border rounded-lg p-4">
-              <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                <Paperclip className="w-4 h-4" />
-                Anexos ({attachments.length})
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {attachments.map((attachment) => (
-                  <div key={attachment.id} className="flex items-center gap-2 p-2 bg-muted/50 rounded border">
-                    {getFileIcon(attachment.mimeType)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{attachment.filename}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFileSize(attachment.size)} • {attachment.uploadedBy.name}
-                      </p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => window.open(attachment.url, '_blank')}
-                      className="shrink-0"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {ticket.messages.length === 0 ? (
+        <div className="flex-1 overflow-y-auto p-4 pb-8 bg-muted/20 space-y-4">
+          {ticket.messages.length === 0 && (!ticket.attachments || ticket.attachments.length === 0) ? (
             <div className="text-center text-muted-foreground py-8">
               <p>Nenhuma mensagem ainda.</p>
               <p className="text-sm">Envie uma mensagem para iniciar a conversa.</p>
             </div>
           ) : (
-            ticket.messages.map((message) => (
-              <div
-                key={message.id}
-                className="flex gap-3"
-              >
-                <Avatar className="w-10 h-10 shrink-0">
-                  <AvatarFallback className={message.role === "support" ? "bg-primary text-primary-foreground" : "bg-muted"}>
-                    {getInitials(message.author.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-sm">{message.author.name}</span>
-                    <span className="text-xs text-muted-foreground">{formatDate(message.createdAt)}</span>
-                  </div>
-                  <div className={`p-3 rounded-lg ${
-                    message.role === "support" 
-                      ? "bg-primary/10 border border-primary/20" 
-                      : "bg-card border border-border"
-                  }`}>
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                </div>
-              </div>
-            ))
+            <>
+              {/* Mesclar mensagens e anexos por data */}
+              {[
+                ...ticket.messages.map(msg => ({ type: 'message' as const, data: msg, createdAt: msg.createdAt })),
+                ...(ticket.attachments || []).map(att => ({ type: 'attachment' as const, data: att, createdAt: att.createdAt }))
+              ]
+                .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+                .map((item, index) => {
+                  if (item.type === 'message') {
+                    const message = item.data
+                    return (
+                      <div key={`msg-${message.id}`} className="flex gap-3">
+                        <Avatar className="w-10 h-10 shrink-0">
+                          <AvatarFallback className={message.role === "support" ? "bg-primary text-primary-foreground" : "bg-muted"}>
+                            {getInitials(message.author.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{message.author.name}</span>
+                            <span className="text-xs text-muted-foreground">{formatDate(message.createdAt)}</span>
+                          </div>
+                          <div className={`p-3 rounded-lg ${
+                            message.role === "support" 
+                              ? "bg-primary/10 border border-primary/20" 
+                              : "bg-card border border-border"
+                          }`}>
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  } else {
+                    const attachment = item.data
+                    return (
+                      <div key={`att-${attachment.id}`} className="flex gap-3">
+                        <Avatar className="w-10 h-10 shrink-0">
+                          <AvatarFallback className="bg-muted">
+                            {getInitials(attachment.uploadedBy.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{attachment.uploadedBy.name}</span>
+                            <span className="text-xs text-muted-foreground">{formatDate(attachment.createdAt)}</span>
+                          </div>
+                          <div className="bg-card border border-border rounded-lg p-3">
+                            <div className="flex items-center gap-3">
+                              <div className="shrink-0">
+                                {getFileIcon(attachment.mimeType)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate" title={attachment.filename}>
+                                  {attachment.filename}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {formatFileSize(attachment.size)}
+                                </p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open(attachment.url, '_blank')}
+                                className="shrink-0"
+                                title="Baixar arquivo"
+                              >
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                })}
+            </>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input de mensagem */}
         {ticket.status !== "Fechado" && ticket.status !== "Resolvido" && (
-          <div className="p-4 border-t border-border bg-card">
+          <div className="p-4 border-t border-border bg-card flex-shrink-0">
             {/* Input de arquivo oculto */}
             <input
               type="file"
@@ -384,7 +531,7 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  className="min-h-20 pr-10 resize-none"
+                  className="min-h-16 pr-10 resize-none"
                   disabled={isSending || isUploading}
                 />
                 <Button
@@ -409,7 +556,7 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
             </div>
             
             {/* Dica sobre tipos de arquivo */}
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-xs text-muted-foreground mt-2 text-center">
               Tipos permitidos: Imagens, PDF, Word, Excel, TXT (máx. 10MB)
             </p>
           </div>
@@ -417,13 +564,24 @@ export function TicketDetail({ ticket, onMessageSent }: TicketDetailProps) {
 
         {/* Chamado fechado */}
         {(ticket.status === "Fechado" || ticket.status === "Resolvido") && (
-          <div className="p-4 border-t border-border bg-muted/50 text-center">
+          <div className="p-4 border-t border-border bg-muted/50 text-center flex-shrink-0">
             <p className="text-sm text-muted-foreground">
               Este chamado foi {ticket.status.toLowerCase()}. Não é possível enviar novas mensagens.
             </p>
           </div>
         )}
       </div>
+
+      {/* Diálogo de feedback/avaliação */}
+      {showFeedbackDialog && (
+        <TicketFeedbackDialog
+          ticketNumber={ticket.number}
+          onClose={() => setShowFeedbackDialog(false)}
+          onSubmit={handleSubmitRating}
+          onReopen={handleReopenTicket}
+          onConfirmResolved={handleConfirmResolved}
+        />
+      )}
     </div>
   )
 }

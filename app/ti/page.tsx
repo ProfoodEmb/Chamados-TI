@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
 import { useSimplePolling } from "@/lib/use-simple-polling"
 import { AssignTicketDialog } from "@/components/assign-ticket-dialog"
-import { NoticeBoard } from "@/components/notice-board"
 
 interface User {
   id: string
@@ -302,12 +301,10 @@ export default function TIPage() {
               </div>
             </div>
 
-            {/* Grid - Tabela de Chamados e Mural de Avisos */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-              {/* Seção Principal - Filtros e Tabela */}
-              <div className="space-y-6">
-                {/* Filtros e Ações */}
-                <div className="bg-card border border-border rounded-xl p-4">
+            {/* Tabela de Chamados */}
+            <div className="space-y-6 min-w-0">
+              {/* Filtros e Ações */}
+              <div className="bg-card border border-border rounded-xl p-4">
                   <div className="flex flex-col md:flex-row gap-4">
                     {/* Busca */}
                     <div className="flex-1 relative">
@@ -362,7 +359,7 @@ export default function TIPage() {
                 {/* Tabela de Chamados */}
                 <div className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full min-w-[800px]">
                       <thead className="bg-muted/50 border-b border-border">
                         <tr>
                           <th className="text-left p-4 text-sm font-semibold text-foreground">Número</th>
@@ -439,10 +436,6 @@ export default function TIPage() {
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Mural de Avisos */}
-              <NoticeBoard />
             </div>
           </div>
         </main>
