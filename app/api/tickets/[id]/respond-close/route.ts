@@ -35,13 +35,24 @@ export async function POST(
       return NextResponse.json({ error: "Apenas o solicitante pode responder" }, { status: 403 })
     }
 
-    // Atualizar status baseado na resposta
-    const newStatus = accept ? "Resolvido" : "Aberto"
+    // Atualizar status e kanbanStatus baseado na resposta
+    let newStatus, newKanbanStatus;
+    
+    if (accept) {
+      // Usuário aceita: vai para Resolvido (aguardando avaliação)
+      newStatus = "Resolvido";
+      newKanbanStatus = "review"; // Mantém em review até avaliar
+    } else {
+      // Usuário nega: volta para Aberto e Em Progresso
+      newStatus = "Aberto";
+      newKanbanStatus = "in_progress";
+    }
 
     const updatedTicket = await prisma.ticket.update({
       where: { id: ticketId },
       data: {
         status: newStatus,
+        kanbanStatus: newKanbanStatus,
         updatedAt: new Date(),
       },
       include: {
@@ -64,6 +75,20 @@ export async function POST(
           },
         },
       },
+    })
+
+    if (accept) {
+      console.log(`✅ Ticket ${ticket.number} aceito pelo usuário - aguardando avaliação`)
+    } else {
+      console.log(`🔄 Ticket ${ticket.number} negado pelo usuário - voltou para "Em Progresso"`)
+    }
+
+    // Notificar via Socket.IO
+    const { notifyTicketUpdate, ensureSocketIO } = require('@/lib/socket-server')
+    ensureSocketIO()
+    notifyTicketUpdate({
+      type: 'ticket_updated',
+      ticket: updatedTicket
     })
 
     return NextResponse.json(updatedTicket)

@@ -45,13 +45,14 @@ export async function POST(
       return NextResponse.json({ error: "Apenas chamados resolvidos podem ser avaliados" }, { status: 400 })
     }
 
-    // Salvar avaliação e fechar o chamado
+    // Salvar avaliação, fechar o chamado e mover para "done"
     const updatedTicket = await prisma.ticket.update({
       where: { id: ticketId },
       data: {
         rating,
         feedback: feedback || null,
         status: "Fechado",
+        kanbanStatus: "done",
         updatedAt: new Date(),
       },
       include: {
@@ -74,6 +75,16 @@ export async function POST(
           },
         },
       },
+    })
+
+    console.log(`✅ Ticket ${ticket.number} movido para "Concluído" (feedback recebido)`)
+
+    // Notificar via Socket.IO
+    const { notifyTicketUpdate, ensureSocketIO } = require('@/lib/socket-server')
+    ensureSocketIO()
+    notifyTicketUpdate({
+      type: 'ticket_updated',
+      ticket: updatedTicket
     })
 
     return NextResponse.json(updatedTicket)

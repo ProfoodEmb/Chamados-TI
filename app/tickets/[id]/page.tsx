@@ -62,7 +62,7 @@ export default function TicketDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Sistema de polling para mensagens em tempo real
+  // Sistema de polling para mensagens em tempo real (3 segundos)
   const { isActive, lastUpdate, forceUpdate, interval } = useTicketPolling({
     ticketId,
     onUpdate: (updatedTicket) => {
@@ -71,7 +71,7 @@ export default function TicketDetailPage() {
       setIsLoading(false)
     },
     enabled: !!ticketId,
-    interval: 5000 // 5 segundos para chat
+    interval: 3000 // 3 segundos para parecer tempo real
   })
 
   useEffect(() => {
@@ -144,12 +144,16 @@ export default function TicketDetailPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium">Chat em Tempo Real</span>
-            <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-green-50 border border-green-200">
+            <div className={`flex items-center gap-2 px-2 py-1 rounded-md ${
+              isActive 
+                ? 'bg-green-50 border border-green-200' 
+                : 'bg-red-50 border border-red-200'
+            }`}>
               {isActive ? (
                 <>
                   <Wifi className="w-3 h-3 text-green-600" />
                   <span className="text-xs text-green-600">
-                    Polling ({interval}s)
+                    Atualização Automática ({interval}s)
                   </span>
                 </>
               ) : (
@@ -158,7 +162,9 @@ export default function TicketDetailPage() {
                   <span className="text-xs text-red-600">Desconectado</span>
                 </>
               )}
-              <span className="text-xs text-green-500">({lastUpdate})</span>
+              <span className={`text-xs ${isActive ? 'text-green-500' : 'text-red-500'}`}>
+                ({lastUpdate})
+              </span>
             </div>
           </div>
           

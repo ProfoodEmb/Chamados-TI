@@ -101,12 +101,13 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
 
   // Mostrar diálogo quando status mudar para "Aguardando Aprovação"
   useEffect(() => {
-    console.log('Status check:', {
+    console.log('🔍 Status check:', {
       status: ticket.status,
       currentUserId: currentUser?.id,
       requesterId: ticket.requester.id,
       hasShown: hasShownFeedbackDialog.current,
-      shouldShow: ticket.status === "Aguardando Aprovação" && currentUser?.id === ticket.requester.id
+      shouldShow: ticket.status === "Aguardando Aprovação" && currentUser?.id === ticket.requester.id,
+      isRequester: currentUser?.id === ticket.requester.id
     })
     
     if (
@@ -114,9 +115,15 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
       currentUser?.id === ticket.requester.id &&
       !hasShownFeedbackDialog.current
     ) {
-      console.log('Mostrando diálogo de feedback')
+      console.log('✅ Mostrando diálogo de feedback')
       setShowFeedbackDialog(true)
       hasShownFeedbackDialog.current = true
+    } else {
+      console.log('❌ Não mostrando diálogo:', {
+        statusCorreto: ticket.status === "Aguardando Aprovação",
+        isRequester: currentUser?.id === ticket.requester.id,
+        naoMostrado: !hasShownFeedbackDialog.current
+      })
     }
     
     // Reset quando o status mudar para algo diferente

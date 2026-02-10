@@ -98,7 +98,7 @@ export function TicketFeedbackDialog({ ticketNumber, onClose, onSubmit, onReopen
                   Chamado #{ticketNumber}
                 </p>
                 <p className="text-sm text-gray-600">
-                  O atendente finalizou este chamado. Se o problema foi resolvido, avalie o atendimento. Caso contrário, você pode reabrir o chamado.
+                  O atendente finalizou este chamado. Se o problema foi resolvido, avalie o atendimento.
                 </p>
               </div>
 
@@ -119,14 +119,6 @@ export function TicketFeedbackDialog({ ticketNumber, onClose, onSubmit, onReopen
                 >
                   <AlertCircle className="w-4 h-4 mr-2" />
                   {isSubmitting ? "Reabrindo..." : "Não, Reabrir Chamado"}
-                </Button>
-                <Button
-                  onClick={onClose}
-                  variant="ghost"
-                  className="w-full text-gray-500"
-                  disabled={isSubmitting}
-                >
-                  Decidir Depois
                 </Button>
               </div>
             </div>

@@ -35,11 +35,12 @@ export async function POST(
       return NextResponse.json({ error: "Apenas TI pode solicitar finalização" }, { status: 403 })
     }
 
-    // Atualizar status para "Aguardando Aprovação"
+    // Atualizar status para "Aguardando Aprovação" e kanbanStatus para "review"
     const updatedTicket = await prisma.ticket.update({
       where: { id: ticketId },
       data: {
         status: "Aguardando Aprovação",
+        kanbanStatus: "review",
         updatedAt: new Date(),
       },
       include: {
@@ -62,6 +63,16 @@ export async function POST(
           },
         },
       },
+    })
+
+    console.log(`🔄 Ticket ${ticket.number} movido para "Revisão" (aguardando aprovação do usuário)`)
+
+    // Notificar via Socket.IO
+    const { notifyTicketUpdate, ensureSocketIO } = require('@/lib/socket-server')
+    ensureSocketIO()
+    notifyTicketUpdate({
+      type: 'ticket_updated',
+      ticket: updatedTicket
     })
 
     return NextResponse.json(updatedTicket)

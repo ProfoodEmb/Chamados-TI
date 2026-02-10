@@ -67,15 +67,33 @@ export async function POST(
       }
     })
 
+    // Atualizar kanbanStatus automaticamente
+    // Se é a primeira mensagem do suporte, mover para "in_progress"
+    if (messageRole === "support" && ticket.kanbanStatus === "inbox") {
+      await prisma.ticket.update({
+        where: { id: ticketId },
+        data: { kanbanStatus: "in_progress" }
+      })
+      console.log(`🔄 Ticket ${ticket.number} movido para "Em Progresso" (primeira resposta do suporte)`)
+    }
+
     // Garantir que Socket.IO esteja inicializado
     ensureSocketIO()
 
-    // Notificar sobre nova mensagem
-    const notified = notifyTicketUpdate({
+    // Notificar sobre nova mensagem E atualização do ticket
+    notifyTicketUpdate({
       type: 'message_created',
       ticketId,
       message: message
     })
+
+    // Se mudou o kanbanStatus, notificar também sobre atualização do ticket
+    if (messageRole === "support" && ticket.kanbanStatus === "inbox") {
+      notifyTicketUpdate({
+        type: 'ticket_updated',
+        ticketId
+      })
+    }
 
     console.log('📢 Notificação de mensagem enviada:', notified ? 'Sucesso' : 'Falhou')
 
