@@ -2,9 +2,23 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { NoticeBoard } from "@/components/notice-board"
 import { Badge } from "@/components/ui/badge"
-import { Wifi, WifiOff, Clock } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { 
+  Ticket as TicketIcon, 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle,
+  TrendingUp,
+  Plus,
+  ArrowRight,
+  Zap,
+  Users,
+  BarChart3
+} from "lucide-react"
 import { useSimplePolling } from "@/lib/use-simple-polling"
 
 interface Ticket {
@@ -14,23 +28,16 @@ interface Ticket {
   status: string
   urgency: "low" | "medium" | "high" | "critical"
   createdAt: string
+  kanbanStatus: string
 }
 
 interface User {
   id: string
   name: string
   email: string
-}
-
-const statusColors = {
-  "Aberto": "bg-gray-500",           // Caixa de Entrada - Cinza
-  "Em Andamento": "bg-blue-500",     // Em Andamento - Azul
-  "Em Revisão": "bg-yellow-500",     // Em Revisão - Amarelo
-  "Concluído": "bg-green-500",       // Concluído - Verde
-  "Pendente": "bg-yellow-500",
-  "Fechado": "bg-gray-500",
-  "Resolvido": "bg-green-500",
-  "Aguardando Aprovação": "bg-orange-500",
+  role: string
+  team: string
+  empresa: string | null
 }
 
 const urgencyColors = {
@@ -48,6 +55,7 @@ const urgencyLabels = {
 }
 
 export default function Home() {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -55,14 +63,11 @@ export default function Home() {
   useEffect(() => {
     const init = async () => {
       try {
-        // Buscar sessão
         const sessionResponse = await fetch("/api/auth/get-session")
         const session = await sessionResponse.json()
         
         if (session?.user) {
           setUser(session.user)
-          
-          // Buscar tickets do usuário
           await fetchTickets()
         }
       } catch (error) {
@@ -75,7 +80,6 @@ export default function Home() {
     init()
   }, [])
 
-  // Função para buscar tickets
   const fetchTickets = async () => {
     try {
       const ticketsResponse = await fetch("/api/tickets")
@@ -88,148 +92,221 @@ export default function Home() {
     }
   }
 
-  // Sistema de tempo real com polling simples
-  const { isActive, lastUpdate, forceUpdate, interval } = useSimplePolling({
-    onUpdate: (data) => {
-      console.log('Atualização recebida via polling:', data)
-      fetchTickets()
-    },
+  useSimplePolling({
+    onUpdate: () => fetchTickets(),
     enabled: !!user,
-    interval: 10000 // 10 segundos
+    interval: 10000
   })
 
-  // Escutar evento de criação de chamado (fallback)
-  useEffect(() => {
-    const handleTicketCreated = () => {
-      console.log("Evento ticketCreated recebido na Home - atualizando tickets...")
-      fetchTickets()
-    }
-
-    window.addEventListener('ticketCreated', handleTicketCreated)
-
-    return () => {
-      window.removeEventListener('ticketCreated', handleTicketCreated)
-    }
-  }, [])
-
-  const activeTickets = tickets.filter(t => t.status !== "Fechado" && t.status !== "Resolvido")
-  const recentTickets = tickets.slice(0, 5)
+  const activeTickets = tickets.filter(t => t.kanbanStatus !== "done")
+  const inboxTickets = tickets.filter(t => t.kanbanStatus === "inbox")
+  const inProgressTickets = tickets.filter(t => t.kanbanStatus === "in_progress")
+  const reviewTickets = tickets.filter(t => t.kanbanStatus === "review")
+  const doneTickets = tickets.filter(t => t.kanbanStatus === "done")
+  const recentTickets = tickets.slice(0, 4)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
+  const getEmpresaColor = (empresa: string | null) => {
+    switch (empresa?.toLowerCase()) {
+      case "tuicial": return "text-blue-600";
+      case "profood": return "text-red-600";
+      default: return "text-gray-600";
+    }
+  }
+
+  const isAdmin = user?.role === "admin" || user?.role?.includes("lider") || user?.role?.includes("func")
+
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Welcome Section */}
-      <div>
-        <h1 className="text-2xl font-semibold text-foreground mb-1 flex items-center gap-2">
-          Olá, {user?.name || "Usuário"} 
-          <span className="text-2xl">👋</span>
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Que bom te ver por aqui! Acompanhe seus chamados e avisos abaixo.
-        </p>
-      </div>
-
-      {/* Grid - Meus chamados recentes e Mural de avisos */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
-        {/* Meus Chamados Recentes */}
-        <div className="bg-card rounded-xl border border-border p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-semibold text-foreground">Meus chamados</h2>
-                  {/* Indicador de polling */}
-                  <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-green-50 border border-green-200">
-                    {isActive ? (
-                      <>
-                        <Wifi className="w-3 h-3 text-green-600" />
-                        <span className="text-xs text-green-600">
-                          Polling ({interval}s)
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="w-3 h-3 text-red-600" />
-                        <span className="text-xs text-red-600">Desconectado</span>
-                      </>
-                    )}
-                    <span className="text-xs text-green-500">({lastUpdate})</span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">{tickets.length} chamados</p>
-              </div>
-            </div>
-            <button className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-              {activeTickets.length} ativos
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Olá, {user?.name?.split(" ")[0] || "Usuário"}! 👋
+            </h1>
+            <p className="text-lg text-gray-600">
+              Bem-vindo ao sistema de chamados
+              {user?.empresa && (
+                <span className={`font-semibold ml-2 ${getEmpresaColor(user.empresa)}`}>
+                  {user.empresa.charAt(0).toUpperCase() + user.empresa.slice(1)}
+                </span>
+              )}
+            </p>
           </div>
+          <Button 
+            size="lg" 
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+            onClick={() => router.push("/tickets")}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Novo Chamado
+          </Button>
+        </div>
 
-          <div className="space-y-3">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-sm text-muted-foreground">Carregando chamados...</p>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                <TicketIcon className="w-6 h-6 text-gray-600" />
               </div>
-            ) : recentTickets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
+              <Badge variant="secondary" className="text-xs">Total</Badge>
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-1">{tickets.length}</h3>
+            <p className="text-sm text-gray-600">Chamados criados</p>
+          </Card>
+
+          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <Clock className="w-6 h-6 text-blue-600" />
+              </div>
+              <Badge className="text-xs bg-blue-100 text-blue-700 border-0">Ativos</Badge>
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-1">{activeTickets.length}</h3>
+            <p className="text-sm text-gray-600">Em andamento</p>
+          </Card>
+
+          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-orange-600" />
+              </div>
+              <Badge className="text-xs bg-orange-100 text-orange-700 border-0">Aguardando</Badge>
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-1">{reviewTickets.length}</h3>
+            <p className="text-sm text-gray-600">Em revisão</p>
+          </Card>
+
+          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <Badge className="text-xs bg-green-100 text-green-700 border-0">Concluídos</Badge>
+            </div>
+            <h3 className="text-3xl font-bold text-gray-900 mb-1">{doneTickets.length}</h3>
+            <p className="text-sm text-gray-600">Finalizados</p>
+          </Card>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Tickets */}
+          <Card className="lg:col-span-2 p-6 bg-white border-0 shadow-lg">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Chamados Recentes</h2>
+                <p className="text-sm text-gray-600 mt-1">Últimos chamados criados</p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => router.push("/tickets")}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                Ver todos
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+                  <p className="text-sm text-gray-600">Carregando...</p>
                 </div>
-                <h3 className="text-sm font-medium text-foreground mb-1">Nenhum chamado ainda</h3>
-                <p className="text-xs text-muted-foreground mb-4">Crie seu primeiro chamado clicando no botão acima</p>
-              </div>
-            ) : (
-              recentTickets.map((ticket) => (
-                <Link key={ticket.id} href={`/tickets/${ticket.id}`}>
-                  <div className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors cursor-pointer">
+              ) : recentTickets.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <TicketIcon className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">Nenhum chamado ainda</h3>
+                  <p className="text-sm text-gray-600 mb-4">Crie seu primeiro chamado para começar</p>
+                  <Button onClick={() => router.push("/tickets")} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Criar Chamado
+                  </Button>
+                </div>
+              ) : (
+                recentTickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    onClick={() => router.push(`/tickets/${ticket.id}`)}
+                    className="p-4 border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-mono text-muted-foreground">#{ticket.number}</span>
-                          <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} text-xs border`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-bold text-blue-600">#{ticket.number}</span>
+                          <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} text-xs border font-semibold`}>
                             {urgencyLabels[ticket.urgency]}
                           </Badge>
                         </div>
-                        <h3 className="text-sm font-medium text-foreground line-clamp-1">{ticket.subject}</h3>
+                        <h3 className="text-base font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+                          {ticket.subject}
+                        </h3>
                       </div>
-                      <Badge className={`${statusColors[ticket.status as keyof typeof statusColors]} text-white text-xs ml-2`}>
-                        {ticket.status}
-                      </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">{formatDate(ticket.createdAt)}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{formatDate(ticket.createdAt)}</span>
+                      <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                    </div>
                   </div>
-                </Link>
-              ))
+                ))
+              )}
+            </div>
+          </Card>
+
+          {/* Quick Actions & Notices */}
+          <div className="space-y-6">
+            {/* Quick Actions */}
+            {isAdmin && (
+              <Card className="p-6 bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-lg text-white">
+                <h2 className="text-lg font-bold mb-4">Acesso Rápido</h2>
+                <div className="space-y-3">
+                  <Button 
+                    variant="secondary" 
+                    className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-0"
+                    onClick={() => router.push("/ti/kanban")}
+                  >
+                    <BarChart3 className="w-4 h-4 mr-3" />
+                    Kanban
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-0"
+                    onClick={() => router.push("/ti/metricas")}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-3" />
+                    Métricas
+                  </Button>
+                  <Button 
+                    variant="secondary" 
+                    className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-0"
+                    onClick={() => router.push("/ti/usuarios")}
+                  >
+                    <Users className="w-4 h-4 mr-3" />
+                    Usuários
+                  </Button>
+                </div>
+              </Card>
             )}
+
+            {/* Notices */}
+            <NoticeBoard />
           </div>
-
-          <Link href="/tickets">
-            <button className="w-full mt-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors">
-              Ver todos os chamados
-            </button>
-          </Link>
         </div>
-
-        {/* Mural de Avisos */}
-        <NoticeBoard />
       </div>
     </div>
   )

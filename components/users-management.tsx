@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CreateUserDialog } from "./create-user-dialog"
+import { ConfirmDialog } from "./confirm-dialog"
 
 interface User {
   id: string
@@ -40,6 +41,11 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("todos")
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; userId: string; userName: string }>({
+    open: false,
+    userId: "",
+    userName: ""
+  })
 
   // Carregar usuários
   const fetchUsers = async () => {
@@ -82,22 +88,30 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       const data = await response.json()
 
       if (response.ok) {
-        alert(data.message)
+        if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+          (window as any).showSimpleToast(data.message, 'success')
+        }
         fetchUsers() // Recarregar lista
       } else {
-        alert(`Erro: ${data.error}`)
+        if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+          (window as any).showSimpleToast(`Erro: ${data.error}`, 'info')
+        }
       }
     } catch (error) {
       console.error("Erro ao atualizar usuário:", error)
-      alert("Erro ao atualizar usuário")
+      if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+        (window as any).showSimpleToast("Erro ao atualizar usuário", 'info')
+      }
     }
   }
 
   // Deletar usuário
   const deleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`Tem certeza que deseja deletar o usuário "${userName}"? Esta ação não pode ser desfeita.`)) {
-      return
-    }
+    setDeleteDialog({ open: true, userId, userName })
+  }
+
+  const confirmDelete = async () => {
+    const { userId } = deleteDialog
 
     try {
       const response = await fetch(`/api/users/${userId}`, {
@@ -107,14 +121,20 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       const data = await response.json()
 
       if (response.ok) {
-        alert(data.message)
+        if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+          (window as any).showSimpleToast(`🗑️ ${data.message}`, 'success')
+        }
         fetchUsers() // Recarregar lista
       } else {
-        alert(`Erro: ${data.error}`)
+        if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+          (window as any).showSimpleToast(`Erro: ${data.error}`, 'info')
+        }
       }
     } catch (error) {
       console.error("Erro ao deletar usuário:", error)
-      alert("Erro ao deletar usuário")
+      if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+        (window as any).showSimpleToast("Erro ao deletar usuário", 'info')
+      }
     }
   }
 
@@ -212,7 +232,7 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       </Card>
 
       {/* Lista de Usuários */}
-      <div className="grid gap-4">
+      <div className="grid gap-4 max-h-[calc(100vh-320px)] overflow-y-auto pr-2">
         {filteredUsers.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
@@ -310,6 +330,18 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onUserCreated={fetchUsers}
+      />
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <ConfirmDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
+        title="Deletar Usuário"
+        message={`Tem certeza que deseja deletar o usuário "${deleteDialog.userName}"? Esta ação não pode ser desfeita.`}
+        confirmText="Deletar"
+        cancelText="Cancelar"
+        variant="destructive"
+        onConfirm={confirmDelete}
       />
     </div>
   )

@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              image: true,
+              setor: true,
+              empresa: true,
             }
           },
           assignedTo: {
@@ -39,6 +42,7 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              image: true,
             }
           },
           messages: {
@@ -69,6 +73,9 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              image: true,
+              setor: true,
+              empresa: true,
             }
           },
           assignedTo: {
@@ -76,6 +83,7 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              image: true,
             }
           },
           messages: {
@@ -101,6 +109,9 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              image: true,
+              setor: true,
+              empresa: true,
             }
           },
           assignedTo: {
@@ -108,6 +119,7 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
+              image: true,
             }
           },
           messages: {
@@ -187,6 +199,9 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
+            image: true,
+            setor: true,
+            empresa: true,
           }
         }
       }

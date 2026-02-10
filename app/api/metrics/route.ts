@@ -1,9 +1,31 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     console.log('📊 [API Metrics] Buscando métricas...')
+
+    // Pegar o filtro de equipe da query string
+    const { searchParams } = new URL(request.url)
+    const teamFilter = searchParams.get('team')
+
+    // Criar filtro base para equipe
+    const teamWhereClause = teamFilter && teamFilter !== 'all' 
+      ? { team: teamFilter } 
+      : {}
+
+    console.log('📊 [API Metrics] Filtro de equipe:', teamFilter || 'all')
+
+    // Buscar IDs dos usuários do time específico (para filtrar avaliações e performance)
+    let teamUserIds: string[] = []
+    if (teamFilter && teamFilter !== 'all') {
+      const teamUsers = await prisma.user.findMany({
+        where: { team: teamFilter },
+        select: { id: true, name: true }
+      })
+      teamUserIds = teamUsers.map(u => u.id)
+      console.log('📊 [API Metrics] Usuários do time:', teamFilter, teamUsers.map(u => u.name))
+    }
 
     // Datas para cálculos
     const now = new Date()
@@ -16,6 +38,7 @@ export async function GET() {
     // 1. Tickets por status
     const ticketsByStatus = await prisma.ticket.groupBy({
       by: ['status'],
+      where: teamWhereClause,
       _count: {
         id: true
       }
@@ -24,6 +47,7 @@ export async function GET() {
     // 2. Tickets por equipe
     const ticketsByTeam = await prisma.ticket.groupBy({
       by: ['team'],
+      where: teamWhereClause,
       _count: {
         id: true
       }
@@ -32,6 +56,7 @@ export async function GET() {
     // 3. Tickets por categoria
     const ticketsByCategory = await prisma.ticket.groupBy({
       by: ['category'],
+      where: teamWhereClause,
       _count: {
         id: true
       }
@@ -40,6 +65,7 @@ export async function GET() {
     // 4. Tickets por urgência
     const ticketsByUrgency = await prisma.ticket.groupBy({
       by: ['urgency'],
+      where: teamWhereClause,
       _count: {
         id: true
       }
@@ -48,7 +74,8 @@ export async function GET() {
     // 5. Tickets resolvidos hoje
     const resolvedToday = await prisma.ticket.count({
       where: {
-        status: 'Concluído',
+        ...teamWhereClause,
+        kanbanStatus: 'done',
         updatedAt: {
           gte: today
         }
@@ -58,7 +85,8 @@ export async function GET() {
     // 6. Tickets resolvidos esta semana
     const resolvedThisWeek = await prisma.ticket.count({
       where: {
-        status: 'Concluído',
+        ...teamWhereClause,
+        kanbanStatus: 'done',
         updatedAt: {
           gte: weekAgo
         }
@@ -68,6 +96,7 @@ export async function GET() {
     // 7. Tickets criados hoje
     const createdToday = await prisma.ticket.count({
       where: {
+        ...teamWhereClause,
         createdAt: {
           gte: today
         }
@@ -77,6 +106,7 @@ export async function GET() {
     // 8. Tickets criados esta semana
     const createdThisWeek = await prisma.ticket.count({
       where: {
+        ...teamWhereClause,
         createdAt: {
           gte: weekAgo
         }
@@ -84,16 +114,28 @@ export async function GET() {
     })
 
     // 9. Performance por responsável (últimos 7 dias)
+    const performanceWhereClause = teamFilter && teamFilter !== 'all'
+      ? {
+          assignedToId: {
+            not: null,
+            in: teamUserIds
+          },
+          updatedAt: {
+            gte: weekAgo
+          }
+        }
+      : {
+          assignedToId: {
+            not: null
+          },
+          updatedAt: {
+            gte: weekAgo
+          }
+        }
+
     const performanceByAssignee = await prisma.ticket.groupBy({
       by: ['assignedToId'],
-      where: {
-        assignedToId: {
-          not: null
-        },
-        updatedAt: {
-          gte: weekAgo
-        }
-      },
+      where: performanceWhereClause,
       _count: {
         id: true
       }
@@ -126,6 +168,7 @@ export async function GET() {
     // 10. Tickets por setor (baseado no solicitante)
     const ticketsBySector = await prisma.ticket.groupBy({
       by: ['requesterId'],
+      where: teamWhereClause,
       _count: {
         id: true
       }
@@ -158,9 +201,9 @@ export async function GET() {
       count
     }))
 
-    // 11. Tendência dos últimos 7 dias
-    const last7Days = []
-    for (let i = 6; i >= 0; i--) {
+    // 11. Tendência dos últimos 90 dias
+    const last90Days = []
+    for (let i = 89; i >= 0; i--) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
       const nextDate = new Date(date)
@@ -168,6 +211,7 @@ export async function GET() {
 
       const created = await prisma.ticket.count({
         where: {
+          ...teamWhereClause,
           createdAt: {
             gte: date,
             lt: nextDate
@@ -177,7 +221,8 @@ export async function GET() {
 
       const resolved = await prisma.ticket.count({
         where: {
-          status: 'Concluído',
+          ...teamWhereClause,
+          kanbanStatus: 'done',
           updatedAt: {
             gte: date,
             lt: nextDate
@@ -185,7 +230,7 @@ export async function GET() {
         }
       })
 
-      last7Days.push({
+      last90Days.push({
         date: date.toISOString().split('T')[0],
         created,
         resolved
@@ -195,7 +240,8 @@ export async function GET() {
     // 12. Tempo médio de resolução (aproximado)
     const resolvedTickets = await prisma.ticket.findMany({
       where: {
-        status: 'Concluído',
+        ...teamWhereClause,
+        kanbanStatus: 'done',
         updatedAt: {
           gte: monthAgo
         }
@@ -216,15 +262,27 @@ export async function GET() {
     }
 
     // 13. Avaliações dos TIs (rating médio por responsável)
-    const ratingsData = await prisma.ticket.findMany({
-      where: {
-        rating: {
-          not: null
-        },
-        assignedToId: {
-          not: null
+    const ratingsWhereClause = teamFilter && teamFilter !== 'all'
+      ? {
+          rating: {
+            not: null
+          },
+          assignedToId: {
+            not: null,
+            in: teamUserIds
+          }
         }
-      },
+      : {
+          rating: {
+            not: null
+          },
+          assignedToId: {
+            not: null
+          }
+        }
+
+    const ratingsData = await prisma.ticket.findMany({
+      where: ratingsWhereClause,
       select: {
         assignedToId: true,
         rating: true,
@@ -302,7 +360,7 @@ export async function GET() {
       })),
       ticketsBySector: ticketsBySectorFormatted,
       performanceByAssignee: performanceWithNames,
-      trendLast7Days: last7Days,
+      trendLast90Days: last90Days,
       tiRatings: tiRatings
     }
 

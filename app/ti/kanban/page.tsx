@@ -93,11 +93,11 @@ export default function KanbanPage() {
   }
 
   return (
-    <div className="p-6 h-screen flex flex-col overflow-hidden">
-      <div className="mb-6 flex-shrink-0">
-        <h1 className="text-3xl font-bold">Kanban - Gestão de Tickets</h1>
-        <p className="text-gray-600 mt-2">
-          Visualização automática do fluxo de tickets: Inbox → Em Progresso → Revisão → Concluído
+    <div className="p-8 h-screen flex flex-col overflow-hidden bg-gray-50">
+      <div className="mb-6 shrink-0">
+        <h1 className="text-3xl font-bold text-gray-900">Kanban</h1>
+        <p className="text-gray-500 mt-1 text-sm">
+          Visualização automática do fluxo de tickets
         </p>
       </div>
 

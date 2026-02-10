@@ -95,8 +95,6 @@ export async function POST(
       })
     }
 
-    console.log('📢 Notificação de mensagem enviada:', notified ? 'Sucesso' : 'Falhou')
-
     return NextResponse.json(message, { status: 201 })
   } catch (error) {
     console.error("Erro ao criar mensagem:", error)

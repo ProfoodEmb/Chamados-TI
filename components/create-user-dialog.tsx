@@ -102,7 +102,11 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated }: CreateUs
 
       if (response.ok) {
         console.log('✅ Usuário criado com sucesso:', result)
-        alert(`Usuário ${formData.name} criado com sucesso!`)
+        
+        // Mostrar toast de sucesso
+        if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+          (window as any).showSimpleToast(`✨ Usuário ${formData.name} criado com sucesso!`, 'success')
+        }
         
         // Limpar formulário
         setFormData({

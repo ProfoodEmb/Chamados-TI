@@ -1,31 +1,29 @@
 /* Scrollbar customizada para colunas do Kanban */
 .kanban-column-scroll::-webkit-scrollbar {
-  width: 14px !important;
-  height: 14px !important;
+  width: 8px !important;
+  height: 8px !important;
 }
 
 .kanban-column-scroll::-webkit-scrollbar-track {
-  background: #94a3b8 !important;
+  background: transparent !important;
   border-radius: 8px !important;
-  margin: 8px 0 !important;
 }
 
 .kanban-column-scroll::-webkit-scrollbar-thumb {
-  background: #1e293b !important;
+  background: #cbd5e1 !important;
   border-radius: 8px !important;
-  border: 2px solid #94a3b8 !important;
 }
 
 .kanban-column-scroll::-webkit-scrollbar-thumb:hover {
-  background: #0f172a !important;
+  background: #94a3b8 !important;
 }
 
 .kanban-column-scroll::-webkit-scrollbar-thumb:active {
-  background: #000000 !important;
+  background: #64748b !important;
 }
 
 /* Para Firefox */
 .kanban-column-scroll {
-  scrollbar-width: auto !important;
-  scrollbar-color: #1e293b #94a3b8 !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 transparent !important;
 }

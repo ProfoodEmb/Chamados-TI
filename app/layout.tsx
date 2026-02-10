@@ -5,6 +5,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
+import { SimpleToast } from "@/components/simple-toast"
 import { usePathname } from "next/navigation"
 import "./globals.css"
 
@@ -35,6 +36,7 @@ export default function RootLayout({
             </div>
           </main>
         </div>
+        <SimpleToast />
         <Analytics />
       </body>
     </html>

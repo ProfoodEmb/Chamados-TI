@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { TicketsChart } from "@/components/tickets-chart"
 import { 
   BarChart3, 
   TrendingUp, 
@@ -31,7 +32,7 @@ interface MetricsData {
   ticketsByUrgency: Array<{ urgency: string; count: number }>
   ticketsBySector: Array<{ sector: string; count: number }>
   performanceByAssignee: Array<{ assigneeId: string; assigneeName: string; ticketCount: number }>
-  trendLast7Days: Array<{ date: string; created: number; resolved: number }>
+  trendLast90Days: Array<{ date: string; created: number; resolved: number }>
   tiRatings: Array<{
     tiId: string
     tiName: string
@@ -49,18 +50,25 @@ interface MetricsData {
   }>
 }
 
-export function MetricsDashboard() {
+interface MetricsDashboardProps {
+  teamFilter?: string
+}
+
+export function MetricsDashboard({ teamFilter = "all" }: MetricsDashboardProps) {
   const [metrics, setMetrics] = useState<MetricsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchMetrics()
-  }, [])
+  }, [teamFilter])
 
   const fetchMetrics = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/metrics')
+      const url = teamFilter === "all" 
+        ? '/api/metrics' 
+        : `/api/metrics?team=${teamFilter}`
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setMetrics(data)
@@ -128,6 +136,9 @@ export function MetricsDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Gráfico de Tendência */}
+      <TicketsChart data={metrics.trendLast90Days} />
+
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
@@ -219,7 +230,7 @@ export function MetricsDashboard() {
                           )}
                           <h4 className="font-semibold text-sm">{ti.tiName}</h4>
                         </div>
-                        <Badge variant="outline" className={getTeamColor(ti.team)} size="sm">
+                        <Badge variant="outline" className={`text-xs ${getTeamColor(ti.team)}`}>
                           {ti.team === 'infra' ? 'Infraestrutura' : 'Sistemas'}
                         </Badge>
                       </div>
@@ -434,7 +445,7 @@ export function MetricsDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {metrics.trendLast7Days.map((day) => (
+            {metrics.trendLast90Days.slice(-7).map((day) => (
               <div key={day.date} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="font-medium">
                   {new Date(day.date).toLocaleDateString('pt-BR', { 
