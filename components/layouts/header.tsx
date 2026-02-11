@@ -63,7 +63,7 @@ export function Header() {
     // Não faz nada aqui, espera a seleção da subcategoria
   }
 
-  const handleSelectInfraCategory = (category: "impressora" | "orcamento" | "manutencao" | "wifi" | "outros") => {
+  const handleSelectInfraCategory = (category: "impressora" | "orcamento" | "manutencao" | "wifi" | "servidores" | "ramal" | "outros") => {
     console.log("Categoria de infraestrutura selecionada:", category)
     setShowSectorDialog(false)
     
@@ -73,6 +73,8 @@ export function Header() {
       orcamento: "Orçamento",
       manutencao: "Manutenção",
       wifi: "Rede e conectividade",
+      servidores: "Servidores",
+      ramal: "Ramal",
       outros: "Outro problema",
     }
     
@@ -102,6 +104,7 @@ export function Header() {
       questor: "Questor",
       sankhya: "Sankhya",
       estoque: "Sistema de Estoque",
+      chamados: "Sistema de Chamados",
     }
     
     setSelectedSistema({

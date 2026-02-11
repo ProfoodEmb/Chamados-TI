@@ -63,6 +63,23 @@ const problemasWifi = [
   "Outros",
 ]
 
+const problemasServidores = [
+  "Servidor não responde",
+  "Servidor lento",
+  "Erro de acesso ao servidor",
+  "Problema com compartilhamento de arquivos",
+  "Outros",
+]
+
+const problemasRamal = [
+  "Ramal não funciona",
+  "Sem sinal de telefone",
+  "Não consigo fazer ligações",
+  "Não consigo receber ligações",
+  "Problema com transferência de chamadas",
+  "Outros",
+]
+
 const problemasOutros = [
   "Computador não liga",
   "Computador lento",
@@ -102,6 +119,8 @@ export function InfraFormDialog({
     if (preSelectedCategory === "Orçamento") return problemasOrcamento
     if (preSelectedCategory === "Manutenção") return problemasManutencao
     if (preSelectedCategory === "Rede e conectividade") return problemasWifi
+    if (preSelectedCategory === "Servidores") return problemasServidores
+    if (preSelectedCategory === "Ramal") return problemasRamal
     return problemasOutros
   }
 
@@ -112,6 +131,8 @@ export function InfraFormDialog({
     if (preSelectedCategory === "Orçamento") return "Orçamento"
     if (preSelectedCategory === "Manutenção") return "Manutenção"
     if (preSelectedCategory === "Rede e conectividade") return "Wi-Fi"
+    if (preSelectedCategory === "Servidores") return "Servidores"
+    if (preSelectedCategory === "Ramal") return "Ramal"
     return "Infraestrutura"
   }
 
@@ -139,8 +160,11 @@ export function InfraFormDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Para orçamento e Wi-Fi, não exigir patrimônio
-    const isPatrimonioRequired = preSelectedCategory !== "Orçamento" && preSelectedCategory !== "Rede e conectividade"
+    // Para orçamento, Wi-Fi, Servidores e Ramal, não exigir patrimônio
+    const isPatrimonioRequired = preSelectedCategory !== "Orçamento" && 
+                                  preSelectedCategory !== "Rede e conectividade" &&
+                                  preSelectedCategory !== "Servidores" &&
+                                  preSelectedCategory !== "Ramal"
     
     if (!formData.problema || !formData.descricao || !formData.urgencia || (isPatrimonioRequired && !formData.patrimonio)) {
       return
@@ -256,8 +280,11 @@ export function InfraFormDialog({
               />
             </div>
 
-            {/* Patrimônio da Impressora ou Código do Equipamento - Não mostrar para Orçamento e Wi-Fi */}
-            {preSelectedCategory !== "Orçamento" && preSelectedCategory !== "Rede e conectividade" && (
+            {/* Patrimônio da Impressora ou Código do Equipamento - Não mostrar para Orçamento, Wi-Fi, Servidores e Ramal */}
+            {preSelectedCategory !== "Orçamento" && 
+             preSelectedCategory !== "Rede e conectividade" && 
+             preSelectedCategory !== "Servidores" &&
+             preSelectedCategory !== "Ramal" && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label className="text-base font-semibold text-gray-700">
@@ -508,7 +535,11 @@ export function InfraFormDialog({
                 !formData.problema || 
                 !formData.descricao || 
                 !formData.urgencia ||
-                (preSelectedCategory !== "Orçamento" && preSelectedCategory !== "Rede e conectividade" && !formData.patrimonio)
+                (preSelectedCategory !== "Orçamento" && 
+                 preSelectedCategory !== "Rede e conectividade" && 
+                 preSelectedCategory !== "Servidores" &&
+                 preSelectedCategory !== "Ramal" && 
+                 !formData.patrimonio)
               }
               className="h-11 px-6 bg-blue-600 hover:bg-blue-700"
             >

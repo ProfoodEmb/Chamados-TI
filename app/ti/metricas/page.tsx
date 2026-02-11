@@ -13,6 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface User {
   id: string
@@ -29,6 +37,8 @@ export default function MetricasPage() {
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [teamFilter, setTeamFilter] = useState<string>("all")
+  const [periodDialogOpen, setPeriodDialogOpen] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("90d")
 
   useEffect(() => {
     const init = async () => {
@@ -50,11 +60,14 @@ export default function MetricasPage() {
           setUser(session.user)
           setIsAuthorized(true)
           
-          // Auto-definir filtro de equipe para lider_sistemas
+          // Definir filtro padrão baseado no papel do usuário
+          // Mas permitir que vejam outros setores
           if (userRole === "lider_sistemas") {
             setTeamFilter("sistemas")
           } else if (userRole === "lider_infra") {
             setTeamFilter("infra")
+          } else if (userRole === "admin") {
+            setTeamFilter("all")
           }
         }
       } catch (error) {
@@ -75,6 +88,25 @@ export default function MetricasPage() {
   const handleExport = () => {
     // TODO: Implementar exportação de relatório
     alert("Funcionalidade de exportação será implementada em breve!")
+  }
+
+  const handlePeriodChange = (period: string) => {
+    setSelectedPeriod(period)
+    setPeriodDialogOpen(false)
+    setRefreshKey(prev => prev + 1)
+  }
+
+  const getPeriodLabel = () => {
+    switch (selectedPeriod) {
+      case "7d":
+        return "Últimos 7 dias"
+      case "30d":
+        return "Últimos 30 dias"
+      case "90d":
+        return "Últimos 3 meses"
+      default:
+        return "Últimos 3 meses"
+    }
   }
 
   if (isLoading) {
@@ -110,16 +142,16 @@ export default function MetricasPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  {/* Mostrar filtro de equipe apenas para admin */}
-                  {user.role === "admin" && (
+                  {/* Filtro de equipe para líderes e admin */}
+                  {(user.role === "admin" || user.role === "lider_infra" || user.role === "lider_sistemas") && (
                     <Select value={teamFilter} onValueChange={setTeamFilter}>
-                      <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Filtrar por equipe" />
+                      <SelectTrigger className="w-70">
+                        <SelectValue placeholder="Filtrar por setor" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos os Departamentos</SelectItem>
-                        <SelectItem value="infra">Departamento de Infraestrutura</SelectItem>
-                        <SelectItem value="sistemas">Departamento de Sistemas</SelectItem>
+                        <SelectItem value="all">Todos os Setores</SelectItem>
+                        <SelectItem value="infra">Infraestrutura</SelectItem>
+                        <SelectItem value="sistemas">Sistemas</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -147,20 +179,63 @@ export default function MetricasPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
+                    onClick={() => setPeriodDialogOpen(true)}
                     className="gap-2"
                   >
                     <Calendar className="w-4 h-4" />
-                    Período
+                    {getPeriodLabel()}
                   </Button>
                 </div>
               </div>
             </div>
 
             {/* Dashboard de Métricas */}
-            <MetricsDashboard key={refreshKey} teamFilter={teamFilter} />
+            <MetricsDashboard key={refreshKey} teamFilter={teamFilter} period={selectedPeriod} />
           </div>
         </main>
       </div>
+
+      {/* Dialog de Período */}
+      <Dialog open={periodDialogOpen} onOpenChange={setPeriodDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Selecionar Período</DialogTitle>
+            <DialogDescription>
+              Escolha o período para visualizar as métricas
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-3 py-4">
+            <Button
+              variant={selectedPeriod === "7d" ? "default" : "outline"}
+              onClick={() => handlePeriodChange("7d")}
+              className="justify-start"
+            >
+              Últimos 7 dias
+            </Button>
+            <Button
+              variant={selectedPeriod === "30d" ? "default" : "outline"}
+              onClick={() => handlePeriodChange("30d")}
+              className="justify-start"
+            >
+              Últimos 30 dias
+            </Button>
+            <Button
+              variant={selectedPeriod === "90d" ? "default" : "outline"}
+              onClick={() => handlePeriodChange("90d")}
+              className="justify-start"
+            >
+              Últimos 3 meses
+            </Button>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPeriodDialogOpen(false)}>
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

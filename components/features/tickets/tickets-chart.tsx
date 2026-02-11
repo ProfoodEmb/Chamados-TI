@@ -55,8 +55,6 @@ export function TicketsChart({ data }: TicketsChartProps) {
       daysToSubtract = 30
     } else if (timeRange === "7d") {
       daysToSubtract = 7
-    } else if (timeRange === "1d") {
-      daysToSubtract = 1
     }
 
     const startDate = new Date(referenceDate)
@@ -93,9 +91,6 @@ export function TicketsChart({ data }: TicketsChartProps) {
             </SelectItem>
             <SelectItem value="7d" className="rounded-lg">
               Últimos 7 dias
-            </SelectItem>
-            <SelectItem value="1d" className="rounded-lg">
-              Último dia
             </SelectItem>
           </SelectContent>
         </Select>

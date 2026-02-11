@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
 import { notifyTicketUpdate, ensureSocketIO } from "@/lib/api/socket-server"
 import { notifyTicketCreated } from "@/lib/api/webhook-notifications"
+import { notifyTicketCreatedWhatsApp } from "@/lib/api/whatsapp-notifications"
 
 // GET - Listar chamados
 export async function GET(request: NextRequest) {
@@ -186,11 +187,12 @@ export async function POST(request: NextRequest) {
       ticketNumber = String(lastNumber + 1).padStart(6, '0')
     }
 
-    // Auto-atribuição: Tickets de Sistemas + Automação vão para Jackson
+    // Auto-atribuição de tickets
     let assignedToId = null
     
-    // Regra 1: Automação de Sistemas → Jackson
-    if (team === 'sistemas' && category === 'Automação') {
+    // Regra 1: Automação → Jackson (Dog King, Ploomes, The Best Açaí)
+    if ((team === 'sistemas' && category === 'Automação') || 
+        (team === 'sistemas' && service && ['Dog King', 'Ploomes', 'The Best Açaí'].includes(service))) {
       const jackson = await prisma.user.findFirst({
         where: { username: 'lider_infra' },
         select: { id: true }
@@ -202,7 +204,7 @@ export async function POST(request: NextRequest) {
       }
     }
     // Regra 2: eCalc → Rafael
-    else if (service === 'eCalc' || category === 'eCalc') {
+    else if (service === 'Ecalc' || service === 'eCalc' || category === 'eCalc') {
       const rafael = await prisma.user.findFirst({
         where: { username: 'rafael.silva' },
         select: { id: true }
@@ -225,18 +227,7 @@ export async function POST(request: NextRequest) {
         console.log('🤖 [Auto-atribuição] Ticket de Questor → Rafael')
       }
     }
-    // Regra 4: Qualquer outro ticket de Sistemas → Rafael
-    else if (team === 'sistemas') {
-      const rafael = await prisma.user.findFirst({
-        where: { username: 'rafael.silva' },
-        select: { id: true }
-      })
-      
-      if (rafael) {
-        assignedToId = rafael.id
-        console.log('🤖 [Auto-atribuição] Ticket de Sistemas → Rafael')
-      }
-    }
+    // Demais tickets de Sistemas ficam sem atribuição automática
 
     // Criar chamado
     const ticket = await prisma.ticket.create({
@@ -297,14 +288,25 @@ export async function POST(request: NextRequest) {
 
     console.log('📢 Notificação Socket.IO enviada:', notified ? 'Sucesso' : 'Falhou')
 
-    // Enviar notificação via webhook (Discord, Slack, etc)
-    try {
-      await notifyTicketCreated(ticket as any)
-    } catch (webhookError) {
-      console.error('⚠️  Erro ao enviar webhook (não crítico):', webhookError)
-      // Não falhar a criação do ticket se o webhook falhar
-    }
+    // Enviar notificações de forma assíncrona (não bloquear a resposta)
+    // Isso garante que o ticket seja criado rapidamente
+    Promise.allSettled([
+      notifyTicketCreated(ticket as any),
+      notifyTicketCreatedWhatsApp(ticket as any)
+    ]).then(results => {
+      results.forEach((result, index) => {
+        const type = index === 0 ? 'Webhook' : 'WhatsApp'
+        if (result.status === 'rejected') {
+          console.error(`⚠️  Erro ao enviar ${type}:`, result.reason)
+        } else {
+          console.log(`✅ ${type} enviado com sucesso`)
+        }
+      })
+    }).catch(error => {
+      console.error('⚠️  Erro inesperado nas notificações:', error)
+    })
 
+    // Retornar imediatamente sem esperar as notificações
     return NextResponse.json(ticket, { status: 201 })
   } catch (error) {
     console.error("Erro ao criar chamado:", error)

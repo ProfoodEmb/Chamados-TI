@@ -52,22 +52,34 @@ interface MetricsData {
 
 interface MetricsDashboardProps {
   teamFilter?: string
+  period?: string
 }
 
-export function MetricsDashboard({ teamFilter = "all" }: MetricsDashboardProps) {
+export function MetricsDashboard({ teamFilter = "all", period = "90d" }: MetricsDashboardProps) {
   const [metrics, setMetrics] = useState<MetricsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchMetrics()
-  }, [teamFilter])
+  }, [teamFilter, period])
 
   const fetchMetrics = async () => {
     try {
       setIsLoading(true)
-      const url = teamFilter === "all" 
-        ? '/api/metrics' 
-        : `/api/metrics?team=${teamFilter}`
+      let url = '/api/metrics'
+      const params = new URLSearchParams()
+      
+      if (teamFilter !== "all") {
+        params.append('team', teamFilter)
+      }
+      if (period) {
+        params.append('period', period)
+      }
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`
+      }
+      
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()

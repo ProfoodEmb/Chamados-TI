@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Server, Monitor, Bot, FileText, Printer, DollarSign, Wrench, Wifi } from "lucide-react"
+import { Server, Monitor, Bot, FileText, Printer, DollarSign, Wrench, Wifi, Database, Phone } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +20,7 @@ const sistemas = [
   { id: "questor", nome: "Questor", logo: "/sistemas/questor.png" },
   { id: "sankhya", nome: "Sankhya", logo: "/sistemas/sankhya.png" },
   { id: "estoque", nome: "Sistema de Estoque", logo: "/sistemas/estoque.png" },
+  { id: "chamados", nome: "Sistema de Chamados", logo: "/sistemas/chamados.svg" },
 ]
 
 const automacoes = [
@@ -32,7 +33,7 @@ interface SelectSectorDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelectSector: (sector: "infra" | "sistemas") => void
-  onSelectInfraCategory?: (category: "impressora" | "orcamento" | "manutencao" | "wifi" | "outros") => void
+  onSelectInfraCategory?: (category: "impressora" | "orcamento" | "manutencao" | "wifi" | "servidores" | "ramal" | "outros") => void
   onSelectSistemasCategory?: (category: "sistemas" | "automacao" | "relatorios") => void
   onSelectSistema?: (sistemaId: string) => void
   onSelectAutomacao?: (automacaoId: string) => void
@@ -64,7 +65,7 @@ export function SelectSectorDialog({
     setShowInfraCategories(false)
   }
 
-  const handleInfraCategoryClick = (category: "impressora" | "orcamento" | "manutencao" | "wifi" | "outros") => {
+  const handleInfraCategoryClick = (category: "impressora" | "orcamento" | "manutencao" | "wifi" | "servidores" | "ramal" | "outros") => {
     onSelectInfraCategory?.(category)
     setShowInfraCategories(false)
   }
@@ -184,7 +185,7 @@ export function SelectSectorDialog({
               <div className="flex items-center gap-2 border-l-4 border-blue-500 pl-4">
                 <h4 className="text-lg font-semibold text-gray-700">Subcategorias de Infraestrutura</h4>
               </div>
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <button
                   className="p-6 rounded-2xl border-2 border-gray-200 bg-white hover:border-blue-300 hover:shadow-md transition-all"
                   onClick={() => handleInfraCategoryClick("impressora")}
@@ -241,6 +242,36 @@ export function SelectSectorDialog({
                     <div className="text-center">
                       <h5 className="font-semibold text-sm text-gray-900">Wi-Fi</h5>
                       <p className="text-xs text-gray-500 mt-1 leading-tight">Problemas de<br />conexão</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  className="p-6 rounded-2xl border-2 border-gray-200 bg-white hover:border-blue-300 hover:shadow-md transition-all"
+                  onClick={() => handleInfraCategoryClick("servidores")}
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <Database className="w-8 h-8 text-gray-600" />
+                    </div>
+                    <div className="text-center">
+                      <h5 className="font-semibold text-sm text-gray-900">Servidores</h5>
+                      <p className="text-xs text-gray-500 mt-1 leading-tight">Problemas com<br />servidores</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  className="p-6 rounded-2xl border-2 border-gray-200 bg-white hover:border-blue-300 hover:shadow-md transition-all"
+                  onClick={() => handleInfraCategoryClick("ramal")}
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center">
+                      <Phone className="w-8 h-8 text-gray-600" />
+                    </div>
+                    <div className="text-center">
+                      <h5 className="font-semibold text-sm text-gray-900">Ramal</h5>
+                      <p className="text-xs text-gray-500 mt-1 leading-tight">Problemas com<br />telefonia</p>
                     </div>
                   </div>
                 </button>

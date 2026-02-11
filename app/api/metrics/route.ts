@@ -5,9 +5,10 @@ export async function GET(request: Request) {
   try {
     console.log('📊 [API Metrics] Buscando métricas...')
 
-    // Pegar o filtro de equipe da query string
+    // Pegar os filtros da query string
     const { searchParams } = new URL(request.url)
     const teamFilter = searchParams.get('team')
+    const periodFilter = searchParams.get('period') || '90d'
 
     // Criar filtro base para equipe
     const teamWhereClause = teamFilter && teamFilter !== 'all' 
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
       : {}
 
     console.log('📊 [API Metrics] Filtro de equipe:', teamFilter || 'all')
+    console.log('📊 [API Metrics] Período:', periodFilter)
 
     // Buscar IDs dos usuários do time específico (para filtrar avaliações e performance)
     let teamUserIds: string[] = []
@@ -27,13 +29,23 @@ export async function GET(request: Request) {
       console.log('📊 [API Metrics] Usuários do time:', teamFilter, teamUsers.map(u => u.name))
     }
 
-    // Datas para cálculos
+    // Datas para cálculos baseadas no período
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekAgo = new Date(today)
     weekAgo.setDate(weekAgo.getDate() - 7)
     const monthAgo = new Date(today)
     monthAgo.setMonth(monthAgo.getMonth() - 1)
+    
+    // Calcular data de início baseada no período
+    const periodStartDate = new Date(today)
+    if (periodFilter === '7d') {
+      periodStartDate.setDate(periodStartDate.getDate() - 7)
+    } else if (periodFilter === '30d') {
+      periodStartDate.setDate(periodStartDate.getDate() - 30)
+    } else {
+      periodStartDate.setDate(periodStartDate.getDate() - 90)
+    }
 
     // 1. Tickets por status
     const ticketsByStatus = await prisma.ticket.groupBy({
@@ -201,9 +213,11 @@ export async function GET(request: Request) {
       count
     }))
 
-    // 11. Tendência dos últimos 90 dias
-    const last90Days = []
-    for (let i = 89; i >= 0; i--) {
+    // 11. Tendência baseada no período selecionado
+    const periodDays = periodFilter === '7d' ? 7 : periodFilter === '30d' ? 30 : 90
+    const trendData = []
+    
+    for (let i = periodDays - 1; i >= 0; i--) {
       const date = new Date(today)
       date.setDate(date.getDate() - i)
       const nextDate = new Date(date)
@@ -230,7 +244,7 @@ export async function GET(request: Request) {
         }
       })
 
-      last90Days.push({
+      trendData.push({
         date: date.toISOString().split('T')[0],
         created,
         resolved
@@ -360,7 +374,7 @@ export async function GET(request: Request) {
       })),
       ticketsBySector: ticketsBySectorFormatted,
       performanceByAssignee: performanceWithNames,
-      trendLast90Days: last90Days,
+      trendLast90Days: trendData,
       tiRatings: tiRatings
     }
 

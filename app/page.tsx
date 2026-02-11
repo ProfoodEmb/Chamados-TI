@@ -134,14 +134,6 @@ export default function Home() {
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Olá, {user?.name?.split(" ")[0] || "Usuário"}! 👋
             </h1>
-            <p className="text-lg text-gray-600">
-              Bem-vindo ao sistema de chamados
-              {user?.empresa && (
-                <span className={`font-semibold ml-2 ${getEmpresaColor(user.empresa)}`}>
-                  {user.empresa.charAt(0).toUpperCase() + user.empresa.slice(1)}
-                </span>
-              )}
-            </p>
           </div>
           <Button 
             size="lg" 

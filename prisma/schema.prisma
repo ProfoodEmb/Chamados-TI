@@ -46,6 +46,7 @@ model User {
   team          String    // admin, infra, sistemas
   setor         String?   // Setor da pessoa (ex: Financeiro, RH, Vendas, etc.)
   empresa       String?   // profood ou tuicial
+  phone         String?   // Telefone para notificações WhatsApp (ex: 11999999999)
   status        String    @default("ativo") // ativo, suspenso, inativo
 
   // Relações Better Auth
