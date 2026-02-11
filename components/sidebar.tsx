@@ -86,12 +86,21 @@ export function Sidebar() {
         })
       }
 
-      // Adicionar "Usuários" apenas para lider_infra
-      if (user.role === "lider_infra") {
+      // Adicionar "Usuários" para lider_infra e admin
+      if (user.role === "lider_infra" || user.role === "admin") {
         baseItems.push({
           icon: Users,
           href: "/ti/usuarios",
           label: "Usuários",
+        })
+      }
+
+      // Adicionar "Equipe" para lider_sistemas
+      if (user.role === "lider_sistemas") {
+        baseItems.push({
+          icon: Users,
+          href: "/ti/equipe",
+          label: "Equipe",
         })
       }
 
@@ -163,17 +172,6 @@ export function Sidebar() {
           )
         })}
       </nav>
-
-      {/* Settings at bottom */}
-      <div className="mt-auto">
-        <Link
-          href="/settings"
-          className="w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors"
-          title="Configurações"
-        >
-          <Settings className="w-5 h-5" />
-        </Link>
-      </div>
     </aside>
   )
 }

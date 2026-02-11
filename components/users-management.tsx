@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { CreateUserDialog } from "./create-user-dialog"
 import { ConfirmDialog } from "./confirm-dialog"
+import { EditUserDialog } from "./edit-user-dialog"
 
 interface User {
   id: string
@@ -46,6 +47,10 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
     userId: "",
     userName: ""
   })
+  const [editDialog, setEditDialog] = useState<{ open: boolean; user: User | null }>({
+    open: false,
+    user: null
+  })
 
   // Carregar usuários
   const fetchUsers = async () => {
@@ -53,6 +58,11 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       const params = new URLSearchParams()
       if (statusFilter !== "todos") params.append("status", statusFilter)
       if (searchTerm) params.append("search", searchTerm)
+      
+      // Se for líder de sistemas, filtrar apenas usuários da equipe de sistemas
+      if (currentUser.role === "lider_sistemas") {
+        params.append("team", "sistemas")
+      }
 
       const response = await fetch(`/api/users?${params.toString()}`)
       const data = await response.json()
@@ -279,6 +289,14 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => setEditDialog({ open: true, user })}
+                            className="text-blue-600"
+                          >
+                            <Shield className="w-4 h-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+
                           {user.status === "ativo" ? (
                             <DropdownMenuItem
                               onClick={() => updateUserStatus(user.id, "suspenso")}
@@ -342,6 +360,14 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
         cancelText="Cancelar"
         variant="destructive"
         onConfirm={confirmDelete}
+      />
+
+      {/* Dialog de Edição de Usuário */}
+      <EditUserDialog
+        open={editDialog.open}
+        onOpenChange={(open) => setEditDialog({ ...editDialog, open })}
+        user={editDialog.user}
+        onUserUpdated={fetchUsers}
       />
     </div>
   )

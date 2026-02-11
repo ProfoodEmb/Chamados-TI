@@ -16,8 +16,8 @@ export default function UsuariosPage() {
         if (session?.user) {
           setUser(session.user)
           
-          // Verificar se é líder de infraestrutura
-          if (session.user.role !== "lider_infra") {
+          // Verificar se é líder de infraestrutura ou admin
+          if (session.user.role !== "lider_infra" && session.user.role !== "admin") {
             window.location.href = "/ti"
             return
           }
@@ -47,7 +47,7 @@ export default function UsuariosPage() {
     )
   }
 
-  if (!user || user.role !== "lider_infra") {
+  if (!user || (user.role !== "lider_infra" && user.role !== "admin")) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

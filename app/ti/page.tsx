@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
 import { useSimplePolling } from "@/lib/use-simple-polling"
 import { AssignTicketDialog } from "@/components/assign-ticket-dialog"
+import { NoticeBoard } from "@/components/notice-board"
 
 interface User {
   id: string
@@ -93,7 +94,15 @@ export default function TIPage() {
   // Função para buscar tickets
   const fetchTickets = async () => {
     try {
-      const ticketsResponse = await fetch("/api/tickets")
+      // Se for líder de sistemas, filtrar apenas tickets da equipe de sistemas
+      const params = new URLSearchParams()
+      if (user?.role === "lider_sistemas") {
+        params.append("team", "sistemas")
+      }
+      
+      const url = `/api/tickets${params.toString() ? `?${params.toString()}` : ''}`
+      const ticketsResponse = await fetch(url)
+      
       if (ticketsResponse.ok) {
         const ticketsData = await ticketsResponse.json()
         setTickets(ticketsData)
@@ -254,6 +263,11 @@ export default function TIPage() {
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* Bloco de Avisos */}
+            <div className="mb-6">
+              <NoticeBoard />
             </div>
 
             {/* Cards de Estatísticas */}

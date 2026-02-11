@@ -49,6 +49,13 @@ export default function MetricasPage() {
           
           setUser(session.user)
           setIsAuthorized(true)
+          
+          // Auto-definir filtro de equipe para lider_sistemas
+          if (userRole === "lider_sistemas") {
+            setTeamFilter("sistemas")
+          } else if (userRole === "lider_infra") {
+            setTeamFilter("infra")
+          }
         }
       } catch (error) {
         console.error("Erro ao inicializar:", error)
@@ -103,16 +110,19 @@ export default function MetricasPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Select value={teamFilter} onValueChange={setTeamFilter}>
-                    <SelectTrigger className="w-[280px]">
-                      <SelectValue placeholder="Filtrar por equipe" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os Departamentos</SelectItem>
-                      <SelectItem value="infra">Departamento de Infraestrutura</SelectItem>
-                      <SelectItem value="sistemas">Departamento de Sistemas</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {/* Mostrar filtro de equipe apenas para admin */}
+                  {user.role === "admin" && (
+                    <Select value={teamFilter} onValueChange={setTeamFilter}>
+                      <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Filtrar por equipe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Departamentos</SelectItem>
+                        <SelectItem value="infra">Departamento de Infraestrutura</SelectItem>
+                        <SelectItem value="sistemas">Departamento de Sistemas</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
 
                   <Button 
                     variant="outline" 

@@ -22,6 +22,7 @@ interface Ticket {
     name: string;
     image: string | null;
     setor: string | null;
+    empresa: string | null;
   };
   assignedTo: {
     id: string;
@@ -56,7 +57,19 @@ export default function KanbanPage() {
 
   const fetchTickets = async () => {
     try {
-      const response = await fetch("/api/tickets");
+      // Buscar sessão para verificar o role do usuário
+      const sessionResponse = await fetch("/api/auth/get-session")
+      const session = await sessionResponse.json()
+      
+      // Se for líder de sistemas, filtrar apenas tickets da equipe de sistemas
+      const params = new URLSearchParams()
+      if (session?.user?.role === "lider_sistemas") {
+        params.append("team", "sistemas")
+      }
+      
+      const url = `/api/tickets${params.toString() ? `?${params.toString()}` : ''}`
+      const response = await fetch(url)
+      
       if (response.ok) {
         const data = await response.json();
         setTickets(data);

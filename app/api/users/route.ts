@@ -13,21 +13,20 @@ export async function GET(request: NextRequest) {
       headers: await headers()
     })
 
-    console.log('👤 [API Users] Sessão:', session?.user ? { id: session.user.id, role: session.user.role } : 'Não autenticado')
+    console.log('👤 [API Users] Sessão:', session?.user ? { 
+      id: session.user.id, 
+      role: session.user.role,
+      team: session.user.team,
+      name: session.user.name 
+    } : 'Não autenticado')
 
     if (!session?.user) {
       console.log('❌ [API Users] Usuário não autenticado')
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é usuário de TI (para listagem básica no Kanban)
-    const isITUser = session.user.role === "admin" || 
-                     session.user.role === "lider_infra" || 
-                     session.user.role === "func_infra" || 
-                     session.user.role === "lider_sistemas" || 
-                     session.user.role === "func_sistemas"
-
-    if (!isITUser) {
+    // Verificar se é líder de infraestrutura, líder de sistemas ou admin
+    if (session.user.role !== "lider_infra" && session.user.role !== "lider_sistemas" && session.user.role !== "admin") {
       console.log('❌ [API Users] Acesso negado. Role:', session.user.role)
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
@@ -110,10 +109,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é líder de infraestrutura
-    if (session.user.role !== "lider_infra") {
+    // Verificar se é líder de infraestrutura ou admin
+    if (session.user.role !== "lider_infra" && session.user.role !== "admin") {
       console.log('❌ Acesso negado. Role atual:', session.user.role)
-      return NextResponse.json({ error: "Acesso negado. Apenas líderes de infraestrutura podem criar usuários." }, { status: 403 })
+      return NextResponse.json({ error: "Acesso negado. Apenas líderes de infraestrutura e admins podem criar usuários." }, { status: 403 })
     }
 
     const body = await request.json()

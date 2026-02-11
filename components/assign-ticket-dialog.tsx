@@ -61,21 +61,28 @@ export function AssignTicketDialog({
   const fetchTeamMembers = async () => {
     setIsLoadingMembers(true)
     try {
+      console.log('🔍 [AssignDialog] Buscando membros da equipe:', currentUser.team)
+      console.log('🔍 [AssignDialog] URL:', `/api/users?team=${currentUser.team}`)
+      
       // Buscar usuários da mesma equipe
       const response = await fetch(`/api/users?team=${currentUser.team}`)
       const data = await response.json()
+
+      console.log('📦 [AssignDialog] Resposta da API:', data)
+      console.log('📦 [AssignDialog] Status:', response.status)
 
       if (response.ok) {
         // Incluir todos os membros da equipe, incluindo líderes
         const members = data.users.filter((user: User) => 
           user.team === currentUser.team
         )
+        console.log('✅ [AssignDialog] Membros filtrados:', members)
         setTeamMembers(members)
       } else {
-        console.error("Erro ao carregar membros da equipe:", data.error)
+        console.error("❌ [AssignDialog] Erro ao carregar membros da equipe:", data.error)
       }
     } catch (error) {
-      console.error("Erro ao carregar membros da equipe:", error)
+      console.error("❌ [AssignDialog] Erro ao carregar membros da equipe:", error)
     } finally {
       setIsLoadingMembers(false)
     }

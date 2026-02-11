@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { notifyTicketUpdate, ensureSocketIO } from "@/lib/socket-server"
+import { notifyTicketCreated } from "@/lib/webhook-notifications"
 
 // GET - Listar chamados
 export async function GET(request: NextRequest) {
@@ -20,12 +21,18 @@ export async function GET(request: NextRequest) {
     const userRole = session.user.role || "user"
     const userTeam = session.user.team || null
 
+    // Pegar filtro de equipe da query string (para casos específicos)
+    const { searchParams } = new URL(request.url)
+    const teamFilter = searchParams.get('team')
+
     // Buscar chamados baseado no role
     let tickets
     
     if (userRole === "admin") {
-      // Admin vê todos
+      // Admin vê todos (ou filtrado por query param)
+      const whereClause = teamFilter ? { team: teamFilter } : {}
       tickets = await prisma.ticket.findMany({
+        where: whereClause,
         include: {
           requester: {
             select: {
@@ -57,11 +64,12 @@ export async function GET(request: NextRequest) {
         }
       })
     } else if (userRole.includes("lider") || userRole.includes("func")) {
-      // Equipe T.I. vê chamados da sua equipe
+      // Equipe T.I. vê chamados da sua equipe (ou filtrado por query param se for admin)
+      const teamToFilter = teamFilter || userTeam
       tickets = await prisma.ticket.findMany({
-        where: userTeam ? {
+        where: teamToFilter ? {
           OR: [
-            { team: userTeam },
+            { team: teamToFilter },
             { assignedToId: userId }
           ]
         } : {
@@ -178,6 +186,58 @@ export async function POST(request: NextRequest) {
       ticketNumber = String(lastNumber + 1).padStart(6, '0')
     }
 
+    // Auto-atribuição: Tickets de Sistemas + Automação vão para Jackson
+    let assignedToId = null
+    
+    // Regra 1: Automação de Sistemas → Jackson
+    if (team === 'sistemas' && category === 'Automação') {
+      const jackson = await prisma.user.findFirst({
+        where: { username: 'lider_infra' },
+        select: { id: true }
+      })
+      
+      if (jackson) {
+        assignedToId = jackson.id
+        console.log('🤖 [Auto-atribuição] Ticket de Automação → Jackson')
+      }
+    }
+    // Regra 2: eCalc → Rafael
+    else if (service === 'eCalc' || category === 'eCalc') {
+      const rafael = await prisma.user.findFirst({
+        where: { username: 'rafael.silva' },
+        select: { id: true }
+      })
+      
+      if (rafael) {
+        assignedToId = rafael.id
+        console.log('🤖 [Auto-atribuição] Ticket de eCalc → Rafael')
+      }
+    }
+    // Regra 3: Questor → Rafael
+    else if (service === 'Questor' || category === 'Questor') {
+      const rafael = await prisma.user.findFirst({
+        where: { username: 'rafael.silva' },
+        select: { id: true }
+      })
+      
+      if (rafael) {
+        assignedToId = rafael.id
+        console.log('🤖 [Auto-atribuição] Ticket de Questor → Rafael')
+      }
+    }
+    // Regra 4: Qualquer outro ticket de Sistemas → Rafael
+    else if (team === 'sistemas') {
+      const rafael = await prisma.user.findFirst({
+        where: { username: 'rafael.silva' },
+        select: { id: true }
+      })
+      
+      if (rafael) {
+        assignedToId = rafael.id
+        console.log('🤖 [Auto-atribuição] Ticket de Sistemas → Rafael')
+      }
+    }
+
     // Criar chamado
     const ticket = await prisma.ticket.create({
       data: {
@@ -192,6 +252,7 @@ export async function POST(request: NextRequest) {
         anydesk: anydesk || null,
         team: team || null,
         requesterId: session.user.id,
+        assignedToId: assignedToId,
       },
       include: {
         requester: {
@@ -202,6 +263,14 @@ export async function POST(request: NextRequest) {
             image: true,
             setor: true,
             empresa: true,
+          }
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
           }
         }
       }
@@ -226,7 +295,15 @@ export async function POST(request: NextRequest) {
       ticket: ticket
     })
 
-    console.log('📢 Notificação enviada:', notified ? 'Sucesso' : 'Falhou')
+    console.log('📢 Notificação Socket.IO enviada:', notified ? 'Sucesso' : 'Falhou')
+
+    // Enviar notificação via webhook (Discord, Slack, etc)
+    try {
+      await notifyTicketCreated(ticket as any)
+    } catch (webhookError) {
+      console.error('⚠️  Erro ao enviar webhook (não crítico):', webhookError)
+      // Não falhar a criação do ticket se o webhook falhar
+    }
 
     return NextResponse.json(ticket, { status: 201 })
   } catch (error) {
