@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db/prisma"
+import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate, ensureSocketIO } from "@/lib/socket-server"
+import { notifyTicketUpdate, ensureSocketIO } from "@/lib/api/socket-server"
 
 // GET - Buscar chamado específico
 export async function GET(

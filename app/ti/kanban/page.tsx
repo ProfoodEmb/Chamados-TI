@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { KanbanBoard } from "@/components/kanban-board";
+import { KanbanBoard } from "@/components/features/kanban/kanban-board";
 import { useSimpleRealtime } from "@/lib/use-simple-realtime";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth/auth-client";
 import "./kanban.css";
 
 interface Ticket {

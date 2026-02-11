@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { TicketsFilters } from "@/components/tickets-filters"
-import { TicketsTable } from "@/components/tickets-table"
+import { TicketsFilters } from "@/components/features/tickets/tickets-filters"
+import { TicketsTable } from "@/components/features/tickets/tickets-table"
 import type { FilterType } from "@/lib/mock-tickets"
 
 export default function TicketsPage() {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { prisma } from "@/lib/db/prisma"
 
 // GET - Listar apenas usuários de TI (para filtros do Kanban)
 export async function GET() {

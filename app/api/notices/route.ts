@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db/prisma"
+import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
 
 // GET - Listar avisos ativos (considerando programação e expiração)

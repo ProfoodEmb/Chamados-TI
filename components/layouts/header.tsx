@@ -12,11 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SelectSectorDialog } from "@/components/select-sector-dialog"
-import { TicketFormDialog, type TicketFormData } from "@/components/ticket-form-dialog"
-import { RelatorioFormDialog, type RelatorioFormData } from "@/components/relatorio-form-dialog"
-import { InfraFormDialog, type InfraFormData } from "@/components/infra-form-dialog"
-import { UserProfileDialog } from "@/components/user-profile-dialog"
+import { SelectSectorDialog } from "@/components/features/tickets/select-sector-dialog"
+import { TicketFormDialog, type TicketFormData } from "@/components/features/tickets/ticket-form-dialog"
+import { RelatorioFormDialog, type RelatorioFormData } from "@/components/features/tickets/relatorio-form-dialog"
+import { InfraFormDialog, type InfraFormData } from "@/components/features/tickets/infra-form-dialog"
+import { UserProfileDialog } from "@/components/features/users/user-profile-dialog"
 
 interface User {
   id: string
@@ -237,7 +237,7 @@ export function Header() {
 
   const handleLogout = async () => {
     // Usar Better Auth para fazer logout
-    const { signOut } = await import("@/lib/auth-client")
+    const { signOut } = await import("@/lib/auth/auth-client")
     await signOut()
     // Redirecionar para a página de login
     window.location.href = "/login"

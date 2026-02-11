@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
+import { Header } from "@/components/layouts/header"
+import { Sidebar } from "@/components/layouts/sidebar"
 import { Button } from "@/components/ui/button"
-import { MetricsDashboard } from "@/components/metrics-dashboard"
+import { MetricsDashboard } from "@/components/features/metrics/metrics-dashboard"
 import { RefreshCw, Download, Calendar } from "lucide-react"
 import {
   Select,

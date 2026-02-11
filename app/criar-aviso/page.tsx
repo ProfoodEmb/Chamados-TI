@@ -1,15 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
+import { Header } from "@/components/layouts/header"
+import { Sidebar } from "@/components/layouts/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Search, Calendar, Clock, Trash2, Edit, Eye, Filter, Megaphone, Wifi, WifiOff } from "lucide-react"
-import { CreateNoticeDialog } from "@/components/create-notice-dialog"
-import { ConfirmDialog } from "@/components/confirm-dialog"
+import { CreateNoticeDialog } from "@/components/features/notices/create-notice-dialog"
+import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog"
 import { useNoticesPolling } from "@/lib/use-notices-polling"
 
 interface Notice {

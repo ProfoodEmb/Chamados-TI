@@ -1,16 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
+import { Header } from "@/components/layouts/header"
+import { Sidebar } from "@/components/layouts/sidebar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
 import { useSimplePolling } from "@/lib/use-simple-polling"
-import { AssignTicketDialog } from "@/components/assign-ticket-dialog"
-import { NoticeBoard } from "@/components/notice-board"
+import { AssignTicketDialog } from "@/components/features/tickets/assign-ticket-dialog"
+import { NoticeBoard } from "@/components/features/notices/notice-board"
 
 interface User {
   id: string

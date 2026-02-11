@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { prisma } from "@/lib/db/prisma"
+import { auth } from "@/lib/auth/auth"
 
 export async function POST(
   request: NextRequest,
@@ -68,7 +68,7 @@ export async function POST(
     console.log(`🔄 Ticket ${ticket.number} movido para "Revisão" (aguardando aprovação do usuário)`)
 
     // Notificar via Socket.IO
-    const { notifyTicketUpdate, ensureSocketIO } = require('@/lib/socket-server')
+    const { notifyTicketUpdate, ensureSocketIO } = require('@/lib/api/socket-server')
     ensureSocketIO()
     notifyTicketUpdate({
       type: 'ticket_updated',

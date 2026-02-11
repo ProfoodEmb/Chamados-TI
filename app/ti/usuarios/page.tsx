@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { UsersManagement } from "@/components/users-management"
+import { UsersManagement } from "@/components/features/users/users-management"
 
 export default function UsuariosPage() {
   const [user, setUser] = useState<any>(null)

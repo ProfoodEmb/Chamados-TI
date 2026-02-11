@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CreateUserDialog } from "./create-user-dialog"
-import { ConfirmDialog } from "./confirm-dialog"
+import { ConfirmDialog } from "../../shared/dialogs/confirm-dialog"
 import { EditUserDialog } from "./edit-user-dialog"
 
 interface User {

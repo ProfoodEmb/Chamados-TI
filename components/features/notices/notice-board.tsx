@@ -4,9 +4,9 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Megaphone, Info, AlertTriangle, Wrench, Sparkles, Trash2, Calendar, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { ConfirmDialog } from "@/components/confirm-dialog"
+import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog"
 import { useNoticesPolling } from "@/lib/use-notices-polling"
-import { NoticeToast } from "@/components/notice-toast"
+import { NoticeToast } from "@/components/shared/toasts/notice-toast"
 
 interface Notice {
   id: string

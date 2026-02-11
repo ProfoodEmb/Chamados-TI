@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TicketsChart } from "@/components/tickets-chart"
+import { TicketsChart } from "@/components/features/tickets/tickets-chart"
 import { 
   BarChart3, 
   TrendingUp, 

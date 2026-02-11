@@ -5,7 +5,7 @@ import { Eye, EyeOff, Lock, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn } from "@/lib/auth-client"
+import { signIn } from "@/lib/auth/auth-client"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {

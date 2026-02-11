@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/db/prisma'
 
 // Store para manter as conexões ativas
 const connections = new Set<ReadableStreamDefaultController>()

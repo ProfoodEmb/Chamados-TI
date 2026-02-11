@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
-import { UsersManagement } from "@/components/users-management"
+import { Header } from "@/components/layouts/header"
+import { Sidebar } from "@/components/layouts/sidebar"
+import { UsersManagement } from "@/components/features/users/users-management"
 
 interface User {
   id: string

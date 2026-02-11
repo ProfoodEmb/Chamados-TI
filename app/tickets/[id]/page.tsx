@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { TicketDetail } from "@/components/ticket-detail"
+import { TicketDetail } from "@/components/features/tickets/ticket-detail"
 import { useTicketPolling } from "@/lib/use-ticket-polling"
 import { Wifi, WifiOff, Clock } from "lucide-react"
 

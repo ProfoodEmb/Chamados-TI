@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { TicketFeedbackDialog } from "@/components/ticket-feedback-dialog"
+import { TicketFeedbackDialog } from "@/components/features/tickets/ticket-feedback-dialog"
 
 interface Attachment {
   id: string

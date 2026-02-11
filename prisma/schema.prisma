@@ -15,8 +15,8 @@ model Notice {
   id            String    @id @default(cuid())
   title         String
   content       String
-  type          String    // "info", "warning", "maintenance", "update"
-  priority      String    // "low", "medium", "high", "critical"
+  type          String    
+  priority      String    
   level         String    @default("general") // "general", "urgent", "critical_system"
   targetSectors String?   // JSON array of sectors, null = all sectors
   scheduledFor  DateTime? // When to publish the notice, null = immediate
