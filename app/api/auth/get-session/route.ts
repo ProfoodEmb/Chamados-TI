@@ -7,6 +7,14 @@ export async function GET() {
     headers: await headers()
   })
 
+  console.log('📋 Sessão atual:', session ? {
+    userId: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    role: session.user.role,
+    team: session.user.team
+  } : 'Nenhuma sessão')
+
   if (!session) {
     return NextResponse.json({ user: null }, { status: 401 })
   }

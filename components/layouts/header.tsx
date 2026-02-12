@@ -36,6 +36,11 @@ export function Header() {
   const [infraCategory, setInfraCategory] = useState<string>("")
   const [user, setUser] = useState<User | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [selectedRequesterId, setSelectedRequesterId] = useState<string>("")
+  const [customRequesterName, setCustomRequesterName] = useState<string>("")
+
+  // Verificar se o usuário é líder
+  const isLeader = user?.role?.includes("lider") || user?.role === "admin"
 
   useEffect(() => {
     setMounted(true)
@@ -45,7 +50,19 @@ export function Header() {
     const fetchUser = async () => {
       try {
         const response = await fetch("/api/auth/get-session")
-        const session = await response.json()
+        
+        if (!response.ok) {
+          console.error("Erro ao buscar sessão:", response.status)
+          return
+        }
+
+        const text = await response.text()
+        if (!text) {
+          console.error("Resposta vazia da API de sessão")
+          return
+        }
+
+        const session = JSON.parse(text)
         
         if (session?.user) {
           setUser(session.user)
@@ -101,6 +118,7 @@ export function Header() {
       idsecure: "IDSecure",
       mercos: "Mercos",
       ploomes: "Ploomes",
+      powerbi: "Power BI",
       questor: "Questor",
       sankhya: "Sankhya",
       estoque: "Sistema de Estoque",
@@ -135,24 +153,36 @@ export function Header() {
 
   const handleTicketSubmit = async (data: TicketFormData) => {
     try {
+      const requestBody: any = {
+        subject: `${data.sistemaNome} - ${data.assunto}`,
+        description: data.descricao,
+        category: "Sistemas",
+        urgency: data.urgencia,
+        service: data.sistemaNome,
+        team: "sistemas",
+      }
+
+      // Se um requesterId foi selecionado e não é "self", adicionar ao body
+      if (selectedRequesterId && selectedRequesterId !== "self") {
+        requestBody.requesterId = selectedRequesterId
+        if (customRequesterName) {
+          requestBody.customRequesterName = customRequesterName
+        }
+      }
+
       const response = await fetch("/api/tickets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          subject: `${data.sistemaNome} - ${data.assunto}`,
-          description: data.descricao,
-          category: "Sistemas",
-          urgency: data.urgencia,
-          service: data.sistemaNome,
-          team: "sistemas",
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (response.ok) {
         setShowTicketForm(false)
         setSelectedSistema(null)
+        setSelectedRequesterId("")
+        setCustomRequesterName("")
         // Emitir evento customizado para atualizar a lista de chamados
         console.log("Disparando evento ticketCreated...")
         window.dispatchEvent(new CustomEvent('ticketCreated'))
@@ -168,23 +198,35 @@ export function Header() {
 
   const handleRelatorioSubmit = async (data: RelatorioFormData) => {
     try {
+      const requestBody: any = {
+        subject: `Relatório - ${data.tipoRelatorio}`,
+        description: data.descricao,
+        category: "Relatórios",
+        urgency: "medium", // Padrão para relatórios
+        service: "Relatórios",
+        team: "sistemas",
+      }
+
+      // Se um requesterId foi selecionado e não é "self", adicionar ao body
+      if (selectedRequesterId && selectedRequesterId !== "self") {
+        requestBody.requesterId = selectedRequesterId
+        if (customRequesterName) {
+          requestBody.customRequesterName = customRequesterName
+        }
+      }
+
       const response = await fetch("/api/tickets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          subject: `Relatório - ${data.tipoRelatorio}`,
-          description: data.descricao,
-          category: "Relatórios",
-          urgency: "medium", // Padrão para relatórios
-          service: "Relatórios",
-          team: "sistemas",
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (response.ok) {
         setShowRelatorioForm(false)
+        setSelectedRequesterId("")
+        setCustomRequesterName("")
         // Emitir evento customizado para atualizar a lista de chamados
         console.log("Disparando evento ticketCreated...")
         window.dispatchEvent(new CustomEvent('ticketCreated'))
@@ -200,24 +242,36 @@ export function Header() {
 
   const handleInfraSubmit = async (data: InfraFormData) => {
     try {
+      const requestBody: any = {
+        subject: `${data.problema}${data.patrimonio ? ` - Patrimônio: ${data.patrimonio}` : ''}`,
+        description: data.descricao,
+        category: "Infraestrutura",
+        urgency: data.urgencia,
+        service: data.problema,
+        team: "infra",
+      }
+
+      // Se um requesterId foi selecionado e não é "self", adicionar ao body
+      if (selectedRequesterId && selectedRequesterId !== "self") {
+        requestBody.requesterId = selectedRequesterId
+        if (customRequesterName) {
+          requestBody.customRequesterName = customRequesterName
+        }
+      }
+
       const response = await fetch("/api/tickets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          subject: `${data.problema}${data.patrimonio ? ` - Patrimônio: ${data.patrimonio}` : ''}`,
-          description: data.descricao,
-          category: "Infraestrutura",
-          urgency: data.urgencia,
-          service: data.problema,
-          team: "infra",
-        }),
+        body: JSON.stringify(requestBody),
       })
 
       if (response.ok) {
         setShowInfraForm(false)
         setInfraCategory("")
+        setSelectedRequesterId("")
+        setCustomRequesterName("")
         // Emitir evento customizado para atualizar a lista de chamados
         console.log("Disparando evento ticketCreated...")
         window.dispatchEvent(new CustomEvent('ticketCreated'))
@@ -249,11 +303,7 @@ export function Header() {
   // Evitar erro de hidratação renderizando apenas no cliente
   if (!mounted) {
     return (
-      <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 z-40 transition-all duration-300">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full" />
-          <span className="text-sm text-muted-foreground">Sistema online</span>
-        </div>
+      <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-end px-4 md:px-6 z-40 transition-all duration-300">
         <div className="flex items-center gap-2 md:gap-3">
           <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" />
@@ -267,13 +317,7 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 z-40 transition-all duration-300">
-        {/* Left side - Sistema online */}
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full" />
-          <span className="text-sm text-muted-foreground">Sistema online</span>
-        </div>
-
+      <header className="fixed top-0 left-0 md:left-16 right-0 h-16 bg-card border-b border-border flex items-center justify-end px-4 md:px-6 z-40 transition-all duration-300">
         {/* Right side - Actions */}
         <div className="flex items-center gap-2 md:gap-3">
           <Button 
@@ -333,6 +377,13 @@ export function Header() {
       onSelectSistemasCategory={handleSelectSistemasCategory}
       onSelectSistema={handleSelectSistema}
       onSelectAutomacao={handleSelectAutomacao}
+      userRole={user?.role}
+      onSelectRequester={(requesterId, customName) => {
+        setSelectedRequesterId(requesterId)
+        if (customName) {
+          setCustomRequesterName(customName)
+        }
+      }}
     />
 
     {selectedSistema && (
@@ -365,9 +416,12 @@ export function Header() {
       onOpenChange={handleInfraFormClose}
       onSubmit={handleInfraSubmit}
       preSelectedCategory={infraCategory}
+      requesterId={selectedRequesterId}
+      userRole={user?.role}
       onBack={() => {
         setShowInfraForm(false)
         setInfraCategory("")
+        setSelectedRequesterId("")
         setShowSectorDialog(true)
       }}
     />

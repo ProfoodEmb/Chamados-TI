@@ -225,115 +225,115 @@ export default function TIPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto pt-16 md:pl-16">
-          <div className="p-6">
+        <main className="flex-1 overflow-y-auto">
+          <div className="p-3">
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-foreground">Dashboard T.I.</h1>
-                  <p className="text-muted-foreground">Gerencie todos os chamados do sistema</p>
+                  <h1 className="text-lg font-bold text-foreground">Dashboard T.I.</h1>
+                  <p className="text-xs text-muted-foreground">Gerencie todos os chamados do sistema</p>
                 </div>
                 
                 {/* Indicador de polling */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-50 border border-green-200">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 border border-green-200">
                     {isActive ? (
                       <>
-                        <Wifi className="w-4 h-4 text-green-600" />
-                        <span className="text-sm text-green-600">
+                        <Wifi className="w-3 h-3 text-green-600" />
+                        <span className="text-xs text-green-600">
                           Polling ({interval}s)
                         </span>
                       </>
                     ) : (
                       <>
-                        <WifiOff className="w-4 h-4 text-red-600" />
-                        <span className="text-sm text-red-600">Desconectado</span>
+                        <WifiOff className="w-3 h-3 text-red-600" />
+                        <span className="text-xs text-red-600">Desconectado</span>
                       </>
                     )}
-                    <span className="text-sm text-green-500">({lastUpdate})</span>
+                    <span className="text-xs text-green-500">({lastUpdate})</span>
                   </div>
                   
                   <button 
                     onClick={forceUpdate}
-                    className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
                   >
-                    <Clock className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm text-blue-600">Atualizar</span>
+                    <Clock className="w-3 h-3 text-blue-600" />
+                    <span className="text-xs text-blue-600">Atualizar</span>
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Bloco de Avisos */}
-            <div className="mb-6">
+            <div className="mb-3">
               <NoticeBoard />
             </div>
 
             {/* Cards de Estatísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+              <div className="bg-card border border-border rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">{totalTickets}</h3>
-                <p className="text-sm text-muted-foreground">Total de Chamados</p>
+                <h3 className="text-xl font-bold text-foreground mb-0.5">{totalTickets}</h3>
+                <p className="text-xs text-muted-foreground">Total de Chamados</p>
               </div>
 
-              <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="bg-card border border-border rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-yellow-600" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">{pendingTickets}</h3>
-                <p className="text-sm text-muted-foreground">Pendentes</p>
+                <h3 className="text-xl font-bold text-foreground mb-0.5">{pendingTickets}</h3>
+                <p className="text-xs text-muted-foreground">Pendentes</p>
               </div>
 
-              <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div className="bg-card border border-border rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">{resolvedTickets}</h3>
-                <p className="text-sm text-muted-foreground">Resolvidos</p>
+                <h3 className="text-xl font-bold text-foreground mb-0.5">{resolvedTickets}</h3>
+                <p className="text-xs text-muted-foreground">Resolvidos</p>
               </div>
 
-              <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-red-600" />
+              <div className="bg-card border border-border rounded-lg p-3 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">{criticalTickets}</h3>
-                <p className="text-sm text-muted-foreground">Críticos</p>
+                <h3 className="text-xl font-bold text-foreground mb-0.5">{criticalTickets}</h3>
+                <p className="text-xs text-muted-foreground">Críticos</p>
               </div>
             </div>
 
             {/* Tabela de Chamados */}
-            <div className="space-y-6 min-w-0">
+            <div className="space-y-3 min-w-0">
               {/* Filtros e Ações */}
-              <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex flex-col md:flex-row gap-4">
+              <div className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex flex-col md:flex-row gap-2">
                     {/* Busca */}
                     <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         placeholder="Buscar por número, assunto ou solicitante..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="pl-8 h-8 text-sm"
                       />
                     </div>
 
                     {/* Filtro de Status */}
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full md:w-48">
+                      <SelectTrigger className="w-full md:w-40 h-8 text-sm">
                         <SelectValue placeholder="Status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -348,7 +348,7 @@ export default function TIPage() {
 
                     {/* Filtro de Urgência */}
                     <Select value={urgencyFilter} onValueChange={setUrgencyFilter}>
-                      <SelectTrigger className="w-full md:w-48">
+                      <SelectTrigger className="w-full md:w-40 h-8 text-sm">
                         <SelectValue placeholder="Urgência" />
                       </SelectTrigger>
                       <SelectContent>
@@ -362,8 +362,8 @@ export default function TIPage() {
 
                     {/* Botões de Ação */}
                     <div className="flex gap-2">
-                      <Button variant="outline" className="gap-2">
-                        <Download className="w-4 h-4" />
+                      <Button variant="outline" className="gap-1.5 h-8 text-sm px-3">
+                        <Download className="w-3 h-3" />
                         Exportar
                       </Button>
                     </div>
@@ -371,57 +371,58 @@ export default function TIPage() {
                 </div>
 
                 {/* Tabela de Chamados */}
-                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="bg-card border border-border rounded-lg overflow-hidden">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[800px]">
                       <thead className="bg-muted/50 border-b border-border">
                         <tr>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Número</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Assunto</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Solicitante</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Responsável</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Urgência</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Status</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Última Ação</th>
-                          <th className="text-left p-4 text-sm font-semibold text-foreground">Ações</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Número</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Assunto</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Solicitante</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Responsável</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Urgência</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Status</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Última Ação</th>
+                          <th className="text-left p-2 text-xs font-semibold text-foreground">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredTickets.map((ticket: Ticket) => (
                           <tr key={ticket.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                            <td className="p-4">
-                              <span className="font-mono text-sm font-medium text-foreground">#{ticket.number}</span>
+                            <td className="p-2">
+                              <span className="font-mono text-xs font-medium text-foreground">#{ticket.number}</span>
                             </td>
-                            <td className="p-4">
+                            <td className="p-2">
                               <div className="max-w-xs">
-                                <p className="text-sm font-medium text-foreground truncate">{ticket.subject}</p>
-                                <p className="text-xs text-muted-foreground">{ticket.category}</p>
+                                <p className="text-xs font-medium text-foreground truncate">{ticket.subject}</p>
+                                <p className="text-[10px] text-muted-foreground">{ticket.category}</p>
                               </div>
                             </td>
-                            <td className="p-4">
-                              <span className="text-sm text-foreground">{ticket.requester.name}</span>
+                            <td className="p-2">
+                              <span className="text-xs text-foreground">{ticket.requester.name}</span>
                             </td>
-                            <td className="p-4">
-                              <span className="text-sm text-foreground">{ticket.assignedTo?.name || "Não atribuído"}</span>
+                            <td className="p-2">
+                              <span className="text-xs text-foreground">{ticket.assignedTo?.name || "Não atribuído"}</span>
                             </td>
-                            <td className="p-4">
-                              <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} border`}>
+                            <td className="p-2">
+                              <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} border text-[10px] px-1.5 py-0`}>
                                 {urgencyLabels[ticket.urgency]}
                               </Badge>
                             </td>
-                            <td className="p-4">
-                              <Badge className={`${statusColors[ticket.status as keyof typeof statusColors]} text-white`}>
+                            <td className="p-2">
+                              <Badge className={`${statusColors[ticket.status as keyof typeof statusColors]} text-white text-[10px] px-1.5 py-0`}>
                                 {ticket.status}
                               </Badge>
                             </td>
-                            <td className="p-4">
-                              <span className="text-sm text-muted-foreground">{formatDate(ticket.updatedAt)}</span>
+                            <td className="p-2">
+                              <span className="text-xs text-muted-foreground">{formatDate(ticket.updatedAt)}</span>
                             </td>
-                            <td className="p-4">
-                              <div className="flex gap-2">
+                            <td className="p-2">
+                              <div className="flex gap-1">
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  className="h-6 text-xs px-2"
                                   onClick={() => window.location.href = `/tickets/${ticket.id}`}
                                 >
                                   Ver
@@ -431,6 +432,7 @@ export default function TIPage() {
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
+                                    className="h-6 text-xs px-2"
                                     onClick={() => handleAssignTicket(ticket)}
                                   >
                                     Atribuir
@@ -445,8 +447,8 @@ export default function TIPage() {
                   </div>
 
                   {filteredTickets.length === 0 && (
-                    <div className="p-8 text-center">
-                      <p className="text-muted-foreground">Nenhum chamado encontrado</p>
+                    <div className="p-6 text-center">
+                      <p className="text-sm text-muted-foreground">Nenhum chamado encontrado</p>
                     </div>
                   )}
                 </div>

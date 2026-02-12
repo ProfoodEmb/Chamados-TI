@@ -82,8 +82,8 @@
 }
 
 @theme inline {
-  --font-sans: "SN Pro", sans-serif;
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: "SN Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -125,12 +125,18 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    font-family: "SN Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
   body {
     @apply bg-background text-foreground;
     overflow-x: hidden;
     overflow-y: hidden;
-    font-size: 16px; /* Tamanho base para zoom 100% */
+    font-size: 16px;
+    font-family: "SN Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   html {
     overflow-x: hidden;
@@ -140,15 +146,22 @@
   /* Ajustar tamanhos de texto para melhor legibilidade em 100% */
   h1 {
     @apply text-2xl;
+    font-family: "SN Pro", sans-serif;
+    font-weight: 700;
   }
   h2 {
     @apply text-xl;
+    font-family: "SN Pro", sans-serif;
+    font-weight: 600;
   }
   h3 {
     @apply text-lg;
+    font-family: "SN Pro", sans-serif;
+    font-weight: 600;
   }
   p, span, div {
     @apply text-base;
+    font-family: "SN Pro", sans-serif;
   }
   /* Esconder scrollbar padrão mas manter funcionalidade */
   ::-webkit-scrollbar {

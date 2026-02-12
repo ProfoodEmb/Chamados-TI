@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate, ensureSocketIO } from "@/lib/api/socket-server"
+import { notifyTicketUpdate as notifySSE } from "@/app/api/tickets/events/route"
 
 // GET - Buscar chamado específico
 export async function GET(
@@ -73,6 +73,17 @@ export async function GET(
     const userId = session.user.id
     const userRole = session.user.role
     
+    console.log('🔐 Verificando permissão:', {
+      userId,
+      userRole,
+      requesterId: ticket.requesterId,
+      assignedToId: ticket.assignedToId,
+      ticketTeam: ticket.team,
+      userTeam: session.user.team,
+      isRequester: ticket.requesterId === userId,
+      isAssigned: ticket.assignedToId === userId,
+    })
+    
     const canView = 
       userRole === "admin" ||
       ticket.requesterId === userId ||
@@ -80,13 +91,16 @@ export async function GET(
       (userRole.includes("lider") && ticket.team === session.user.team) ||
       (userRole.includes("func") && ticket.team === session.user.team)
 
+    console.log('🔐 Resultado da verificação:', { canView })
+
     if (!canView) {
+      console.log('❌ Sem permissão:', { userRole, requesterId: ticket.requesterId, userId })
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 })
     }
 
     return NextResponse.json(ticket)
   } catch (error) {
-    console.error("Erro ao buscar chamado:", error)
+    console.error("❌ Erro ao buscar chamado:", error)
     return NextResponse.json({ error: "Erro ao buscar chamado" }, { status: 500 })
   }
 }
@@ -212,16 +226,13 @@ export async function PATCH(
       }
     })
 
-    // Garantir que Socket.IO esteja inicializado
-    ensureSocketIO()
-
-    // Notificar via Socket.IO sobre atualização do ticket
-    const notified = notifyTicketUpdate({
+    // Notificar via SSE sobre atualização do ticket
+    notifySSE({
       type: 'ticket_updated',
       ticket: updatedTicket
     })
 
-    console.log('📢 Notificação de atualização enviada:', notified ? 'Sucesso' : 'Falhou')
+    console.log('📢 Notificação SSE de atualização enviada')
 
     return NextResponse.json(updatedTicket)
   } catch (error) {

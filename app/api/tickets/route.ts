@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate, ensureSocketIO } from "@/lib/api/socket-server"
+import { notifyTicketUpdate as notifySSE } from "@/app/api/tickets/events/route"
 import { notifyTicketCreated } from "@/lib/api/webhook-notifications"
 import { notifyTicketCreatedWhatsApp } from "@/lib/api/whatsapp-notifications"
 
@@ -164,11 +164,36 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { subject, description, category, urgency, service, anydesk, patrimonio, team } = body
+    const { subject, description, category, urgency, service, anydesk, patrimonio, team, requesterId, customRequesterName, solution } = body
 
     // Validação básica
     if (!subject || !description || !urgency) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 })
+    }
+
+    // Determinar quem é o solicitante
+    // Se requesterId foi fornecido e o usuário é líder, usar o requesterId
+    // Caso contrário, usar o próprio usuário logado
+    let finalRequesterId = session.user.id
+    const userRole = session.user.role || "user"
+    let isCustomRequester = false
+    
+    if (requesterId && (userRole.includes("lider") || userRole === "admin")) {
+      // Verificar se o usuário existe
+      const requesterExists = await prisma.user.findUnique({
+        where: { id: requesterId }
+      })
+      
+      if (requesterExists) {
+        finalRequesterId = requesterId
+        // Verificar se é "Usuário Específico"
+        if (requesterExists.name === "Usuário Específico") {
+          isCustomRequester = true
+        }
+        console.log(`📝 [Líder] Criando chamado em nome de: ${requesterExists.name}`)
+      } else {
+        return NextResponse.json({ error: "Usuário solicitante não encontrado" }, { status: 400 })
+      }
     }
 
     // Gerar número do chamado sequencial
@@ -237,13 +262,15 @@ export async function POST(request: NextRequest) {
         description,
         category: category || "Geral",
         urgency,
-        status: "Aberto",
-        kanbanStatus: "inbox",
+        status: isCustomRequester ? "Resolvido" : "Aberto", // Se for customizado, já criar como Resolvido
+        kanbanStatus: isCustomRequester ? "done" : "inbox", // Se for customizado, já colocar em done
         service: service || null,
         anydesk: anydesk || null,
         team: team || null,
-        requesterId: session.user.id,
+        requesterId: finalRequesterId,
         assignedToId: assignedToId,
+        customRequesterName: isCustomRequester ? customRequesterName : null,
+        solution: isCustomRequester ? solution : null,
       },
       include: {
         requester: {
@@ -273,20 +300,20 @@ export async function POST(request: NextRequest) {
         content: description,
         role: "user",
         ticketId: ticket.id,
-        authorId: session.user.id,
+        authorId: finalRequesterId,
       }
     })
 
-    // Garantir que Socket.IO esteja inicializado
-    ensureSocketIO()
-
-    // Notificar via Socket.IO sobre novo ticket
-    const notified = notifyTicketUpdate({
+    console.log('📢 [API] Enviando notificação SSE para ticket:', ticket.number)
+    
+    // Notificar via SSE sobre novo ticket
+    notifySSE({
       type: 'ticket_created',
-      ticket: ticket
+      ticket: ticket,
+      timestamp: new Date().toISOString()
     })
 
-    console.log('📢 Notificação Socket.IO enviada:', notified ? 'Sucesso' : 'Falhou')
+    console.log('✅ [API] Notificação SSE enviada para novo ticket')
 
     // Enviar notificações de forma assíncrona (não bloquear a resposta)
     // Isso garante que o ticket seja criado rapidamente

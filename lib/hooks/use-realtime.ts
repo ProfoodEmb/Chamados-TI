@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSocket } from './use-socket'
+import { useSSE } from './use-sse'
 
 interface RealtimeOptions {
   onUpdate?: (data: any) => void
@@ -9,13 +9,13 @@ interface RealtimeOptions {
 
 export function useRealtime(options: RealtimeOptions = {}) {
   const { onUpdate, enabled = true, fallbackInterval = 30000 } = options
-  const [mode, setMode] = useState<'socket' | 'polling' | 'disabled'>('socket')
+  const [mode, setMode] = useState<'sse' | 'polling' | 'disabled'>('sse')
   const [pollingActive, setPollingActive] = useState(false)
   
-  // Tentar Socket.IO primeiro
-  const socket = useSocket({
-    onTicketUpdate: onUpdate,
-    enabled: enabled && mode === 'socket'
+  // Usar SSE (Server-Sent Events)
+  const sse = useSSE({
+    onUpdate: onUpdate,
+    enabled: enabled && mode === 'sse'
   })
   
   // Sistema de polling como fallback
@@ -47,28 +47,28 @@ export function useRealtime(options: RealtimeOptions = {}) {
     }
   }, [enabled, mode, fallbackInterval, onUpdate])
 
-  // Monitorar conexão Socket.IO e fazer fallback se necessário
+  // Monitorar conexão SSE e fazer fallback se necessário
   useEffect(() => {
     if (!enabled) {
       setMode('disabled')
       return
     }
 
-    // Se Socket.IO não conectar em 15 segundos, usar polling
+    // Se SSE não conectar em 10 segundos, usar polling
     const fallbackTimer = setTimeout(() => {
-      if (!socket.isConnected && mode === 'socket') {
-        console.log('⚠️ Socket.IO não conectou em 15s - usando polling como fallback')
+      if (!sse.isConnected && mode === 'sse') {
+        console.log('⚠️ SSE não conectou em 10s - usando polling como fallback')
         setMode('polling')
       }
-    }, 15000)
+    }, 10000)
 
-    // Se Socket.IO conectar, cancelar fallback
-    if (socket.isConnected && mode === 'socket') {
+    // Se SSE conectar, cancelar fallback
+    if (sse.isConnected && mode === 'sse') {
       clearTimeout(fallbackTimer)
     }
 
     return () => clearTimeout(fallbackTimer)
-  }, [socket.isConnected, enabled, mode])
+  }, [sse.isConnected, enabled, mode])
 
   const forceUpdate = () => {
     console.log('🔄 Atualização forçada')
@@ -76,8 +76,8 @@ export function useRealtime(options: RealtimeOptions = {}) {
   }
 
   const getLastUpdate = () => {
-    if (mode === 'socket') {
-      return socket.lastUpdate
+    if (mode === 'sse') {
+      return sse.lastUpdate
     } else if (mode === 'polling') {
       const now = new Date()
       const seconds = Math.floor(now.getSeconds() / 30) * 30
@@ -88,10 +88,10 @@ export function useRealtime(options: RealtimeOptions = {}) {
   }
 
   return {
-    isConnected: mode === 'socket' ? socket.isConnected : pollingActive,
+    isConnected: mode === 'sse' ? sse.isConnected : pollingActive,
     lastUpdate: getLastUpdate(),
     mode,
     forceUpdate,
-    connectionError: mode === 'socket' ? socket.connectionError : null
+    connectionError: null
   }
 }

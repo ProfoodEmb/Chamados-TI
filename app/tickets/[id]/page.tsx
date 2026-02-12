@@ -62,7 +62,7 @@ export default function TicketDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Sistema de polling para mensagens em tempo real (3 segundos)
+  // Sistema de polling para mensagens (20 segundos)
   const { isActive, lastUpdate, forceUpdate, interval } = useTicketPolling({
     ticketId,
     onUpdate: (updatedTicket) => {
@@ -71,7 +71,7 @@ export default function TicketDetailPage() {
       setIsLoading(false)
     },
     enabled: !!ticketId,
-    interval: 3000 // 3 segundos para parecer tempo real
+    interval: 20000 // 20 segundos
   })
 
   useEffect(() => {

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { NoticeBoard } from "@/components/features/notices/notice-board"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -15,11 +15,9 @@ import {
   TrendingUp,
   Plus,
   ArrowRight,
-  Zap,
   Users,
   BarChart3
 } from "lucide-react"
-import { useSimplePolling } from "@/lib/use-simple-polling"
 
 interface Ticket {
   id: string
@@ -64,7 +62,21 @@ export default function Home() {
     const init = async () => {
       try {
         const sessionResponse = await fetch("/api/auth/get-session")
-        const session = await sessionResponse.json()
+        
+        if (!sessionResponse.ok) {
+          console.error("Erro ao buscar sessão:", sessionResponse.status)
+          setIsLoading(false)
+          return
+        }
+
+        const text = await sessionResponse.text()
+        if (!text) {
+          console.error("Resposta vazia da API de sessão")
+          setIsLoading(false)
+          return
+        }
+
+        const session = JSON.parse(text)
         
         if (session?.user) {
           setUser(session.user)
@@ -86,21 +98,27 @@ export default function Home() {
       if (ticketsResponse.ok) {
         const ticketsData = await ticketsResponse.json()
         setTickets(ticketsData)
+        console.log('✅ [HOME] Tickets atualizados:', ticketsData.length)
       }
     } catch (error) {
       console.error("Erro ao buscar tickets:", error)
     }
   }
 
-  useSimplePolling({
-    onUpdate: () => fetchTickets(),
-    enabled: !!user,
-    interval: 10000
-  })
+  // Polling a cada 60 segundos para atualizações
+  useEffect(() => {
+    if (!user) return
+    
+    const interval = setInterval(() => {
+      fetchTickets()
+    }, 60000) // 60 segundos
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [user])
 
   const activeTickets = tickets.filter(t => t.kanbanStatus !== "done")
-  const inboxTickets = tickets.filter(t => t.kanbanStatus === "inbox")
-  const inProgressTickets = tickets.filter(t => t.kanbanStatus === "in_progress")
   const reviewTickets = tickets.filter(t => t.kanbanStatus === "review")
   const doneTickets = tickets.filter(t => t.kanbanStatus === "done")
   const recentTickets = tickets.slice(0, 4)
@@ -115,14 +133,6 @@ export default function Home() {
     })
   }
 
-  const getEmpresaColor = (empresa: string | null) => {
-    switch (empresa?.toLowerCase()) {
-      case "tuicial": return "text-blue-600";
-      case "profood": return "text-red-600";
-      default: return "text-gray-600";
-    }
-  }
-
   const isAdmin = user?.role === "admin" || user?.role?.includes("lider") || user?.role?.includes("func")
 
   return (
@@ -135,14 +145,6 @@ export default function Home() {
               Olá, {user?.name?.split(" ")[0] || "Usuário"}! 👋
             </h1>
           </div>
-          <Button 
-            size="lg" 
-            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-            onClick={() => router.push("/tickets")}
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Novo Chamado
-          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -232,10 +234,10 @@ export default function Home() {
                 </div>
               ) : (
                 recentTickets.map((ticket) => (
-                  <div
+                  <Link
                     key={ticket.id}
-                    onClick={() => router.push(`/tickets/${ticket.id}`)}
-                    className="p-4 border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
+                    href={`/tickets/${ticket.id}`}
+                    className="block p-4 border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
@@ -254,7 +256,7 @@ export default function Home() {
                       <span>{formatDate(ticket.createdAt)}</span>
                       <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                     </div>
-                  </div>
+                  </Link>
                 ))
               )}
             </div>

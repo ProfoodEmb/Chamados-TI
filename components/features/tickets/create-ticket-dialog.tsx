@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { Plus, Paperclip, X, Server, Monitor, Bot, FileText, Wifi, DollarSign, Wrench, Printer, Phone, CheckCircle2 } from "lucide-react"
+import { useState, useRef, useEffect } from "react"
+import { Plus, Paperclip, X, Server, Monitor, Bot, FileText, Wifi, DollarSign, Wrench, Printer, Phone, CheckCircle2, User } from "lucide-react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -131,14 +131,19 @@ interface CreateTicketDialogProps {
     anydesk: string
     urgency: string
     attachments: File[]
+    requesterId?: string
   }) => void
+  userRole?: string
+  userId?: string
 }
 
-export function CreateTicketDialog({ onCreateTicket }: CreateTicketDialogProps) {
+export function CreateTicketDialog({ onCreateTicket, userRole, userId }: CreateTicketDialogProps) {
   const [open, setOpen] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [showCables, setShowCables] = useState(false)
+  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const [formData, setFormData] = useState({
     tipo: "",
     categoria: "", // "sistemas" ou "automacao"
@@ -148,7 +153,38 @@ export function CreateTicketDialog({ onCreateTicket }: CreateTicketDialogProps) 
     description: "",
     anydesk: "",
     urgency: "",
+    requesterId: "", // ID do usuário para quem o chamado está sendo criado
   })
+
+  // Verificar se o usuário é líder
+  const isLeader = userRole?.includes("lider") || userRole === "admin"
+
+  // Buscar lista de usuários quando o dialog abrir (apenas para líderes)
+  useEffect(() => {
+    if (open && isLeader) {
+      fetchUsers()
+    }
+  }, [open, isLeader])
+
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true)
+      const response = await fetch('/api/users')
+      if (response.ok) {
+        const data = await response.json()
+        // Filtrar apenas usuários ativos e que não são da TI
+        const filteredUsers = data.users.filter((u: any) => 
+          u.status === 'ativo' && 
+          u.role === 'user'
+        )
+        setUsers(filteredUsers)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
 
   // Cores dos cabos de rede
   const cableColors = [
@@ -187,6 +223,7 @@ export function CreateTicketDialog({ onCreateTicket }: CreateTicketDialogProps) 
       description: "",
       anydesk: "",
       urgency: "",
+      requesterId: "",
     })
     setAttachments([])
     setOpen(false)
@@ -390,12 +427,64 @@ export function CreateTicketDialog({ onCreateTicket }: CreateTicketDialogProps) 
         <DialogHeader>
           <DialogTitle>Criar Novo Chamado</DialogTitle>
           <DialogDescription>
-            Selecione o tipo do problema e preencha as informações.
+            {isLeader 
+              ? "Selecione para quem você está criando o chamado e preencha as informações."
+              : "Selecione o tipo do problema e preencha as informações."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             
+            {/* Seletor de Usuário - Apenas para Líderes */}
+            {isLeader && (
+              <motion.div
+                key="requester"
+                variants={itemVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid gap-2"
+              >
+                <Label className="text-base font-semibold flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Criar chamado para *
+                </Label>
+                <Select 
+                  value={formData.requesterId} 
+                  onValueChange={(value) => handleInputChange("requesterId", value)}
+                >
+                  <SelectTrigger className="transition-all duration-300 hover:border-primary/50">
+                    <SelectValue placeholder={loadingUsers ? "Carregando usuários..." : "Selecione o usuário..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="self">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span className="font-medium">Para mim mesmo</span>
+                      </div>
+                    </SelectItem>
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{user.name}</span>
+                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formData.requesterId && formData.requesterId !== "self" && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-muted-foreground flex items-center gap-1"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    Chamado será criado em nome de {users.find(u => u.id === formData.requesterId)?.name}
+                  </motion.p>
+                )}
+              </motion.div>
+            )}
+
             {/* Tipo do Chamado - Infra ou Sistemas */}
             <AnimatePresence mode="wait">
               <motion.div
@@ -1023,6 +1112,7 @@ export function CreateTicketDialog({ onCreateTicket }: CreateTicketDialogProps) 
                     !formData.problema || 
                     !formData.description || 
                     !formData.urgency ||
+                    (isLeader && !formData.requesterId) ||
                     (formData.tipo === "sistemas" && formData.categoria !== "relatorios" && !formData.sistema) ||
                     (isOutroProblema && !formData.subject)
                   }

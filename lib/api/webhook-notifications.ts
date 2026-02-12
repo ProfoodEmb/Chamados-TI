@@ -45,16 +45,6 @@ const WEBHOOKS: WebhookConfig[] = [
     url: process.env.SLACK_WEBHOOK_URL || '',
     enabled: !!process.env.SLACK_WEBHOOK_URL
   },
-  {
-    name: 'n8n - Profood',
-    url: process.env.N8N_WEBHOOK_URL || '',
-    enabled: !!process.env.N8N_WEBHOOK_URL
-  },
-  {
-    name: 'Webhook Customizado',
-    url: process.env.CUSTOM_WEBHOOK_URL || '',
-    enabled: !!process.env.CUSTOM_WEBHOOK_URL
-  },
   // Adicione mais webhooks conforme necessário
 ]
 
@@ -219,7 +209,7 @@ async function sendToWebhook(webhook: WebhookConfig, ticket: TicketData): Promis
     } else if (webhook.url.includes('slack.com')) {
       payload = formatSlackMessage(ticket)
     } else {
-      // Formato genérico JSON (n8n, webhooks customizados, etc)
+      // Formato genérico JSON (webhooks customizados, etc)
       payload = {
         event: 'ticket_created',
         timestamp: new Date().toISOString(),

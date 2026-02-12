@@ -43,6 +43,7 @@ interface EditUserDialogProps {
 export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: EditUserDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
+    username: "",
     password: "",
     role: "",
     setor: "",
@@ -55,6 +56,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     if (user) {
       setFormData({
         name: user.name,
+        username: user.username,
         password: "",
         role: user.role,
         setor: user.setor || "",
@@ -73,6 +75,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     try {
       const updateData: any = {
         name: formData.name,
+        username: formData.username,
         role: formData.role,
         setor: formData.setor === "outro" ? formData.setorCustom : formData.setor,
       }
@@ -121,6 +124,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     onOpenChange(false)
     setFormData({
       name: "",
+      username: "",
       password: "",
       role: "",
       setor: "",
@@ -155,6 +159,21 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: João Silva"
+              required
+            />
+          </div>
+
+          {/* Username */}
+          <div className="space-y-2">
+            <Label htmlFor="edit-username">
+              <User className="w-4 h-4 inline mr-2" />
+              Nome de Usuário
+            </Label>
+            <Input
+              id="edit-username"
+              value={formData.username}
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              placeholder="Ex: joao.silva"
               required
             />
           </div>

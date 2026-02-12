@@ -8,7 +8,7 @@ interface TicketPollingOptions {
 }
 
 export function useTicketPolling(options: TicketPollingOptions) {
-  const { ticketId, onUpdate, enabled = true, interval = 20000 } = options // 20 segundos para chat
+  const { ticketId, onUpdate, enabled = true, interval = 20000 } = options // 20 segundos padrão
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isActive, setIsActive] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)

@@ -25,7 +25,7 @@ export async function PATCH(
 
     const { id } = await params
     const body = await request.json()
-    const { status, name, role, setor, password } = body
+    const { status, name, username, role, setor, password } = body
 
     // Não permitir alterar a si mesmo (exceto senha)
     if (id === session.user.id && (status || role)) {
@@ -47,6 +47,23 @@ export async function PATCH(
     // Atualizar nome se fornecido
     if (name) {
       updateData.name = name
+    }
+
+    // Atualizar username se fornecido
+    if (username) {
+      // Verificar se o username já existe (exceto para o próprio usuário)
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          username,
+          NOT: { id }
+        }
+      })
+
+      if (existingUser) {
+        return NextResponse.json({ error: "Nome de usuário já está em uso" }, { status: 400 })
+      }
+
+      updateData.username = username
     }
 
     // Atualizar role se fornecido

@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Tabelas do Better Auth
@@ -118,6 +118,8 @@ model Ticket {
   anydesk       String?
   rating        Int?     // Avaliação de 1 a 5 estrelas
   feedback      String?  // Comentário do feedback
+  customRequesterName String? // Nome customizado quando criado para "Usuário Específico"
+  solution      String?  // Descrição de como o problema foi resolvido
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

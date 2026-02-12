@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Server, Monitor, Bot, FileText, Printer, DollarSign, Wrench, Wifi, Database, Phone } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Server, Monitor, Bot, FileText, Printer, Calculator, Wrench, Wifi, Database, Phone, User, CheckCircle2 } from "lucide-react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,12 +11,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 const sistemas = [
   { id: "ecalc", nome: "Ecalc", logo: "/sistemas/ecalc.png" },
   { id: "idsecure", nome: "IDSecure", logo: "/sistemas/idsecure.jpg" },
   { id: "mercos", nome: "Mercos", logo: "/sistemas/mercos.png" },
   { id: "ploomes", nome: "Ploomes", logo: "/sistemas/ploomes.png" },
+  { id: "powerbi", nome: "Power BI", logo: "/sistemas/powerbi.png" },
   { id: "questor", nome: "Questor", logo: "/sistemas/questor.png" },
   { id: "sankhya", nome: "Sankhya", logo: "/sistemas/sankhya.png" },
   { id: "estoque", nome: "Sistema de Estoque", logo: "/sistemas/estoque.png" },
@@ -37,6 +41,8 @@ interface SelectSectorDialogProps {
   onSelectSistemasCategory?: (category: "sistemas" | "automacao" | "relatorios") => void
   onSelectSistema?: (sistemaId: string) => void
   onSelectAutomacao?: (automacaoId: string) => void
+  userRole?: string
+  onSelectRequester?: (requesterId: string, customName?: string) => void
 }
 
 export function SelectSectorDialog({ 
@@ -46,12 +52,75 @@ export function SelectSectorDialog({
   onSelectInfraCategory,
   onSelectSistemasCategory,
   onSelectSistema,
-  onSelectAutomacao
+  onSelectAutomacao,
+  userRole,
+  onSelectRequester
 }: SelectSectorDialogProps) {
   const [showInfraCategories, setShowInfraCategories] = useState(false)
   const [showSistemasCategories, setShowSistemasCategories] = useState(false)
   const [showSistemasList, setShowSistemasList] = useState(false)
   const [showAutomacaoList, setShowAutomacaoList] = useState(false)
+  const [showRequesterSelect, setShowRequesterSelect] = useState(false)
+  const [showCustomNameInput, setShowCustomNameInput] = useState(false)
+  const [customRequesterName, setCustomRequesterName] = useState("")
+  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [selectedRequesterId, setSelectedRequesterId] = useState<string>("")
+
+  const isLeader = userRole?.includes("lider") || userRole === "admin"
+
+  // Buscar usuários quando o dialog abrir (apenas para líderes)
+  useEffect(() => {
+    if (open && isLeader) {
+      fetchUsers()
+      setShowRequesterSelect(true)
+    } else {
+      setShowRequesterSelect(false)
+    }
+  }, [open, isLeader])
+
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true)
+      const response = await fetch('/api/users')
+      if (response.ok) {
+        const data = await response.json()
+        // Filtrar apenas usuários ativos e que não são da TI
+        const filteredUsers = data.users.filter((u: any) => 
+          u.status === 'ativo' && 
+          u.role === 'user'
+        )
+        setUsers(filteredUsers)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar usuários:', error)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
+  const handleRequesterSelect = (requesterId: string) => {
+    setSelectedRequesterId(requesterId)
+    
+    // Se for "Usuário Específico", mostrar campo de texto
+    const selectedUser = users.find(u => u.id === requesterId)
+    if (selectedUser?.name === "Usuário Específico") {
+      setShowCustomNameInput(true)
+      setShowRequesterSelect(false)
+    } else {
+      onSelectRequester?.(requesterId)
+      setShowRequesterSelect(false)
+      setShowCustomNameInput(false)
+    }
+  }
+
+  const handleCustomNameSubmit = () => {
+    if (customRequesterName.trim()) {
+      // Passar o ID do "Usuário Específico" e o nome customizado
+      onSelectRequester?.(selectedRequesterId, customRequesterName)
+      setShowCustomNameInput(false)
+    }
+  }
 
   const handleInfraClick = () => {
     setShowInfraCategories(true)
@@ -108,6 +177,10 @@ export function SelectSectorDialog({
       setShowSistemasCategories(false)
       setShowSistemasList(false)
       setShowAutomacaoList(false)
+      setShowRequesterSelect(false)
+      setShowCustomNameInput(false)
+      setCustomRequesterName("")
+      setSelectedRequesterId("")
     }
     onOpenChange(open)
   }
@@ -117,14 +190,148 @@ export function SelectSectorDialog({
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-0 border-0">
         {/* Header com fundo escuro */}
         <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-8 text-white rounded-t-lg">
-          <DialogTitle className="text-3xl font-bold mb-2">Selecione o Setor</DialogTitle>
+          <DialogTitle className="text-3xl font-bold mb-2">
+            {showCustomNameInput ? "Nome do Solicitante" : showRequesterSelect ? "Criar Chamado Para" : "Selecione o Setor"}
+          </DialogTitle>
           <DialogDescription className="text-slate-300 text-base">
-            Escolha qual setor da T.I. você deseja abrir o chamado
+            {showCustomNameInput 
+              ? "Digite o nome da pessoa que está solicitando o suporte"
+              : showRequesterSelect 
+                ? "Selecione para quem você está criando este chamado"
+                : "Escolha qual setor da T.I. você deseja abrir o chamado"}
           </DialogDescription>
         </div>
         
         <div className="flex flex-col gap-6 p-8">
+          {/* Campo de nome customizado */}
+          {showCustomNameInput && (
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Quem está pedindo ajuda?</h3>
+                <p className="text-gray-600">Digite o nome completo da pessoa</p>
+              </div>
+
+              <div className="max-w-md mx-auto space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="customName" className="text-base font-semibold">
+                    Nome do solicitante *
+                  </Label>
+                  <Input
+                    id="customName"
+                    type="text"
+                    placeholder="Ex: João Silva"
+                    value={customRequesterName}
+                    onChange={(e) => setCustomRequesterName(e.target.value)}
+                    className="h-14 text-base"
+                    autoFocus
+                  />
+                  <p className="text-sm text-gray-500">Digite o nome completo da pessoa que pediu ajuda</p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowCustomNameInput(false)
+                      setShowRequesterSelect(true)
+                      setCustomRequesterName("")
+                    }}
+                    className="flex-1 h-12"
+                  >
+                    Voltar
+                  </Button>
+                  <Button
+                    onClick={handleCustomNameSubmit}
+                    disabled={!customRequesterName.trim()}
+                    className="flex-1 h-12 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Continuar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Seletor de Usuário - Apenas para Líderes */}
+          {showRequesterSelect && isLeader && (
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-lg mb-4">
+                  <User className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Para quem é este chamado?</h3>
+                <p className="text-gray-600">Selecione o usuário que está solicitando o suporte</p>
+              </div>
+
+              {loadingUsers ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Card "Para mim mesmo" */}
+                  <button
+                    onClick={() => handleRequesterSelect("self")}
+                    className={`relative p-6 rounded-2xl border-2 transition-all ${
+                      selectedRequesterId === "self"
+                        ? "border-blue-500 bg-blue-50 shadow-lg"
+                        : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                    }`}
+                  >
+                    {selectedRequesterId === "self" && (
+                      <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                        <User className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <h4 className="font-bold text-gray-900">Para mim mesmo</h4>
+                        <p className="text-sm text-gray-500 mt-1">Criar chamado em meu nome</p>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Cards dos usuários */}
+                  {users.map((user) => (
+                    <button
+                      key={user.id}
+                      onClick={() => handleRequesterSelect(user.id)}
+                      className={`relative p-6 rounded-2xl border-2 transition-all ${
+                        selectedRequesterId === user.id
+                          ? "border-blue-500 bg-blue-50 shadow-lg"
+                          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                      }`}
+                    >
+                      {selectedRequesterId === user.id && (
+                        <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center shadow-lg">
+                          <span className="text-2xl font-bold text-white">
+                            {user.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="text-center">
+                          <h4 className="font-bold text-gray-900">{user.name}</h4>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Cards principais - Infraestrutura e Sistemas */}
+          {!showRequesterSelect && (
           <div className="grid grid-cols-2 gap-6">
             <button
               className={`relative p-8 rounded-2xl border-2 transition-all ${
@@ -178,6 +385,7 @@ export function SelectSectorDialog({
               </div>
             </button>
           </div>
+          )}
 
           {/* Subcategorias de Infraestrutura */}
           {showInfraCategories && (
@@ -207,7 +415,7 @@ export function SelectSectorDialog({
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center">
-                      <DollarSign className="w-8 h-8 text-gray-600" />
+                      <Calculator className="w-8 h-8 text-gray-600" />
                     </div>
                     <div className="text-center">
                       <h5 className="font-semibold text-sm text-gray-900">Orçamento</h5>

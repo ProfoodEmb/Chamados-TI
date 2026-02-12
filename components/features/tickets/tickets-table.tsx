@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -72,7 +73,7 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
     }
   }
 
-  // Escutar evento de criação de chamado e polling a cada 5 segundos
+  // Escutar evento de criação de chamado e polling a cada 60 segundos
   useEffect(() => {
     const handleTicketCreated = () => {
       console.log("Evento ticketCreated recebido na tabela - atualizando tickets...")
@@ -81,10 +82,10 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
 
     window.addEventListener('ticketCreated', handleTicketCreated)
     
-    // Polling a cada 20 segundos para garantir atualização
+    // Polling a cada 60 segundos para garantir atualização
     const interval = setInterval(() => {
       fetchTickets()
-    }, 20000)
+    }, 60000)
 
     return () => {
       window.removeEventListener('ticketCreated', handleTicketCreated)
@@ -129,10 +130,6 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
 
     return filtered
   }, [tickets, activeFilter, searchTerm])
-
-  const handleRowClick = (ticketId: string) => {
-    router.push(`/tickets/${ticketId}`)
-  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -206,17 +203,22 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
                 filteredTickets.map((ticket, index) => (
                   <tr
                     key={ticket.id}
-                    onClick={() => handleRowClick(ticket.id)}
-                    className={`border-b border-border hover:bg-muted/30 transition-colors cursor-pointer ${
+                    className={`border-b border-border hover:bg-muted/30 transition-colors ${
                       index % 2 === 0 ? "bg-background" : "bg-muted/10"
                     }`}
                   >
                     <td className="py-2 px-2">
-                      <Checkbox />
+                      <Checkbox onClick={(e) => e.stopPropagation()} />
                     </td>
-                    <td className="py-2 px-2 text-xs text-foreground font-medium">{ticket.number}</td>
-                    <td className="py-2 px-2 text-xs text-foreground max-w-[120px] truncate" title={ticket.subject}>
-                      {ticket.subject}
+                    <td className="py-2 px-2">
+                      <Link href={`/tickets/${ticket.id}`} className="text-xs text-foreground font-medium hover:text-blue-600">
+                        {ticket.number}
+                      </Link>
+                    </td>
+                    <td className="py-2 px-2">
+                      <Link href={`/tickets/${ticket.id}`} className="text-xs text-foreground max-w-[120px] truncate block hover:text-blue-600" title={ticket.subject}>
+                        {ticket.subject}
+                      </Link>
                     </td>
                     <td className="py-2 px-2 text-xs text-muted-foreground hidden md:table-cell max-w-[100px] truncate" title={ticket.assignedTo?.name || "Não atribuído"}>
                       {ticket.assignedTo?.name || "Não atribuído"}

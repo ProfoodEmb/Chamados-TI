@@ -204,3 +204,21 @@ npm run dev
 
 **Desenvolvido em:** 11/02/2026  
 **Commit:** `5db454c - 11/02 - Reorganização completa do projeto`
+
+
+### 11. ✅ Atualização Automática na Conta de Usuário
+
+**Problema:** A home do usuário não atualizava automaticamente. Era necessário atualizar a página manualmente (F5) para ver novos chamados.
+
+**Solução:**
+- ✅ Implementado polling rápido (3 segundos) na home
+- ✅ Atualização automática sem necessidade de refresh
+- ✅ Solução simples e confiável
+- ✅ Funciona em qualquer ambiente
+- ✅ Baixo consumo de recursos
+
+**Arquivos:**
+- `app/page.tsx` - Implementado polling a cada 3 segundos
+- `REALTIME-FIX.md` - Documentação da solução
+
+**Resultado:** Chamados aparecem automaticamente em até 3 segundos! Solução simples e 100% confiável. ✅

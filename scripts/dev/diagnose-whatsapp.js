@@ -1,10 +1,28 @@
 // Script de diagnóstico para verificar configuração WhatsApp
-// Configuração manual (copie do seu .env)
+// Carregar variáveis de ambiente do arquivo .env
+const fs = require('fs')
+const path = require('path')
+
+const envPath = path.join(__dirname, '../../.env')
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8')
+  envContent.split('\n').forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/)
+    if (match) {
+      const key = match[1].trim()
+      let value = match[2].trim()
+      value = value.replace(/^["'](.*)["']$/, '$1')
+      process.env[key] = value
+    }
+  })
+}
+
+// Configuração a partir de variáveis de ambiente
 const CONFIG = {
-  EVOLUTION_API_URL: 'https://evolution-apiv223-production-bf63.up.railway.app',
-  EVOLUTION_INSTANCE_NAME: 'jackson',
-  EVOLUTION_API_KEY: 'FF2004F46318-4CB3-8B09-B27FFC20F4D1',
-  INFRA_TEAM_PHONE: '5545999363214'
+  EVOLUTION_API_URL: process.env.EVOLUTION_API_URL,
+  EVOLUTION_INSTANCE_NAME: process.env.EVOLUTION_INSTANCE_NAME,
+  EVOLUTION_API_KEY: process.env.EVOLUTION_API_KEY,
+  INFRA_TEAM_PHONE: process.env.INFRA_TEAM_PHONE
 }
 
 console.log('🔍 Diagnóstico da Configuração WhatsApp\n')

@@ -27,7 +27,19 @@ export function Sidebar() {
     const fetchUser = async () => {
       try {
         const response = await fetch("/api/auth/get-session")
-        const session = await response.json()
+        
+        if (!response.ok) {
+          console.error("Erro ao buscar sessão:", response.status)
+          return
+        }
+
+        const text = await response.text()
+        if (!text) {
+          console.error("Resposta vazia da API de sessão")
+          return
+        }
+
+        const session = JSON.parse(text)
         
         if (session?.user) {
           setUser(session.user)
