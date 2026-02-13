@@ -63,54 +63,26 @@ export function SelectSectorDialog({
   const [showRequesterSelect, setShowRequesterSelect] = useState(false)
   const [showCustomNameInput, setShowCustomNameInput] = useState(false)
   const [customRequesterName, setCustomRequesterName] = useState("")
-  const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
-  const [loadingUsers, setLoadingUsers] = useState(false)
   const [selectedRequesterId, setSelectedRequesterId] = useState<string>("")
 
   const isLeader = userRole?.includes("lider") || userRole === "admin"
 
-  // Buscar usuários quando o dialog abrir (apenas para líderes)
+  // Mostrar seletor de solicitante quando o dialog abrir (apenas para líderes)
   useEffect(() => {
     if (open && isLeader) {
-      fetchUsers()
       setShowRequesterSelect(true)
     } else {
       setShowRequesterSelect(false)
     }
   }, [open, isLeader])
 
-  const fetchUsers = async () => {
-    try {
-      setLoadingUsers(true)
-      const response = await fetch('/api/users')
-      if (response.ok) {
-        const data = await response.json()
-        // Filtrar apenas usuários ativos e que não são da TI
-        const filteredUsers = data.users.filter((u: any) => 
-          u.status === 'ativo' && 
-          u.role === 'user'
-        )
-        setUsers(filteredUsers)
-      }
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error)
-    } finally {
-      setLoadingUsers(false)
-    }
-  }
-
   const handleRequesterSelect = (requesterId: string) => {
     setSelectedRequesterId(requesterId)
     
-    // Se for "Usuário Específico", mostrar campo de texto
-    const selectedUser = users.find(u => u.id === requesterId)
-    if (selectedUser?.name === "Usuário Específico") {
-      setShowCustomNameInput(true)
-      setShowRequesterSelect(false)
-    } else {
+    // Se for "self", continuar normalmente
+    if (requesterId === "self") {
       onSelectRequester?.(requesterId)
       setShowRequesterSelect(false)
-      setShowCustomNameInput(false)
     }
   }
 
@@ -266,12 +238,7 @@ export function SelectSectorDialog({
                 <p className="text-gray-600">Selecione o usuário que está solicitando o suporte</p>
               </div>
 
-              {loadingUsers ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                   {/* Card "Para mim mesmo" */}
                   <button
                     onClick={() => handleRequesterSelect("self")}
@@ -297,36 +264,25 @@ export function SelectSectorDialog({
                     </div>
                   </button>
 
-                  {/* Cards dos usuários */}
-                  {users.map((user) => (
-                    <button
-                      key={user.id}
-                      onClick={() => handleRequesterSelect(user.id)}
-                      className={`relative p-6 rounded-2xl border-2 transition-all ${
-                        selectedRequesterId === user.id
-                          ? "border-blue-500 bg-blue-50 shadow-lg"
-                          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
-                      }`}
-                    >
-                      {selectedRequesterId === user.id && (
-                        <div className="absolute top-3 right-3 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                          <CheckCircle2 className="w-4 h-4 text-white" />
-                        </div>
-                      )}
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-16 h-16 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center shadow-lg">
-                          <span className="text-2xl font-bold text-white">
-                            {user.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="text-center">
-                          <h4 className="font-bold text-gray-900">{user.name}</h4>
-                        </div>
+                  {/* Card "Usuário Específico" */}
+                  <button
+                    onClick={() => {
+                      setShowCustomNameInput(true)
+                      setShowRequesterSelect(false)
+                    }}
+                    className="relative p-6 rounded-2xl border-2 border-gray-200 bg-white hover:border-purple-300 hover:shadow-md transition-all"
+                  >
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                        <User className="w-8 h-8 text-white" />
                       </div>
-                    </button>
-                  ))}
+                      <div className="text-center">
+                        <h4 className="font-bold text-gray-900">Usuário Específico</h4>
+                        <p className="text-sm text-gray-500 mt-1">Digitar nome do solicitante</p>
+                      </div>
+                    </div>
+                  </button>
                 </div>
-              )}
             </div>
           )}
 

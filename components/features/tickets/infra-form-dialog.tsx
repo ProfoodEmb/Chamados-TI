@@ -20,6 +20,8 @@ interface InfraFormDialogProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (data: InfraFormData) => void
   preSelectedCategory?: string
+  requesterId?: string
+  userRole?: string
   onBack?: () => void
 }
 

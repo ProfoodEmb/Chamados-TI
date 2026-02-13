@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,18 +7,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Tabelas do Better Auth
 model Notice {
   id            String    @id @default(cuid())
   title         String
   content       String
-  type          String    
-  priority      String    
-  level         String    @default("general") // "general", "urgent", "critical_system"
-  targetSectors String?   // JSON array of sectors, null = all sectors
-  scheduledFor  DateTime? // When to publish the notice, null = immediate
-  publishedAt   DateTime? // When it was actually published
-  expiresAt     DateTime? // When to automatically hide/expire
+  type          String
+  priority      String
+  level         String    @default("general")
+  targetSectors String?
+  scheduledFor  DateTime?
+  publishedAt   DateTime?
+  expiresAt     DateTime?
   active        Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -32,33 +28,27 @@ model Notice {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Campos customizados
-  username      String    @unique
-  role          String    // admin, lider_infra, func_infra, lider_sistemas, func_sistemas
-  team          String    // admin, infra, sistemas
-  setor         String?   // Setor da pessoa (ex: Financeiro, RH, Vendas, etc.)
-  empresa       String?   // profood ou tuicial
-  phone         String?   // Telefone para notificações WhatsApp (ex: 11999999999)
-  status        String    @default("ativo") // ativo, suspenso, inativo
-
-  // Relações Better Auth
-  sessions      Session[]
-  accounts      Account[]
-
-  // Relações do sistema
-  ticketsCreated   Ticket[]     @relation("TicketRequester")
-  ticketsAssigned  Ticket[]     @relation("TicketAssigned")
-  messages         Message[]
-  attachments      Attachment[]
-  notices          Notice[]     // Avisos criados pelo usuário
+  id              String       @id @default(uuid())
+  name            String
+  email           String       @unique
+  emailVerified   Boolean      @default(false)
+  image           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  username        String       @unique
+  role            String
+  team            String
+  setor           String?
+  empresa         String?
+  phone           String?
+  status          String       @default("ativo")
+  accounts        Account[]
+  attachments     Attachment[]
+  messages        Message[]
+  sessions        Session[]
+  ticketsAssigned Ticket[]     @relation("TicketAssigned")
+  ticketsCreated  Ticket[]     @relation("TicketRequester")
+  notices         Notice[]
 }
 
 model Session {
@@ -74,20 +64,20 @@ model Session {
 }
 
 model Account {
-  id                String  @id @default(uuid())
-  accountId         String
-  providerId        String
-  userId            String
-  accessToken       String?
-  refreshToken      String?
-  idToken           String?
-  accessTokenExpiresAt DateTime?
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope             String?
-  password          String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerId, accountId])
 }
@@ -103,63 +93,52 @@ model Verification {
   @@unique([identifier, value])
 }
 
-// Tabelas do sistema de chamados
 model Ticket {
-  id            String   @id @default(uuid())
-  number        String   @unique
-  subject       String
-  description   String
-  category      String
-  urgency       String   // low, medium, high, critical
-  status        String   // Aberto, Pendente, Fechado, Resolvido, Aguardando Aprovação
-  kanbanStatus  String   @default("inbox") // inbox, in_progress, review, done
-  team          String?  // infra, sistemas, automacao
-  service       String?
-  anydesk       String?
-  rating        Int?     // Avaliação de 1 a 5 estrelas
-  feedback      String?  // Comentário do feedback
-  customRequesterName String? // Nome customizado quando criado para "Usuário Específico"
-  solution      String?  // Descrição de como o problema foi resolvido
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relações
-  requesterId   String
-  requester     User     @relation("TicketRequester", fields: [requesterId], references: [id])
-  
-  assignedToId  String?
-  assignedTo    User?    @relation("TicketAssigned", fields: [assignedToId], references: [id])
-  
-  messages      Message[]
-  attachments   Attachment[]
+  id                  String       @id @default(uuid())
+  number              String       @unique
+  subject             String
+  description         String
+  category            String
+  urgency             String
+  status              String
+  kanbanStatus        String       @default("inbox")
+  team                String?
+  service             String?
+  anydesk             String?
+  rating              Int?
+  feedback            String?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  requesterId         String
+  assignedToId        String?
+  customRequesterName String?
+  solution            String?
+  attachments         Attachment[]
+  messages            Message[]
+  assignedTo          User?        @relation("TicketAssigned", fields: [assignedToId], references: [id])
+  requester           User         @relation("TicketRequester", fields: [requesterId], references: [id])
 }
 
 model Message {
   id        String   @id @default(uuid())
   content   String
-  role      String   // user, support
+  role      String
   createdAt DateTime @default(now())
-
-  // Relações
   ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  
   authorId  String
   author    User     @relation(fields: [authorId], references: [id])
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 model Attachment {
-  id        String   @id @default(uuid())
-  filename  String
-  url       String
-  size      Int
-  mimeType  String
-  createdAt DateTime @default(now())
-
-  // Relações
+  id           String   @id @default(uuid())
+  filename     String
+  url          String
+  size         Int
+  mimeType     String
+  createdAt    DateTime @default(now())
   ticketId     String
-  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  
   uploadedById String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   uploadedBy   User     @relation(fields: [uploadedById], references: [id])
 }

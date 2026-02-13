@@ -62,7 +62,7 @@ export default function TicketDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Sistema de polling para mensagens (20 segundos)
+  // Sistema de polling para mensagens (5 segundos para tempo real)
   const { isActive, lastUpdate, forceUpdate, interval } = useTicketPolling({
     ticketId,
     onUpdate: (updatedTicket) => {
@@ -71,13 +71,29 @@ export default function TicketDetailPage() {
       setIsLoading(false)
     },
     enabled: !!ticketId,
-    interval: 20000 // 20 segundos
+    interval: 5000 // 5 segundos para atualização em tempo real
   })
 
   useEffect(() => {
     if (ticketId) {
       fetchTicket()
       fetchCurrentUser()
+    }
+  }, [ticketId])
+
+  // Escutar eventos de atualização de ticket
+  useEffect(() => {
+    const handleTicketUpdated = (event: any) => {
+      console.log('🔔 Evento ticketUpdated recebido:', event.detail)
+      // Forçar atualização imediata
+      fetchTicket()
+      forceUpdate()
+    }
+
+    window.addEventListener('ticketUpdated', handleTicketUpdated)
+
+    return () => {
+      window.removeEventListener('ticketUpdated', handleTicketUpdated)
     }
   }, [ticketId])
 

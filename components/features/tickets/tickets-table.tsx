@@ -73,22 +73,30 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
     }
   }
 
-  // Escutar evento de criação de chamado e polling a cada 60 segundos
+  // Escutar evento de criação/atualização de chamado e polling a cada 8 segundos
   useEffect(() => {
     const handleTicketCreated = () => {
       console.log("Evento ticketCreated recebido na tabela - atualizando tickets...")
       fetchTickets()
     }
 
-    window.addEventListener('ticketCreated', handleTicketCreated)
-    
-    // Polling a cada 60 segundos para garantir atualização
-    const interval = setInterval(() => {
+    const handleTicketUpdated = () => {
+      console.log("Evento ticketUpdated recebido na tabela - atualizando tickets...")
       fetchTickets()
-    }, 60000)
+    }
+
+    window.addEventListener('ticketCreated', handleTicketCreated)
+    window.addEventListener('ticketUpdated', handleTicketUpdated)
+    
+    // Polling a cada 8 segundos para garantir atualização em tempo real
+    const interval = setInterval(() => {
+      console.log("🔄 Polling: Atualizando tickets automaticamente...")
+      fetchTickets()
+    }, 8000)
 
     return () => {
       window.removeEventListener('ticketCreated', handleTicketCreated)
+      window.removeEventListener('ticketUpdated', handleTicketUpdated)
       clearInterval(interval)
     }
   }, [])

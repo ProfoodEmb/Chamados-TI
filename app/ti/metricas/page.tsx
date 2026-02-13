@@ -129,7 +129,7 @@ export default function MetricasPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto pt-16 md:pl-16">
+        <main className="flex-1 overflow-y-auto">
           <div className="p-6">
             {/* Header */}
             <div className="mb-6">

@@ -58,11 +58,6 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       const params = new URLSearchParams()
       if (statusFilter !== "todos") params.append("status", statusFilter)
       if (searchTerm) params.append("search", searchTerm)
-      
-      // Se for líder de sistemas, filtrar apenas usuários da equipe de sistemas
-      if (currentUser.role === "lider_sistemas") {
-        params.append("team", "sistemas")
-      }
 
       const response = await fetch(`/api/users?${params.toString()}`)
       const data = await response.json()

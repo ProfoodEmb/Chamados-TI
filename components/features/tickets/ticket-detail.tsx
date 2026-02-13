@@ -252,6 +252,11 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
       })
 
       if (response.ok) {
+        // Disparar evento para atualizar outras telas
+        window.dispatchEvent(new CustomEvent('ticketUpdated', { 
+          detail: { ticketId: ticket.id, action: 'request-close' } 
+        }))
+        
         if (onMessageSent) {
           onMessageSent()
         }
@@ -276,6 +281,11 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
       })
 
       if (response.ok) {
+        // Disparar evento para atualizar outras telas
+        window.dispatchEvent(new CustomEvent('ticketUpdated', { 
+          detail: { ticketId: ticket.id, action: 'respond-close', accept } 
+        }))
+        
         if (onMessageSent) {
           onMessageSent()
         }

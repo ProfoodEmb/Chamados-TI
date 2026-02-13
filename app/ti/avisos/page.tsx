@@ -260,118 +260,150 @@ export default function AvisosManagementPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto pt-16 md:pl-16">
-          <div className="p-6">
-            {/* Header */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground">Gerenciar Avisos</h1>
-                  <p className="text-muted-foreground">Crie e gerencie todos os avisos do sistema</p>
+        <main className="flex-1 overflow-y-auto">
+          <div className="pt-2 px-6 pb-6">
+            {/* Header com gradiente */}
+            <div className="mb-8">
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 shadow-xl">
+                <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]" />
+                <div className="relative flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                        <span className="text-4xl">📢</span>
+                      </div>
+                      <div>
+                        <h1 className="text-3xl font-bold text-white">Gerenciar Avisos</h1>
+                        <p className="text-blue-100">Crie e gerencie todos os avisos do sistema</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Botão Criar Aviso */}
+                  <Button 
+                    onClick={() => setShowCreateDialog(true)}
+                    className="bg-white text-blue-700 hover:bg-blue-50 gap-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                    size="lg"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Criar Aviso
+                  </Button>
                 </div>
-                
-                {/* Botão Criar Aviso */}
-                <Button 
-                  onClick={() => setShowCreateDialog(true)}
-                  className="bg-blue-600 hover:bg-blue-700 gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Criar Aviso
-                </Button>
               </div>
             </div>
 
-            {/* Filtros e Ações */}
-            <div className="bg-card border border-border rounded-xl p-4 mb-6">
+            {/* Filtros e Ações com visual melhorado */}
+            <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6 shadow-sm">
               <div className="flex flex-col md:flex-row gap-4">
-                {/* Busca */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                {/* Busca com ícone animado */}
+                <div className="flex-1 relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                   <Input
                     placeholder="Buscar avisos por título ou conteúdo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
                   />
                 </div>
 
-                {/* Filtro de Tipo */}
+                {/* Filtro de Tipo com ícone */}
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full md:w-48">
-                    <SelectValue placeholder="Tipo" />
+                  <SelectTrigger className="w-full md:w-56 h-12 rounded-xl border-gray-300">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4 text-gray-500" />
+                      <SelectValue placeholder="Tipo" />
+                    </div>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os tipos</SelectItem>
-                    <SelectItem value="info">Informação</SelectItem>
-                    <SelectItem value="warning">Aviso</SelectItem>
-                    <SelectItem value="maintenance">Manutenção</SelectItem>
-                    <SelectItem value="update">Novidade</SelectItem>
+                    <SelectItem value="info">ℹ️ Informação</SelectItem>
+                    <SelectItem value="warning">⚠️ Aviso</SelectItem>
+                    <SelectItem value="maintenance">🔧 Manutenção</SelectItem>
+                    <SelectItem value="update">✨ Novidade</SelectItem>
                   </SelectContent>
                 </Select>
 
                 {/* Filtro de Status */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-48">
+                  <SelectTrigger className="w-full md:w-56 h-12 rounded-xl border-gray-300">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os status</SelectItem>
-                    <SelectItem value="ativo">Ativo</SelectItem>
-                    <SelectItem value="programado">Programado</SelectItem>
-                    <SelectItem value="expirado">Expirado</SelectItem>
-                    <SelectItem value="inativo">Inativo</SelectItem>
+                    <SelectItem value="ativo">✅ Ativo</SelectItem>
+                    <SelectItem value="programado">🕐 Programado</SelectItem>
+                    <SelectItem value="expirado">❌ Expirado</SelectItem>
+                    <SelectItem value="inativo">⏸️ Inativo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Lista de Avisos */}
+            {/* Lista de Avisos com animações */}
             <div className="space-y-4">
               {isLoading ? (
-                <div className="flex items-center justify-center py-12">
+                <div className="flex items-center justify-center py-20">
                   <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Carregando avisos...</p>
+                    <div className="relative w-16 h-16 mx-auto mb-4">
+                      <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-ping"></div>
+                      <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <p className="text-gray-600 font-medium">Carregando avisos...</p>
                   </div>
                 </div>
               ) : filteredNotices.length === 0 ? (
-                <div className="bg-card border border-border rounded-xl p-12 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    📢
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-16 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                    <span className="text-4xl">📢</span>
                   </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Nenhum aviso encontrado</h3>
-                  <p className="text-muted-foreground mb-4">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">Nenhum aviso encontrado</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                     {searchTerm || typeFilter !== "all" || statusFilter !== "all" 
-                      ? "Tente ajustar os filtros de busca"
-                      : "Crie seu primeiro aviso clicando no botão acima"
+                      ? "Tente ajustar os filtros de busca para encontrar o que procura"
+                      : "Comece criando seu primeiro aviso clicando no botão acima"
                     }
                   </p>
+                  {!searchTerm && typeFilter === "all" && statusFilter === "all" && (
+                    <Button 
+                      onClick={() => setShowCreateDialog(true)}
+                      className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-lg"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Criar Primeiro Aviso
+                    </Button>
+                  )}
                 </div>
               ) : (
-                filteredNotices.map((notice) => {
+                filteredNotices.map((notice, index) => {
                   const status = getStatusLabel(notice)
                   return (
-                    <div key={notice.id} className="bg-card border border-border rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div 
+                      key={notice.id} 
+                      className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-xl hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300 hover:-translate-y-1"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          {/* Header */}
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="text-2xl">{getTypeIcon(notice.type)}</span>
+                          {/* Header com ícone maior */}
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-xl group-hover:scale-110 transition-transform">
+                              <span className="text-3xl">{getTypeIcon(notice.type)}</span>
+                            </div>
                             <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-foreground">{notice.title}</h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="outline" className={getTypeColor(notice.type)}>
+                              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{notice.title}</h3>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className={`${getTypeColor(notice.type)} border-2 font-medium`}>
                                   {notice.type === "info" && "Informação"}
                                   {notice.type === "warning" && "Aviso"}
                                   {notice.type === "maintenance" && "Manutenção"}
                                   {notice.type === "update" && "Novidade"}
                                 </Badge>
-                                <Badge variant="outline" className={getPriorityColor(notice.priority)}>
+                                <Badge variant="outline" className={`${getPriorityColor(notice.priority)} border-2 font-medium`}>
                                   {notice.priority === "low" && "Baixa"}
                                   {notice.priority === "medium" && "Média"}
                                   {notice.priority === "high" && "Alta"}
                                 </Badge>
-                                <Badge variant="outline" className={status.color}>
+                                <Badge variant="outline" className={`${status.color} border-2 font-medium`}>
                                   {status.label}
                                 </Badge>
                               </div>
@@ -379,57 +411,72 @@ export default function AvisosManagementPage() {
                           </div>
 
                           {/* Conteúdo */}
-                          <p className="text-muted-foreground mb-4 line-clamp-2">{notice.content}</p>
+                          <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 text-base">{notice.content}</p>
 
-                          {/* Informações adicionais */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4" />
-                              <span>Criado: {formatDate(notice.createdAt)}</span>
+                          {/* Informações adicionais com ícones */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span className="font-medium">Criado:</span>
+                              <span>{formatDate(notice.createdAt)}</span>
                             </div>
                             
                             {notice.scheduledFor && (
-                              <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                <span>Programado: {formatDate(notice.scheduledFor)}</span>
+                              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg px-3 py-2">
+                                <Clock className="w-4 h-4 text-blue-600" />
+                                <span className="font-medium">Programado:</span>
+                                <span>{formatDate(notice.scheduledFor)}</span>
                               </div>
                             )}
                             
                             {notice.expiresAt && (
-                              <div className="flex items-center gap-2">
-                                <Clock className="w-4 h-4" />
-                                <span>Expira: {formatDate(notice.expiresAt)}</span>
+                              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/30 rounded-lg px-3 py-2">
+                                <Clock className="w-4 h-4 text-orange-600" />
+                                <span className="font-medium">Expira:</span>
+                                <span>{formatDate(notice.expiresAt)}</span>
                               </div>
                             )}
                             
-                            <div className="flex items-center gap-2">
-                              <span>Por: {notice.author.name}</span>
+                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2">
+                              <span className="font-medium">Por:</span>
+                              <span>{notice.author.name}</span>
                             </div>
                             
                             {notice.targetSectors && (
-                              <div className="flex items-center gap-2">
-                                <span>Setores: {JSON.parse(notice.targetSectors).join(", ")}</span>
+                              <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-2 col-span-2">
+                                <span className="font-medium">Setores:</span>
+                                <span>{JSON.parse(notice.targetSectors).join(", ")}</span>
                               </div>
                             )}
                           </div>
                         </div>
 
-                        {/* Ações */}
+                        {/* Ações com hover melhorado */}
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm" title="Visualizar">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            title="Visualizar"
+                            className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 transition-colors"
+                          >
                             <Eye className="w-4 h-4" />
                           </Button>
                           
                           {canEditNotice(notice) && (
                             <>
-                              <Button variant="ghost" size="sm" title="Editar">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                title="Editar"
+                                className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30 transition-colors"
+                              >
                                 <Edit className="w-4 h-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 onClick={() => deleteNotice(notice.id)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30 transition-colors"
                                 title="Excluir"
                               >
                                 <Trash2 className="w-4 h-4" />
