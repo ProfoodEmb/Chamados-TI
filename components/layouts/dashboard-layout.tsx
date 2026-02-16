@@ -7,7 +7,7 @@ import { Header } from "@/components/layouts/header"
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isLoginPage = pathname === "/login"
-  const isAvisosPage = pathname === "/avisos"
+  const isAvisosPage = pathname === "/avisos" || pathname === "/ti/avisos"
 
   if (isLoginPage) {
     return <>{children}</>

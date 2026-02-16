@@ -66,6 +66,11 @@ export function Sidebar() {
       // Menu para usuários T.I.
       const baseItems = [
         {
+          icon: Home,
+          href: "/",
+          label: "Início",
+        },
+        {
           icon: BarChart3,
           href: "/ti",
           label: "Dashboard T.I.",
@@ -89,11 +94,19 @@ export function Sidebar() {
         label: "Avisos",
       })
 
-      // Adicionar "Métricas" para líderes e admin
+      // Adicionar "Métricas" para todos os usuários T.I.
       if (user.role === "admin" || user.role === "lider_infra" || user.role === "lider_sistemas") {
+        // Líderes e admin vão para /ti/metricas (com mais controles)
         baseItems.push({
           icon: TrendingUp,
           href: "/ti/metricas",
+          label: "Métricas",
+        })
+      } else if (user.role === "func_infra" || user.role === "func_sistemas") {
+        // Funcionários vão para /metricas (versão simplificada)
+        baseItems.push({
+          icon: TrendingUp,
+          href: "/metricas",
           label: "Métricas",
         })
       }

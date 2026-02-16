@@ -173,6 +173,3 @@ Para dúvidas ou problemas:
 2. Verifique o [changelog](./docs/changelog/)
 3. Leia o guia de [troubleshooting](./docs/architecture/PREVENCAO-BUGS.md)
 
----
-
-**Desenvolvido com ❤️ pela equipe Tuicial**

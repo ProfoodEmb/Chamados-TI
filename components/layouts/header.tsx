@@ -242,6 +242,10 @@ export function Header() {
 
   const handleInfraSubmit = async (data: InfraFormData) => {
     try {
+      console.log('🔍 [Header] handleInfraSubmit chamado')
+      console.log('🔍 [Header] selectedRequesterId:', selectedRequesterId)
+      console.log('🔍 [Header] customRequesterName:', customRequesterName)
+      
       const requestBody: any = {
         subject: `${data.problema}${data.patrimonio ? ` - Patrimônio: ${data.patrimonio}` : ''}`,
         description: data.descricao,
@@ -257,7 +261,11 @@ export function Header() {
         if (customRequesterName) {
           requestBody.customRequesterName = customRequesterName
         }
+        console.log('🔍 [Header] Adicionando requesterId ao body:', requestBody.requesterId)
+        console.log('🔍 [Header] Adicionando customRequesterName ao body:', requestBody.customRequesterName)
       }
+
+      console.log('🔍 [Header] Request body completo:', JSON.stringify(requestBody, null, 2))
 
       const response = await fetch("/api/tickets", {
         method: "POST",

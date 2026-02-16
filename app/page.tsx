@@ -38,6 +38,13 @@ interface User {
   empresa: string | null
 }
 
+interface PersonalStats {
+  resolved: number
+  inProgress: number
+  inReview: number
+  total: number
+}
+
 const urgencyColors = {
   low: "text-green-600 bg-green-50 border-green-200",
   medium: "text-yellow-600 bg-yellow-50 border-yellow-200",
@@ -56,6 +63,7 @@ export default function Home() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [tickets, setTickets] = useState<Ticket[]>([])
+  const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -81,6 +89,17 @@ export default function Home() {
         if (session?.user) {
           setUser(session.user)
           await fetchTickets()
+          
+          // Se for usuário TI, buscar estatísticas pessoais
+          const isTIUser = session.user.role === "admin" || 
+                          session.user.role === "lider_infra" || 
+                          session.user.role === "func_infra" || 
+                          session.user.role === "lider_sistemas" || 
+                          session.user.role === "func_sistemas"
+          
+          if (isTIUser) {
+            await fetchPersonalStats(session.user.id)
+          }
         }
       } catch (error) {
         console.error("Erro ao inicializar:", error)
@@ -105,12 +124,35 @@ export default function Home() {
     }
   }
 
+  const fetchPersonalStats = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}/stats`)
+      if (response.ok) {
+        const stats = await response.json()
+        setPersonalStats(stats)
+        console.log('✅ [HOME] Estatísticas pessoais:', stats)
+      }
+    } catch (error) {
+      console.error("Erro ao buscar estatísticas pessoais:", error)
+    }
+  }
+
   // Polling a cada 60 segundos para atualizações
   useEffect(() => {
     if (!user) return
     
     const interval = setInterval(() => {
       fetchTickets()
+      
+      const isTIUser = user.role === "admin" || 
+                      user.role === "lider_infra" || 
+                      user.role === "func_infra" || 
+                      user.role === "lider_sistemas" || 
+                      user.role === "func_sistemas"
+      
+      if (isTIUser) {
+        fetchPersonalStats(user.id)
+      }
     }, 60000) // 60 segundos
 
     return () => {
@@ -134,9 +176,14 @@ export default function Home() {
   }
 
   const isAdmin = user?.role === "admin" || user?.role?.includes("lider") || user?.role?.includes("func")
+  const isTIUser = user?.role === "admin" || 
+                   user?.role === "lider_infra" || 
+                   user?.role === "func_infra" || 
+                   user?.role === "lider_sistemas" || 
+                   user?.role === "func_sistemas"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen max-h-screen overflow-y-scroll bg-gradient-to-br from-gray-50 to-gray-100 p-8 scrollbar-visible">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -147,52 +194,61 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                <TicketIcon className="w-6 h-6 text-gray-600" />
-              </div>
-              <Badge variant="secondary" className="text-xs">Total</Badge>
-            </div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">{tickets.length}</h3>
-            <p className="text-sm text-gray-600">Chamados criados</p>
-          </Card>
+        {/* Personal Stats for TI Users */}
+        {isTIUser && personalStats && (
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Minhas Estatísticas</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* 1. Chamados atribuídos */}
+              <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-purple-200 rounded-xl flex items-center justify-center">
+                    <TicketIcon className="w-6 h-6 text-purple-700" />
+                  </div>
+                  <Badge className="text-xs bg-purple-200 text-purple-800 border-0">Meus</Badge>
+                </div>
+                <h3 className="text-3xl font-bold text-purple-900 mb-1">{personalStats.total}</h3>
+                <p className="text-sm text-purple-700 font-medium">Chamados atribuídos</p>
+              </Card>
 
-          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-              <Badge className="text-xs bg-blue-100 text-blue-700 border-0">Ativos</Badge>
-            </div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">{activeTickets.length}</h3>
-            <p className="text-sm text-gray-600">Em andamento</p>
-          </Card>
+              {/* 2. Em andamento */}
+              <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-blue-700" />
+                  </div>
+                  <Badge className="text-xs bg-blue-200 text-blue-800 border-0">Trabalhando</Badge>
+                </div>
+                <h3 className="text-3xl font-bold text-blue-900 mb-1">{personalStats.inProgress}</h3>
+                <p className="text-sm text-blue-700 font-medium">Em andamento</p>
+              </Card>
 
-          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-orange-600" />
-              </div>
-              <Badge className="text-xs bg-orange-100 text-orange-700 border-0">Aguardando</Badge>
-            </div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">{reviewTickets.length}</h3>
-            <p className="text-sm text-gray-600">Em revisão</p>
-          </Card>
+              {/* 3. Aguardando revisão */}
+              <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-orange-200 rounded-xl flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-orange-700" />
+                  </div>
+                  <Badge className="text-xs bg-orange-200 text-orange-800 border-0">Revisão</Badge>
+                </div>
+                <h3 className="text-3xl font-bold text-orange-900 mb-1">{personalStats.inReview}</h3>
+                <p className="text-sm text-orange-700 font-medium">Aguardando revisão</p>
+              </Card>
 
-          <Card className="p-6 bg-white border-0 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              </div>
-              <Badge className="text-xs bg-green-100 text-green-700 border-0">Concluídos</Badge>
+              {/* 4. Chamados concluídos */}
+              <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-green-700" />
+                  </div>
+                  <Badge className="text-xs bg-green-200 text-green-800 border-0">Resolvidos</Badge>
+                </div>
+                <h3 className="text-3xl font-bold text-green-900 mb-1">{personalStats.resolved}</h3>
+                <p className="text-sm text-green-700 font-medium">Chamados concluídos</p>
+              </Card>
             </div>
-            <h3 className="text-3xl font-bold text-gray-900 mb-1">{doneTickets.length}</h3>
-            <p className="text-sm text-gray-600">Finalizados</p>
-          </Card>
-        </div>
+          </div>
+        )}
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -214,7 +270,7 @@ export default function Home() {
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-96 overflow-y-scroll pr-2 scrollbar-visible">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />

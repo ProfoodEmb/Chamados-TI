@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const teamFilter = searchParams.get('team')
     const periodFilter = searchParams.get('period') || '90d'
+    const customStartDate = searchParams.get('startDate')
+    const customEndDate = searchParams.get('endDate')
 
     // Criar filtro base para equipe
     const teamWhereClause = teamFilter && teamFilter !== 'all' 
@@ -17,6 +19,9 @@ export async function GET(request: Request) {
 
     console.log('📊 [API Metrics] Filtro de equipe:', teamFilter || 'all')
     console.log('📊 [API Metrics] Período:', periodFilter)
+    if (customStartDate && customEndDate) {
+      console.log('📊 [API Metrics] Datas personalizadas:', customStartDate, 'até', customEndDate)
+    }
 
     // Buscar IDs dos usuários do time específico (para filtrar avaliações e performance)
     let teamUserIds: string[] = []
@@ -29,7 +34,7 @@ export async function GET(request: Request) {
       console.log('📊 [API Metrics] Usuários do time:', teamFilter, teamUsers.map(u => u.name))
     }
 
-    // Datas para cálculos baseadas no período
+    // Datas para cálculos baseadas no período ou datas personalizadas
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     const weekAgo = new Date(today)
@@ -37,14 +42,23 @@ export async function GET(request: Request) {
     const monthAgo = new Date(today)
     monthAgo.setMonth(monthAgo.getMonth() - 1)
     
-    // Calcular data de início baseada no período
-    const periodStartDate = new Date(today)
-    if (periodFilter === '7d') {
-      periodStartDate.setDate(periodStartDate.getDate() - 7)
-    } else if (periodFilter === '30d') {
-      periodStartDate.setDate(periodStartDate.getDate() - 30)
+    // Calcular data de início baseada no período ou usar datas personalizadas
+    let periodStartDate: Date
+    let periodEndDate: Date = now // Usar now ao invés de today
+    
+    if (customStartDate && customEndDate) {
+      periodStartDate = new Date(customStartDate)
+      periodEndDate = new Date(customEndDate)
+      periodEndDate.setHours(23, 59, 59, 999) // Incluir o dia inteiro
     } else {
-      periodStartDate.setDate(periodStartDate.getDate() - 90)
+      periodStartDate = new Date(now)
+      if (periodFilter === '7d') {
+        periodStartDate.setDate(periodStartDate.getDate() - 7)
+      } else if (periodFilter === '30d') {
+        periodStartDate.setDate(periodStartDate.getDate() - 30)
+      } else {
+        periodStartDate.setDate(periodStartDate.getDate() - 90)
+      }
     }
 
     // 1. Tickets por status
@@ -213,13 +227,21 @@ export async function GET(request: Request) {
       count
     }))
 
-    // 11. Tendência baseada no período selecionado
-    const periodDays = periodFilter === '7d' ? 7 : periodFilter === '30d' ? 30 : 90
+    // 11. Tendência baseada no período selecionado ou datas personalizadas
+    const periodDays = customStartDate && customEndDate 
+      ? Math.ceil((periodEndDate.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : (periodFilter === '7d' ? 7 : periodFilter === '30d' ? 30 : 90)
+    
     const trendData = []
     
-    for (let i = periodDays - 1; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
+    // Usar a data atual como referência para garantir que hoje seja incluído
+    const referenceDate = new Date()
+    referenceDate.setHours(0, 0, 0, 0)
+    
+    // Loop de 0 até periodDays-1 para incluir todos os dias
+    for (let i = 0; i < periodDays; i++) {
+      const date = new Date(referenceDate)
+      date.setDate(date.getDate() - (periodDays - 1 - i))
       const nextDate = new Date(date)
       nextDate.setDate(nextDate.getDate() + 1)
 

@@ -428,6 +428,21 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
                 Finalizar Chamado
               </Button>
             )}
+            
+            {/* Botão de reenviar solicitação de fechamento */}
+            {currentUser && 
+             (currentUser.team === "infra" || currentUser.team === "sistemas" || currentUser.team === "admin") &&
+             ticket.status === "Aguardando Aprovação" && (
+              <Button
+                onClick={handleRequestClose}
+                variant="outline"
+                size="sm"
+                className="border-green-600 text-green-600 hover:bg-green-50 shrink-0"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Reenviar Solicitação
+              </Button>
+            )}
           </div>
         </div>
 

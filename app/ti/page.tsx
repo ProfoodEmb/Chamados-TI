@@ -33,6 +33,7 @@ interface Ticket {
   team?: string | null
   service?: string | null
   anydesk?: string | null
+  customRequesterName?: string | null
   createdAt: string
   updatedAt: string
   requester: {
@@ -399,7 +400,9 @@ export default function TIPage() {
                               </div>
                             </td>
                             <td className="p-2">
-                              <span className="text-xs text-foreground">{ticket.requester.name}</span>
+                              <span className="text-xs text-foreground">
+                                {ticket.customRequesterName || ticket.requester.name}
+                              </span>
                             </td>
                             <td className="p-2">
                               <span className="text-xs text-foreground">{ticket.assignedTo?.name || "Não atribuído"}</span>

@@ -32,50 +32,62 @@ export function useTicketPolling(options: TicketPollingOptions) {
         
         // Buscar ticket completo com mensagens e anexos
         const response = await fetch(`/api/tickets/${ticketId}`)
-        if (response.ok) {
-          const ticket = await response.json()
-          const currentMessageCount = ticket.messages?.length || 0
-          const currentAttachmentCount = ticket.attachments?.length || 0
-          const currentStatus = ticket.status || ''
-          
-          // Se o número de mensagens, anexos ou status mudou, notificar
-          const messagesChanged = lastMessageCountRef.current > 0 && currentMessageCount !== lastMessageCountRef.current
-          const attachmentsChanged = lastAttachmentCountRef.current > 0 && currentAttachmentCount !== lastAttachmentCountRef.current
-          const statusChanged = lastStatusRef.current !== '' && currentStatus !== lastStatusRef.current
-          
-          if (messagesChanged) {
-            console.log('💬 Nova mensagem detectada via polling:', { 
-              anterior: lastMessageCountRef.current, 
-              atual: currentMessageCount 
-            })
-            onUpdate?.(ticket)
-          }
-          
-          if (attachmentsChanged) {
-            console.log('📎 Novo anexo detectado via polling:', { 
-              anterior: lastAttachmentCountRef.current, 
-              atual: currentAttachmentCount 
-            })
-            onUpdate?.(ticket)
-          }
-
-          if (statusChanged) {
-            console.log('🔄 Status do ticket mudou via polling:', { 
-              anterior: lastStatusRef.current, 
-              atual: currentStatus 
-            })
-            onUpdate?.(ticket)
-          }
-          
-          // Se é a primeira vez, apenas definir o ticket
-          if (lastMessageCountRef.current === 0 && lastAttachmentCountRef.current === 0) {
-            onUpdate?.(ticket)
-          }
-          
-          lastMessageCountRef.current = currentMessageCount
-          lastAttachmentCountRef.current = currentAttachmentCount
-          lastStatusRef.current = currentStatus
+        
+        // Verificar se a resposta é válida
+        if (!response.ok) {
+          console.warn(`⚠️ Resposta não OK: ${response.status} ${response.statusText}`)
+          return
         }
+
+        // Verificar se o content-type é JSON
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+          console.warn('⚠️ Resposta não é JSON:', contentType)
+          return
+        }
+
+        const ticket = await response.json()
+        const currentMessageCount = ticket.messages?.length || 0
+        const currentAttachmentCount = ticket.attachments?.length || 0
+        const currentStatus = ticket.status || ''
+        
+        // Se o número de mensagens, anexos ou status mudou, notificar
+        const messagesChanged = lastMessageCountRef.current > 0 && currentMessageCount !== lastMessageCountRef.current
+        const attachmentsChanged = lastAttachmentCountRef.current > 0 && currentAttachmentCount !== lastAttachmentCountRef.current
+        const statusChanged = lastStatusRef.current !== '' && currentStatus !== lastStatusRef.current
+        
+        if (messagesChanged) {
+          console.log('💬 Nova mensagem detectada via polling:', { 
+            anterior: lastMessageCountRef.current, 
+            atual: currentMessageCount 
+          })
+          onUpdate?.(ticket)
+        }
+        
+        if (attachmentsChanged) {
+          console.log('📎 Novo anexo detectado via polling:', { 
+            anterior: lastAttachmentCountRef.current, 
+            atual: currentAttachmentCount 
+          })
+          onUpdate?.(ticket)
+        }
+
+        if (statusChanged) {
+          console.log('🔄 Status do ticket mudou via polling:', { 
+            anterior: lastStatusRef.current, 
+            atual: currentStatus 
+          })
+          onUpdate?.(ticket)
+        }
+        
+        // Se é a primeira vez, apenas definir o ticket
+        if (lastMessageCountRef.current === 0 && lastAttachmentCountRef.current === 0) {
+          onUpdate?.(ticket)
+        }
+        
+        lastMessageCountRef.current = currentMessageCount
+        lastAttachmentCountRef.current = currentAttachmentCount
+        lastStatusRef.current = currentStatus
         
         setLastUpdate(new Date())
       } catch (error) {
@@ -124,11 +136,21 @@ export function useTicketPolling(options: TicketPollingOptions) {
     console.log('🔄 Atualização forçada de mensagens')
     try {
       const response = await fetch(`/api/tickets/${ticketId}`)
-      if (response.ok) {
-        const ticket = await response.json()
-        onUpdate?.(ticket)
-        setLastUpdate(new Date())
+      
+      if (!response.ok) {
+        console.warn(`⚠️ Resposta não OK: ${response.status} ${response.statusText}`)
+        return
       }
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.warn('⚠️ Resposta não é JSON:', contentType)
+        return
+      }
+
+      const ticket = await response.json()
+      onUpdate?.(ticket)
+      setLastUpdate(new Date())
     } catch (error) {
       console.error('❌ Erro na atualização forçada:', error)
     }

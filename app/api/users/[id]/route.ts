@@ -94,14 +94,37 @@ export async function PATCH(
       const bcrypt = require('bcryptjs')
       const hashedPassword = await bcrypt.hash(password, 10)
       
-      // Atualizar senha na tabela Account
-      await prisma.account.updateMany({
+      console.log('🔐 Atualizando senha para usuário:', id)
+      
+      // Buscar a conta do usuário
+      const account = await prisma.account.findFirst({
         where: { 
           userId: id,
           providerId: 'credential'
-        },
+        }
+      })
+
+      if (!account) {
+        console.error('❌ Conta credential não encontrada para o usuário:', id)
+        return NextResponse.json({ error: "Conta de autenticação não encontrada" }, { status: 404 })
+      }
+
+      console.log('✅ Conta encontrada:', account.id)
+      
+      // Atualizar senha na tabela Account
+      const updated = await prisma.account.update({
+        where: { id: account.id },
         data: { password: hashedPassword }
       })
+
+      console.log('✅ Senha atualizada com sucesso')
+
+      // Invalidar todas as sessões do usuário para forçar novo login
+      await prisma.session.deleteMany({
+        where: { userId: id }
+      })
+
+      console.log('✅ Sessões invalidadas')
     }
 
     // Atualizar usuário

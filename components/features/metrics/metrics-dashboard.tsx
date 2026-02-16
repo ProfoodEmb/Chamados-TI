@@ -53,15 +53,17 @@ interface MetricsData {
 interface MetricsDashboardProps {
   teamFilter?: string
   period?: string
+  startDate?: string
+  endDate?: string
 }
 
-export function MetricsDashboard({ teamFilter = "all", period = "90d" }: MetricsDashboardProps) {
+export function MetricsDashboard({ teamFilter = "all", period = "90d", startDate, endDate }: MetricsDashboardProps) {
   const [metrics, setMetrics] = useState<MetricsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     fetchMetrics()
-  }, [teamFilter, period])
+  }, [teamFilter, period, startDate, endDate])
 
   const fetchMetrics = async () => {
     try {
@@ -72,7 +74,12 @@ export function MetricsDashboard({ teamFilter = "all", period = "90d" }: Metrics
       if (teamFilter !== "all") {
         params.append('team', teamFilter)
       }
-      if (period) {
+      
+      // Se tiver datas personalizadas, usar elas ao invés do período
+      if (startDate && endDate) {
+        params.append('startDate', startDate)
+        params.append('endDate', endDate)
+      } else if (period) {
         params.append('period', period)
       }
       

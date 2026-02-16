@@ -65,7 +65,18 @@ export async function POST(
       },
     })
 
+    // Criar mensagem de sistema informando a solicitação de fechamento
+    await prisma.message.create({
+      data: {
+        content: `🔔 O atendente ${session.user.name} solicitou o fechamento deste chamado. Por favor, confirme se o problema foi resolvido ou reabra o chamado se ainda precisar de ajuda.`,
+        role: "support",
+        ticketId: ticketId,
+        authorId: session.user.id,
+      },
+    })
+
     console.log(`🔄 Ticket ${ticket.number} movido para "Revisão" (aguardando aprovação do usuário)`)
+    console.log(`💬 Mensagem de solicitação de fechamento criada`)
 
     // Notificar via Socket.IO
     const { notifyTicketUpdate, ensureSocketIO } = require('@/lib/api/socket-server')

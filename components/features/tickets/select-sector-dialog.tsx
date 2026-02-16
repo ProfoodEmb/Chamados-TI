@@ -91,6 +91,7 @@ export function SelectSectorDialog({
       // Passar o ID do "Usuário Específico" e o nome customizado
       onSelectRequester?.(selectedRequesterId, customRequesterName)
       setShowCustomNameInput(false)
+      // Não fechar o dialog, apenas voltar para mostrar os setores
     }
   }
 
@@ -266,9 +267,32 @@ export function SelectSectorDialog({
 
                   {/* Card "Usuário Específico" */}
                   <button
-                    onClick={() => {
-                      setShowCustomNameInput(true)
-                      setShowRequesterSelect(false)
+                    onClick={async () => {
+                      try {
+                        // Buscar o ID do usuário "Usuário Específico"
+                        const response = await fetch('/api/users')
+                        const data = await response.json()
+                        
+                        console.log('🔍 Resposta da API:', data)
+                        
+                        // A API retorna { users: [...] }
+                        const users = data.users || []
+                        const specificUser = users.find((u: any) => u.name === "Usuário Específico")
+                        
+                        if (specificUser) {
+                          console.log('✅ Usuário Específico encontrado:', specificUser)
+                          setSelectedRequesterId(specificUser.id)
+                          setShowCustomNameInput(true)
+                          setShowRequesterSelect(false)
+                        } else {
+                          console.error('❌ Usuário Específico não encontrado na lista')
+                          console.log('Usuários disponíveis:', users.map((u: any) => u.name))
+                          alert('Erro: Usuário Específico não encontrado no sistema')
+                        }
+                      } catch (error) {
+                        console.error('Erro ao buscar usuários:', error)
+                        alert('Erro ao buscar usuários')
+                      }
                     }}
                     className="relative p-6 rounded-2xl border-2 border-gray-200 bg-white hover:border-purple-300 hover:shadow-md transition-all"
                   >
@@ -287,7 +311,7 @@ export function SelectSectorDialog({
           )}
 
           {/* Cards principais - Infraestrutura e Sistemas */}
-          {!showRequesterSelect && (
+          {!showRequesterSelect && !showCustomNameInput && (
           <div className="grid grid-cols-2 gap-6">
             <button
               className={`relative p-8 rounded-2xl border-2 transition-all ${

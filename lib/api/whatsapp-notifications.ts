@@ -47,6 +47,12 @@ const TEAM_PHONES = {
   sistemas: process.env.SISTEMAS_TEAM_PHONE || ''
 }
 
+// Número do Rafael para sistemas específicos
+const RAFAEL_PHONE = process.env.RAFAEL_PHONE || ''
+
+// Sistemas que devem notificar o Rafael
+const RAFAEL_SYSTEMS = ['Ecalc', 'Questor']
+
 // Emojis para urgência
 const URGENCY_EMOJIS = {
   low: '🟢',
@@ -258,6 +264,27 @@ export async function notifyTicketCreatedWhatsApp(ticket: TicketData): Promise<v
     notifications.push(sendWhatsAppMessage(ticket.assignedTo.phone, assigneeMessage))
   } else if (ticket.assignedTo) {
     console.log('⚠️  Técnico responsável sem telefone cadastrado')
+  }
+
+  // 4. Notificar o Rafael se for chamado de Ecalc, Questor ou Mercos
+  if (RAFAEL_PHONE && ticket.service && RAFAEL_SYSTEMS.includes(ticket.service)) {
+    console.log(`📱 Enviando notificação para Rafael (sistema: ${ticket.service})`)
+    const rafaelMessage = `🔔 *Chamado Prioritário - ${ticket.service}*
+
+📋 *Número:* #${ticket.number}
+📝 *Assunto:* ${ticket.subject}
+${URGENCY_EMOJIS[ticket.urgency as keyof typeof URGENCY_EMOJIS] || '⚪'} *Urgência:* ${URGENCY_LABELS[ticket.urgency as keyof typeof URGENCY_LABELS] || ticket.urgency}
+
+👤 *Solicitante:* ${ticket.requester.name}
+📧 *Email:* ${ticket.requester.email}
+
+${ticket.description ? `📄 *Descrição:*\n${ticket.description.substring(0, 200)}${ticket.description.length > 200 ? '...' : ''}` : ''}
+
+🖥️ *Sistema:* ${ticket.service}
+
+_Este chamado requer sua atenção. Acesse o sistema para mais detalhes._`
+    
+    notifications.push(sendWhatsAppMessage(RAFAEL_PHONE, rafaelMessage))
   }
 
   // Enviar todas as notificações em paralelo

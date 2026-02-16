@@ -166,6 +166,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { subject, description, category, urgency, service, anydesk, patrimonio, team, requesterId, customRequesterName, solution } = body
 
+    console.log('🔍 [API] POST /api/tickets - Body recebido:', JSON.stringify(body, null, 2))
+    console.log('🔍 [API] requesterId:', requesterId)
+    console.log('🔍 [API] customRequesterName:', customRequesterName)
+
     // Validação básica
     if (!subject || !description || !urgency) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 })
@@ -177,6 +181,7 @@ export async function POST(request: NextRequest) {
     let finalRequesterId = session.user.id
     const userRole = session.user.role || "user"
     let isCustomRequester = false
+    let finalCustomRequesterName = null
     
     if (requesterId && (userRole.includes("lider") || userRole === "admin")) {
       // Verificar se o usuário existe
@@ -186,11 +191,14 @@ export async function POST(request: NextRequest) {
       
       if (requesterExists) {
         finalRequesterId = requesterId
-        // Verificar se é "Usuário Específico"
-        if (requesterExists.name === "Usuário Específico") {
+        // Verificar se é "Usuário Específico" e tem nome customizado
+        if (requesterExists.name === "Usuário Específico" && customRequesterName) {
           isCustomRequester = true
+          finalCustomRequesterName = customRequesterName
+          console.log(`📝 [Líder] Criando chamado para usuário específico: ${customRequesterName}`)
+        } else {
+          console.log(`📝 [Líder] Criando chamado em nome de: ${requesterExists.name}`)
         }
-        console.log(`📝 [Líder] Criando chamado em nome de: ${requesterExists.name}`)
       } else {
         return NextResponse.json({ error: "Usuário solicitante não encontrado" }, { status: 400 })
       }
@@ -269,8 +277,8 @@ export async function POST(request: NextRequest) {
         team: team || null,
         requesterId: finalRequesterId,
         assignedToId: assignedToId,
-        customRequesterName: isCustomRequester ? customRequesterName : null,
-        solution: isCustomRequester ? solution : null,
+        customRequesterName: finalCustomRequesterName,
+        solution: isCustomRequester && solution ? solution : null,
       },
       include: {
         requester: {
