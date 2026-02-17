@@ -13,12 +13,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
     }
 
-    const { newPassword } = await request.json()
+    // Apenas admin pode resetar senhas
+    if (session.user.role !== "admin") {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
+    }
 
-    // Validações
-    if (!newPassword) {
+    const { userId, newPassword } = await request.json()
+
+    if (!userId || !newPassword) {
       return NextResponse.json(
-        { error: "Nova senha é obrigatória" },
+        { error: "userId e newPassword são obrigatórios" },
         { status: 400 }
       )
     }
@@ -30,51 +34,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Buscar usuário e sua conta
+    // Buscar o usuário
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        accounts: true
-      }
+      where: { id: userId },
+      include: { accounts: true }
     })
 
     if (!user) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 })
     }
 
-    // Buscar a conta de email/password do usuário
     const account = user.accounts.find(acc => acc.providerId === 'credential')
 
     if (!account) {
       return NextResponse.json({ error: "Conta não encontrada" }, { status: 404 })
     }
 
-    // Usar a mesma lógica da edição de usuário (que funciona!)
+    // Usar Better Auth para criar o hash correto
     const crypto = require('crypto')
     const salt = crypto.randomBytes(16).toString('hex')
     const hash = crypto.pbkdf2Sync(newPassword, salt, 10000, 64, 'sha256').toString('hex')
     const hashedPassword = `${salt}:${hash}`
-    
-    console.log('🔨 Criando novo hash para senha')
 
-    // Atualizar senha na tabela Account
+    // Atualizar a senha
     await prisma.account.update({
       where: { id: account.id },
-      data: { password: hashedPassword },
+      data: { password: hashedPassword }
     })
 
-    console.log('✅ Senha alterada com sucesso')
-
-    // Invalidar todas as sessões do usuário para forçar novo login
-    await prisma.session.deleteMany({
-      where: { userId: user.id }
+    return NextResponse.json({ 
+      message: "Senha resetada com sucesso",
+      username: user.username,
+      newPassword: newPassword
     })
-
-    return NextResponse.json({ message: "Senha alterada com sucesso" })
   } catch (error) {
-    console.error("Erro ao alterar senha:", error)
+    console.error("Erro ao resetar senha:", error)
     return NextResponse.json(
-      { error: "Erro ao alterar senha" },
+      { error: "Erro ao resetar senha" },
       { status: 500 }
     )
   }

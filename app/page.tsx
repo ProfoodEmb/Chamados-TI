@@ -12,11 +12,8 @@ import {
   Clock, 
   CheckCircle2, 
   AlertCircle,
-  TrendingUp,
   Plus,
-  ArrowRight,
-  Users,
-  BarChart3
+  ArrowRight
 } from "lucide-react"
 
 interface Ticket {
@@ -27,6 +24,8 @@ interface Ticket {
   urgency: "low" | "medium" | "high" | "critical"
   createdAt: string
   kanbanStatus: string
+  assignedToId?: string | null
+  requesterId?: string
 }
 
 interface User {
@@ -160,9 +159,11 @@ export default function Home() {
     }
   }, [user])
 
-  const activeTickets = tickets.filter(t => t.kanbanStatus !== "done")
-  const reviewTickets = tickets.filter(t => t.kanbanStatus === "review")
-  const doneTickets = tickets.filter(t => t.kanbanStatus === "done")
+  // Filtrar chamados do usuário (criados ou atribuídos) - apenas os 3 mais recentes
+  const myRecentTickets = user ? tickets.filter(ticket => 
+    ticket.requesterId === user.id || ticket.assignedToId === user.id
+  ).slice(0, 3) : []
+  
   const recentTickets = tickets.slice(0, 4)
 
   const formatDate = (dateString: string) => {
@@ -175,20 +176,31 @@ export default function Home() {
     })
   }
 
-  const isAdmin = user?.role === "admin" || user?.role?.includes("lider") || user?.role?.includes("func")
+  const getStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; className: string }> = {
+      open: { label: "Aberto", className: "bg-blue-100 text-blue-800 border-blue-200" },
+      in_progress: { label: "Em Andamento", className: "bg-yellow-100 text-yellow-800 border-yellow-200" },
+      resolved: { label: "Resolvido", className: "bg-green-100 text-green-800 border-green-200" },
+      closed: { label: "Fechado", className: "bg-gray-100 text-gray-800 border-gray-200" },
+    }
+    return statusConfig[status] || { label: status, className: "bg-gray-100 text-gray-800" }
+  }
+
   const isTIUser = user?.role === "admin" || 
                    user?.role === "lider_infra" || 
                    user?.role === "func_infra" || 
                    user?.role === "lider_sistemas" || 
                    user?.role === "func_sistemas"
+  
+  const isFuncOrLiderOrAdmin = user?.role?.includes("func") || user?.role?.includes("lider") || user?.role === "admin"
 
   return (
-    <div className="min-h-screen max-h-screen overflow-y-scroll bg-gradient-to-br from-gray-50 to-gray-100 p-8 scrollbar-visible">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen max-h-screen overflow-y-scroll bg-gradient-to-br from-gray-50 to-gray-100 p-4 scrollbar-visible">
+      <div className="max-w-6xl mx-auto space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-gray-900">
               Olá, {user?.name?.split(" ")[0] || "Usuário"}! 👋
             </h1>
           </div>
@@ -197,165 +209,133 @@ export default function Home() {
         {/* Personal Stats for TI Users */}
         {isTIUser && personalStats && (
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Minhas Estatísticas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Minhas Estatísticas</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {/* 1. Chamados atribuídos */}
-              <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-purple-200 rounded-xl flex items-center justify-center">
-                    <TicketIcon className="w-6 h-6 text-purple-700" />
+              <Card className="p-3 bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-purple-200 rounded-lg flex items-center justify-center">
+                    <TicketIcon className="w-4 h-4 text-purple-700" />
                   </div>
-                  <Badge className="text-xs bg-purple-200 text-purple-800 border-0">Meus</Badge>
+                  <Badge className="text-[10px] bg-purple-200 text-purple-800 border-0 px-1.5 py-0.5">Meus</Badge>
                 </div>
-                <h3 className="text-3xl font-bold text-purple-900 mb-1">{personalStats.total}</h3>
-                <p className="text-sm text-purple-700 font-medium">Chamados atribuídos</p>
+                <h3 className="text-xl font-bold text-purple-900 mb-0.5">{personalStats.total}</h3>
+                <p className="text-[10px] text-purple-700 font-medium">Chamados atribuídos</p>
               </Card>
 
               {/* 2. Em andamento */}
-              <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-200 rounded-xl flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-blue-700" />
+              <Card className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-blue-200 rounded-lg flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-blue-700" />
                   </div>
-                  <Badge className="text-xs bg-blue-200 text-blue-800 border-0">Trabalhando</Badge>
+                  <Badge className="text-[10px] bg-blue-200 text-blue-800 border-0 px-1.5 py-0.5">Trabalhando</Badge>
                 </div>
-                <h3 className="text-3xl font-bold text-blue-900 mb-1">{personalStats.inProgress}</h3>
-                <p className="text-sm text-blue-700 font-medium">Em andamento</p>
+                <h3 className="text-xl font-bold text-blue-900 mb-0.5">{personalStats.inProgress}</h3>
+                <p className="text-[10px] text-blue-700 font-medium">Em andamento</p>
               </Card>
 
               {/* 3. Aguardando revisão */}
-              <Card className="p-6 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-orange-200 rounded-xl flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-orange-700" />
+              <Card className="p-3 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-orange-200 rounded-lg flex items-center justify-center">
+                    <AlertCircle className="w-4 h-4 text-orange-700" />
                   </div>
-                  <Badge className="text-xs bg-orange-200 text-orange-800 border-0">Revisão</Badge>
+                  <Badge className="text-[10px] bg-orange-200 text-orange-800 border-0 px-1.5 py-0.5">Revisão</Badge>
                 </div>
-                <h3 className="text-3xl font-bold text-orange-900 mb-1">{personalStats.inReview}</h3>
-                <p className="text-sm text-orange-700 font-medium">Aguardando revisão</p>
+                <h3 className="text-xl font-bold text-orange-900 mb-0.5">{personalStats.inReview}</h3>
+                <p className="text-[10px] text-orange-700 font-medium">Aguardando revisão</p>
               </Card>
 
               {/* 4. Chamados concluídos */}
-              <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-green-200 rounded-xl flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6 text-green-700" />
+              <Card className="p-3 bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-8 h-8 bg-green-200 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="w-4 h-4 text-green-700" />
                   </div>
-                  <Badge className="text-xs bg-green-200 text-green-800 border-0">Resolvidos</Badge>
+                  <Badge className="text-[10px] bg-green-200 text-green-800 border-0 px-1.5 py-0.5">Resolvidos</Badge>
                 </div>
-                <h3 className="text-3xl font-bold text-green-900 mb-1">{personalStats.resolved}</h3>
-                <p className="text-sm text-green-700 font-medium">Chamados concluídos</p>
+                <h3 className="text-xl font-bold text-green-900 mb-0.5">{personalStats.resolved}</h3>
+                <p className="text-[10px] text-green-700 font-medium">Chamados concluídos</p>
               </Card>
             </div>
           </div>
         )}
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Tickets */}
-          <Card className="lg:col-span-2 p-6 bg-white border-0 shadow-lg">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Chamados Recentes</h2>
-                <p className="text-sm text-gray-600 mt-1">Últimos chamados criados</p>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => router.push("/tickets")}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                Ver todos
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
-
-            <div className="space-y-3 max-h-96 overflow-y-scroll pr-2 scrollbar-visible">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-                  <p className="text-sm text-gray-600">Carregando...</p>
-                </div>
-              ) : recentTickets.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <TicketIcon className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">Nenhum chamado ainda</h3>
-                  <p className="text-sm text-gray-600 mb-4">Crie seu primeiro chamado para começar</p>
-                  <Button onClick={() => router.push("/tickets")} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Criar Chamado
-                  </Button>
-                </div>
-              ) : (
-                recentTickets.map((ticket) => (
-                  <Link
-                    key={ticket.id}
-                    href={`/tickets/${ticket.id}`}
-                    className="block p-4 border border-gray-200 rounded-xl hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-sm font-bold text-blue-600">#{ticket.number}</span>
-                          <Badge variant="outline" className={`${urgencyColors[ticket.urgency]} text-xs border font-semibold`}>
-                            {urgencyLabels[ticket.urgency]}
-                          </Badge>
-                        </div>
-                        <h3 className="text-base font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
-                          {ticket.subject}
-                        </h3>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-gray-500">
-                      <span>{formatDate(ticket.createdAt)}</span>
-                      <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-                    </div>
-                  </Link>
-                ))
-              )}
-            </div>
-          </Card>
-
-          {/* Quick Actions & Notices */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            {isAdmin && (
-              <Card className="p-6 bg-gradient-to-br from-blue-600 to-blue-700 border-0 shadow-lg text-white">
-                <h2 className="text-lg font-bold mb-4">Acesso Rápido</h2>
-                <div className="space-y-3">
-                  <Button 
-                    variant="secondary" 
-                    className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-0"
-                    onClick={() => router.push("/ti/kanban")}
-                  >
-                    <BarChart3 className="w-4 h-4 mr-3" />
-                    Kanban
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-0"
-                    onClick={() => router.push("/ti/metricas")}
-                  >
-                    <TrendingUp className="w-4 h-4 mr-3" />
-                    Métricas
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    className="w-full justify-start bg-white/20 hover:bg-white/30 text-white border-0"
-                    onClick={() => router.push("/ti/usuarios")}
-                  >
-                    <Users className="w-4 h-4 mr-3" />
-                    Usuários
-                  </Button>
-                </div>
-              </Card>
-            )}
-
-            {/* Notices */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* Notices */}
+          <div>
             <NoticeBoard />
           </div>
+
+          {/* Recent Tickets Section */}
+          {isFuncOrLiderOrAdmin && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-bold text-gray-900">Chamados Recentes</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => router.push('/tickets')}
+                  className="text-sm text-blue-600 hover:text-blue-700"
+                >
+                  Ver todos
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+              
+              {myRecentTickets.length > 0 ? (
+                <div className="space-y-2">
+                  {myRecentTickets.map((ticket) => {
+                    const statusInfo = getStatusBadge(ticket.status)
+                    const isMyTicket = ticket.requesterId === user?.id
+                    return (
+                      <Card 
+                        key={ticket.id}
+                        className="p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
+                        onClick={() => router.push(`/tickets/${ticket.id}`)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span className="text-xs font-mono text-gray-500 font-semibold">#{ticket.number}</span>
+                              {isMyTicket && (
+                                <Badge className="text-[10px] px-2 py-0.5 bg-purple-100 text-purple-800 border-purple-200">
+                                  Meu Chamado
+                                </Badge>
+                              )}
+                              <Badge className={`text-[10px] px-2 py-0.5 ${statusInfo.className}`}>
+                                {statusInfo.label}
+                              </Badge>
+                              <Badge className={`text-[10px] px-2 py-0.5 ${urgencyColors[ticket.urgency as keyof typeof urgencyColors]}`}>
+                                {urgencyLabels[ticket.urgency as keyof typeof urgencyLabels]}
+                              </Badge>
+                            </div>
+                            <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
+                              {ticket.subject}
+                            </h3>
+                            <p className="text-xs text-gray-500">
+                              Criado em {formatDate(ticket.createdAt)}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
+                        </div>
+                      </Card>
+                    )
+                  })}
+                </div>
+              ) : (
+                <Card className="p-8 text-center bg-white">
+                  <div className="flex flex-col items-center justify-center text-gray-400">
+                    <TicketIcon className="w-12 h-12 mb-3 opacity-50" />
+                    <p className="text-sm font-medium">Nenhum chamado recente</p>
+                    <p className="text-xs mt-1">Você não tem chamados criados ou atribuídos</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

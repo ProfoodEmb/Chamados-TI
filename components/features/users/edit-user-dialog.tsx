@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { User, Lock, Briefcase, Building } from "lucide-react"
+import { User, Lock, Briefcase, Building, Eye, EyeOff } from "lucide-react"
 
 interface User {
   id: string
@@ -50,6 +50,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     setorCustom: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // Preencher formulário quando o usuário mudar
   useEffect(() => {
@@ -70,6 +71,14 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     
     if (!user) return
 
+    // Validar senha se foi preenchida
+    if (formData.password && formData.password.length < 6) {
+      if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
+        (window as any).showSimpleToast("A senha deve ter no mínimo 6 caracteres", 'info')
+      }
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -81,9 +90,11 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
       }
 
       // Só incluir senha se foi preenchida
-      if (formData.password) {
+      if (formData.password && formData.password.trim()) {
         updateData.password = formData.password
       }
+
+      console.log('📤 Enviando atualização:', { ...updateData, password: updateData.password ? '***' : undefined })
 
       const response = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
@@ -94,6 +105,8 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
       })
 
       const result = await response.json()
+
+      console.log('📥 Resposta:', result)
 
       if (response.ok) {
         if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
@@ -184,13 +197,29 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               <Lock className="w-4 h-4 inline mr-2" />
               Nova Senha (deixe em branco para manter a atual)
             </Label>
-            <Input
-              id="edit-password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Digite a nova senha"
-            />
+            <div className="relative">
+              <Input
+                id="edit-password"
+                type={showPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="Digite a nova senha"
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
             <p className="text-xs text-muted-foreground">
               Mínimo 6 caracteres. Deixe em branco se não quiser alterar.
             </p>

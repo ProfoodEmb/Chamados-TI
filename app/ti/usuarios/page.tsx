@@ -16,8 +16,14 @@ export default function UsuariosPage() {
         if (session?.user) {
           setUser(session.user)
           
-          // Verificar se é líder de infraestrutura, líder de sistemas ou admin
-          if (session.user.role !== "lider_infra" && session.user.role !== "lider_sistemas" && session.user.role !== "admin") {
+          // Verificar se é líder de infraestrutura, líder de sistemas, funcionário de infra, funcionário de sistemas ou admin
+          if (
+            session.user.role !== "lider_infra" && 
+            session.user.role !== "lider_sistemas" && 
+            session.user.role !== "func_infra" && 
+            session.user.role !== "func_sistemas" && 
+            session.user.role !== "admin"
+          ) {
             window.location.href = "/ti"
             return
           }
@@ -47,12 +53,18 @@ export default function UsuariosPage() {
     )
   }
 
-  if (!user || (user.role !== "lider_infra" && user.role !== "lider_sistemas" && user.role !== "admin")) {
+  if (!user || (
+    user.role !== "lider_infra" && 
+    user.role !== "lider_sistemas" && 
+    user.role !== "func_infra" && 
+    user.role !== "func_sistemas" && 
+    user.role !== "admin"
+  )) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-2">Acesso Negado</h1>
-          <p className="text-gray-600">Apenas líderes podem acessar esta página.</p>
+          <p className="text-gray-600">Apenas membros da equipe TI podem acessar esta página.</p>
         </div>
       </div>
     )

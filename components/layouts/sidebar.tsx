@@ -111,8 +111,8 @@ export function Sidebar() {
         })
       }
 
-      // Adicionar "Usuários" para lider_infra e admin
-      if (user.role === "lider_infra" || user.role === "admin") {
+      // Adicionar "Usuários" ou "Equipe" para todos os membros da equipe TI
+      if (user.role === "lider_infra" || user.role === "func_infra" || user.role === "admin") {
         baseItems.push({
           icon: Users,
           href: "/ti/usuarios",
@@ -120,8 +120,8 @@ export function Sidebar() {
         })
       }
 
-      // Adicionar "Equipe" para lider_sistemas
-      if (user.role === "lider_sistemas") {
+      // Adicionar "Equipe" para lider_sistemas e func_sistemas
+      if (user.role === "lider_sistemas" || user.role === "func_sistemas") {
         baseItems.push({
           icon: Users,
           href: "/ti/equipe",

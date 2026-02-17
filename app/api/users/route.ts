@@ -25,8 +25,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é líder de infraestrutura, líder de sistemas ou admin
-    if (session.user.role !== "lider_infra" && session.user.role !== "lider_sistemas" && session.user.role !== "admin") {
+    // Verificar se é líder de infraestrutura, líder de sistemas, funcionário de infra, funcionário de sistemas ou admin
+    if (
+      session.user.role !== "lider_infra" && 
+      session.user.role !== "lider_sistemas" && 
+      session.user.role !== "func_infra" && 
+      session.user.role !== "func_sistemas" && 
+      session.user.role !== "admin"
+    ) {
       console.log('❌ [API Users] Acesso negado. Role:', session.user.role)
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
@@ -109,10 +115,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é líder de infraestrutura ou admin
-    if (session.user.role !== "lider_infra" && session.user.role !== "admin") {
+    // Verificar se é líder de infraestrutura, líder de sistemas, funcionário de infra, funcionário de sistemas ou admin
+    if (
+      session.user.role !== "lider_infra" && 
+      session.user.role !== "lider_sistemas" && 
+      session.user.role !== "func_infra" && 
+      session.user.role !== "func_sistemas" && 
+      session.user.role !== "admin"
+    ) {
       console.log('❌ Acesso negado. Role atual:', session.user.role)
-      return NextResponse.json({ error: "Acesso negado. Apenas líderes de infraestrutura e admins podem criar usuários." }, { status: 403 })
+      return NextResponse.json({ error: "Acesso negado. Apenas membros da equipe TI podem criar usuários." }, { status: 403 })
     }
 
     const body = await request.json()
@@ -147,7 +159,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar roles permitidos
-    const allowedRoles = ["user", "func_infra", "lider_sistemas", "func_sistemas"]
+    const allowedRoles = ["user", "func_infra", "lider_infra", "lider_sistemas", "func_sistemas"]
     if (!allowedRoles.includes(role)) {
       return NextResponse.json({ error: "Role não permitido" }, { status: 400 })
     }

@@ -27,8 +27,12 @@ export default function EquipePage() {
         
         if (session?.user) {
           const userRole = session.user.role
-          // Apenas líderes podem acessar
-          const authorized = userRole === "lider_infra" || userRole === "lider_sistemas"
+          // Membros da equipe de sistemas podem acessar
+          const authorized = 
+            userRole === "lider_sistemas" || 
+            userRole === "func_sistemas" ||
+            userRole === "lider_infra" ||
+            userRole === "admin"
           
           if (!authorized) {
             window.location.href = "/ti"

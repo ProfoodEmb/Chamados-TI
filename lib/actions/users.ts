@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
-import { hash } from "bcryptjs"
 
 // Tipos
 interface CreateUserInput {
@@ -121,9 +120,6 @@ export async function createUser(input: CreateUserInput) {
       return { success: false, error: "Username ou email já cadastrado" }
     }
 
-    // Hash da senha
-    const hashedPassword = await hash(input.password, 10)
-
     // Criar usuário
     const user = await prisma.user.create({
       data: {
@@ -150,15 +146,8 @@ export async function createUser(input: CreateUserInput) {
       }
     })
 
-    // Criar conta com senha
-    await prisma.account.create({
-      data: {
-        userId: user.id,
-        accountId: user.id,
-        providerId: "credential",
-        password: hashedPassword,
-      }
-    })
+    // Criar conta com senha - será feito via API
+    // A senha precisa ser criada via API route devido ao crypto.pbkdf2Sync
 
     // Revalidar cache
     revalidatePath('/ti/usuarios')
@@ -188,11 +177,8 @@ export async function updateUser(input: UpdateUserInput) {
 
     const { id, password, ...updateData } = input
 
-    // Se houver senha, fazer hash
-    if (password) {
-      const hashedPassword = await hash(password, 10)
-      Object.assign(updateData, { password: hashedPassword })
-    }
+    // Nota: A senha deve ser atualizada via API route (/api/users/[id])
+    // devido ao uso de crypto.pbkdf2Sync que não funciona em server actions
 
     const user = await prisma.user.update({
       where: { id },

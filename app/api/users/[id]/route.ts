@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
 import { prisma } from "@/lib/db/prisma"
 
-// PATCH - Atualizar usuário (só para lider_infra e admin)
+// PATCH - Atualizar usuário (para equipe TI e admin)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,8 +18,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é líder de infraestrutura ou admin
-    if (session.user.role !== "lider_infra" && session.user.role !== "admin") {
+    // Verificar se é líder de infraestrutura, líder de sistemas, funcionário de infra, funcionário de sistemas ou admin
+    if (
+      session.user.role !== "lider_infra" && 
+      session.user.role !== "lider_sistemas" && 
+      session.user.role !== "func_infra" && 
+      session.user.role !== "func_sistemas" && 
+      session.user.role !== "admin"
+    ) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 
@@ -91,10 +97,13 @@ export async function PATCH(
 
     // Atualizar senha se fornecida
     if (password) {
-      const bcrypt = require('bcryptjs')
-      const hashedPassword = await bcrypt.hash(password, 10)
+      console.log('🔐 Senha fornecida, iniciando atualização...')
       
-      console.log('🔐 Atualizando senha para usuário:', id)
+      // Usar a função de hash do Better Auth
+      const { hashPassword } = await import('better-auth/crypto')
+      const hashedPassword = await hashPassword(password)
+      
+      console.log('✅ Hash gerado via Better Auth crypto')
       
       // Buscar a conta do usuário
       const account = await prisma.account.findFirst({
@@ -105,21 +114,19 @@ export async function PATCH(
       })
 
       if (!account) {
-        console.error('❌ Conta credential não encontrada para o usuário:', id)
+        console.error('❌ Conta credential não encontrada')
         return NextResponse.json({ error: "Conta de autenticação não encontrada" }, { status: 404 })
       }
 
-      console.log('✅ Conta encontrada:', account.id)
-      
       // Atualizar senha na tabela Account
-      const updated = await prisma.account.update({
+      await prisma.account.update({
         where: { id: account.id },
         data: { password: hashedPassword }
       })
 
       console.log('✅ Senha atualizada com sucesso')
 
-      // Invalidar todas as sessões do usuário para forçar novo login
+      // Invalidar todas as sessões do usuário
       await prisma.session.deleteMany({
         where: { userId: id }
       })
@@ -160,7 +167,7 @@ export async function PATCH(
   }
 }
 
-// DELETE - Deletar usuário (só para lider_infra e admin)
+// DELETE - Deletar usuário (para equipe TI e admin)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -175,8 +182,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 })
     }
 
-    // Verificar se é líder de infraestrutura ou admin
-    if (session.user.role !== "lider_infra" && session.user.role !== "admin") {
+    // Verificar se é líder de infraestrutura, líder de sistemas, funcionário de infra, funcionário de sistemas ou admin
+    if (
+      session.user.role !== "lider_infra" && 
+      session.user.role !== "lider_sistemas" && 
+      session.user.role !== "func_infra" && 
+      session.user.role !== "func_sistemas" && 
+      session.user.role !== "admin"
+    ) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 })
     }
 

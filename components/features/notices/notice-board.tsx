@@ -220,23 +220,23 @@ export function NoticeBoard() {
   }
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-          <Megaphone className="w-5 h-5 text-yellow-600" />
+    <div className="bg-card rounded-lg border border-border p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-7 h-7 bg-yellow-100 rounded-lg flex items-center justify-center">
+          <Megaphone className="w-3.5 h-3.5 text-yellow-600" />
         </div>
         <div>
-          <h2 className="text-base font-semibold text-foreground">Mural de avisos</h2>
-          <p className="text-xs text-muted-foreground">Fique por dentro das novidades</p>
+          <h2 className="text-xs font-semibold text-foreground">Mural de avisos</h2>
+          <p className="text-[10px] text-muted-foreground">Fique por dentro das novidades</p>
         </div>
       </div>
 
-      <div className="space-y-3 mb-4">
+      <div className="space-y-2 mb-2 max-h-[300px] overflow-y-auto scrollbar-visible">
         {isLoading ? (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="p-2 bg-gray-50 border border-gray-200 rounded-lg">
             <div className="animate-pulse">
-              <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-              <div className="h-3 bg-gray-300 rounded w-full"></div>
+              <div className="h-2 bg-gray-300 rounded w-3/4 mb-1"></div>
+              <div className="h-2 bg-gray-300 rounded w-full"></div>
             </div>
           </div>
         ) : filteredNotices.length > 0 ? (
@@ -247,49 +247,44 @@ export function NoticeBoard() {
             return (
               <div key={notice.id} className="relative">
                 <Link href="/avisos">
-                  <div className={`p-4 border rounded-lg transition-colors cursor-pointer ${getNoticeColor(notice.type)}`}>
+                  <div className={`p-2 border rounded-lg transition-colors cursor-pointer ${getNoticeColor(notice.type)}`}>
                     {/* Conteúdo do aviso */}
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4 text-gray-600" />
-                        <h3 className="text-sm font-semibold text-foreground">
+                    <div className="flex items-start justify-between gap-1 mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <Icon className="w-3 h-3 text-gray-600 flex-shrink-0" />
+                        <h3 className="text-[11px] font-semibold text-foreground line-clamp-1">
                           {getPriorityLabel(notice.priority)}{notice.title}
                         </h3>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {isScheduled && (
-                          <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                            <Calendar className="w-3 h-3" />
-                            <span>Programado</span>
+                          <div className="flex items-center gap-0.5 text-xs text-blue-600 bg-blue-100 px-1 py-0.5 rounded">
+                            <Calendar className="w-2 h-2" />
                           </div>
                         )}
                         {notice.expiresAt && (
-                          <div className="flex items-center gap-1 text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded">
-                            <Clock className="w-3 h-3" />
-                            <span>Expira</span>
+                          <div className="flex items-center gap-0.5 text-xs text-orange-600 bg-orange-100 px-1 py-0.5 rounded">
+                            <Clock className="w-2 h-2" />
                           </div>
                         )}
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-[9px] text-muted-foreground whitespace-nowrap">
                           {formatDate(notice.createdAt)}
                         </span>
                       </div>
                     </div>
                     
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {notice.content.length > 100 
-                        ? `${notice.content.substring(0, 100)}...` 
-                        : notice.content
-                      }
+                    <p className="text-[10px] text-muted-foreground leading-relaxed line-clamp-2">
+                      {notice.content}
                     </p>
                     
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="mt-1 flex items-center justify-between">
+                      <span className="text-[9px] text-muted-foreground">
                         Por: {notice.author.name}
                       </span>
                       
                       {/* Informações de programação */}
                       {(isScheduled || notice.expiresAt) && (
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-[9px] text-muted-foreground">
                           {isScheduled && (
                             <div>📅 {formatScheduledDate(notice.scheduledFor!)}</div>
                           )}
@@ -310,18 +305,18 @@ export function NoticeBoard() {
                       e.stopPropagation()
                       deleteNotice(notice.id)
                     }}
-                    className="absolute top-2 right-2 p-1 bg-red-100 hover:bg-red-200 text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-1 right-1 p-0.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Excluir aviso"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-2 h-2" />
                   </button>
                 )}
               </div>
             )
           })
         ) : (
-          <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
-            <p className="text-sm text-muted-foreground">Nenhum aviso disponível</p>
+          <div className="p-2 bg-gray-50 border border-gray-200 rounded-lg text-center">
+            <p className="text-[10px] text-muted-foreground">Nenhum aviso disponível</p>
           </div>
         )}
       </div>
@@ -329,7 +324,7 @@ export function NoticeBoard() {
       <Link href="/avisos">
         <Button
           variant="outline"
-          className="w-full text-sm hover:bg-accent"
+          className="w-full text-[10px] hover:bg-accent h-7"
         >
           Ver todos os avisos
         </Button>

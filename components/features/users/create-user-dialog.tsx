@@ -156,6 +156,7 @@ export function CreateUserDialog({ open, onOpenChange, onUserCreated }: CreateUs
   const roleOptions = [
     { value: "user", label: "Usuário Comum", team: "user" },
     { value: "func_infra", label: "Funcionário de Infraestrutura", team: "infra" },
+    { value: "lider_infra", label: "Líder de Infraestrutura", team: "infra" },
     { value: "lider_sistemas", label: "Líder de Sistemas", team: "sistemas" },
     { value: "func_sistemas", label: "Funcionário de Sistemas", team: "sistemas" },
   ]
