@@ -144,6 +144,9 @@ export function CreateTicketDialog({ onCreateTicket, userRole, userId }: CreateT
   const [showCables, setShowCables] = useState(false)
   const [users, setUsers] = useState<Array<{ id: string; name: string; email: string }>>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [hasPendingFeedback, setHasPendingFeedback] = useState(false)
+  const [pendingTickets, setPendingTickets] = useState<Array<{ id: string; number: string; subject: string }>>([])
+  const [checkingFeedback, setCheckingFeedback] = useState(false)
   const [formData, setFormData] = useState({
     tipo: "",
     categoria: "", // "sistemas" ou "automacao"
@@ -158,6 +161,32 @@ export function CreateTicketDialog({ onCreateTicket, userRole, userId }: CreateT
 
   // Verificar se o usuário é líder
   const isLeader = userRole?.includes("lider") || userRole === "admin"
+
+  // Verificar feedback pendente quando o dialog abrir
+  useEffect(() => {
+    if (open) {
+      checkPendingFeedback()
+      if (isLeader) {
+        fetchUsers()
+      }
+    }
+  }, [open, isLeader])
+
+  const checkPendingFeedback = async () => {
+    try {
+      setCheckingFeedback(true)
+      const response = await fetch(`/api/tickets/pending-feedback?userId=${userId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setHasPendingFeedback(data.hasPendingFeedback)
+        setPendingTickets(data.pendingTickets || [])
+      }
+    } catch (error) {
+      console.error('Erro ao verificar feedback pendente:', error)
+    } finally {
+      setCheckingFeedback(false)
+    }
+  }
 
   // Buscar lista de usuários quando o dialog abrir (apenas para líderes)
   useEffect(() => {
@@ -432,6 +461,37 @@ export function CreateTicketDialog({ onCreateTicket, userRole, userId }: CreateT
               : "Selecione o tipo do problema e preencha as informações."}
           </DialogDescription>
         </DialogHeader>
+
+        {/* Mensagem de bloqueio por feedback pendente */}
+        {hasPendingFeedback && !isLeader && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-900 mb-1">Avaliação Pendente</h3>
+                <p className="text-sm text-amber-800 mb-3">
+                  Você precisa avaliar {pendingTickets.length === 1 ? 'o chamado anterior' : 'os chamados anteriores'} antes de abrir um novo:
+                </p>
+                <ul className="space-y-2">
+                  {pendingTickets.map((ticket) => (
+                    <li key={ticket.id} className="text-sm text-amber-700 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span className="font-medium">#{ticket.number}</span> - {ticket.subject}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-amber-800 mt-3">
+                  Por favor, acesse {pendingTickets.length === 1 ? 'o chamado' : 'os chamados'} e forneça sua avaliação.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             
@@ -1114,7 +1174,8 @@ export function CreateTicketDialog({ onCreateTicket, userRole, userId }: CreateT
                     !formData.urgency ||
                     (isLeader && !formData.requesterId) ||
                     (formData.tipo === "sistemas" && formData.categoria !== "relatorios" && !formData.sistema) ||
-                    (isOutroProblema && !formData.subject)
+                    (isOutroProblema && !formData.subject) ||
+                    (hasPendingFeedback && !isLeader)
                   }
                 >
                   Criar Chamado

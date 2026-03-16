@@ -42,6 +42,7 @@ interface SelectSectorDialogProps {
   onSelectSistema?: (sistemaId: string) => void
   onSelectAutomacao?: (automacaoId: string) => void
   userRole?: string
+  userId?: string
   onSelectRequester?: (requesterId: string, customName?: string) => void
 }
 
@@ -54,6 +55,7 @@ export function SelectSectorDialog({
   onSelectSistema,
   onSelectAutomacao,
   userRole,
+  userId,
   onSelectRequester
 }: SelectSectorDialogProps) {
   const [showInfraCategories, setShowInfraCategories] = useState(false)
@@ -64,8 +66,30 @@ export function SelectSectorDialog({
   const [showCustomNameInput, setShowCustomNameInput] = useState(false)
   const [customRequesterName, setCustomRequesterName] = useState("")
   const [selectedRequesterId, setSelectedRequesterId] = useState<string>("")
+  const [hasPendingFeedback, setHasPendingFeedback] = useState(false)
+  const [pendingTickets, setPendingTickets] = useState<Array<{ id: string; number: string; subject: string }>>([])
 
   const isLeader = userRole?.includes("lider") || userRole === "admin"
+
+  // Verificar feedback pendente quando o dialog abrir
+  useEffect(() => {
+    if (open && userId && !isLeader) {
+      checkPendingFeedback()
+    }
+  }, [open, userId, isLeader])
+
+  const checkPendingFeedback = async () => {
+    try {
+      const response = await fetch(`/api/tickets/pending-feedback?userId=${userId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setHasPendingFeedback(data.hasPendingFeedback)
+        setPendingTickets(data.pendingTickets || [])
+      }
+    } catch (error) {
+      console.error('Erro ao verificar feedback pendente:', error)
+    }
+  }
 
   // Mostrar seletor de solicitante quando o dialog abrir (apenas para líderes)
   useEffect(() => {
@@ -174,6 +198,36 @@ export function SelectSectorDialog({
                 : "Escolha qual setor da T.I. você deseja abrir o chamado"}
           </DialogDescription>
         </div>
+
+        {/* Mensagem de bloqueio por feedback pendente */}
+        {hasPendingFeedback && !isLeader && !showRequesterSelect && (
+          <div className="mx-8 mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-amber-900 mb-1">Avaliação Pendente</h3>
+                <p className="text-sm text-amber-800 mb-3">
+                  Você precisa avaliar {pendingTickets.length === 1 ? 'o chamado anterior' : 'os chamados anteriores'} antes de abrir um novo:
+                </p>
+                <ul className="space-y-2">
+                  {pendingTickets.map((ticket) => (
+                    <li key={ticket.id} className="text-sm text-amber-700 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span className="font-medium">#{ticket.number}</span> - {ticket.subject}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-amber-800 mt-3">
+                  Por favor, acesse {pendingTickets.length === 1 ? 'o chamado' : 'os chamados'} e forneça sua avaliação.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col gap-6 p-8">
           {/* Campo de nome customizado */}
@@ -317,9 +371,12 @@ export function SelectSectorDialog({
               className={`relative p-8 rounded-2xl border-2 transition-all ${
                 showInfraCategories 
                   ? "border-blue-500 bg-blue-50 shadow-lg" 
-                  : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                  : hasPendingFeedback && !isLeader
+                    ? "border-gray-200 bg-gray-100 cursor-not-allowed opacity-50"
+                    : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
               }`}
-              onClick={handleInfraClick}
+              onClick={hasPendingFeedback && !isLeader ? undefined : handleInfraClick}
+              disabled={hasPendingFeedback && !isLeader}
             >
               {showInfraCategories && (
                 <div className="absolute top-4 right-4 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
@@ -343,9 +400,12 @@ export function SelectSectorDialog({
               className={`relative p-8 rounded-2xl border-2 transition-all ${
                 showSistemasCategories 
                   ? "border-blue-500 bg-blue-50 shadow-lg" 
-                  : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
+                  : hasPendingFeedback && !isLeader
+                    ? "border-gray-200 bg-gray-100 cursor-not-allowed opacity-50"
+                    : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-md"
               }`}
-              onClick={handleSistemasClick}
+              onClick={hasPendingFeedback && !isLeader ? undefined : handleSistemasClick}
+              disabled={hasPendingFeedback && !isLeader}
             >
               {showSistemasCategories && (
                 <div className="absolute top-4 right-4 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">

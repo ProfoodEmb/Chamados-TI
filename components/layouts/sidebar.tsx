@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users, Megaphone, Plus, TrendingUp } from "lucide-react"
+import { Home, Ticket, LayoutGrid, Settings, BarChart3, Users, Megaphone, Plus, TrendingUp, Puzzle } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -129,6 +129,13 @@ export function Sidebar() {
         })
       }
 
+      // Adicionar "Extensões" para todos os usuários T.I.
+      baseItems.push({
+        icon: Puzzle,
+        href: "/ti/extensoes",
+        label: "Extensões",
+      })
+
       return baseItems
     } else {
       // Menu para usuários comuns
@@ -147,6 +154,11 @@ export function Sidebar() {
           icon: Megaphone,
           href: "/criar-aviso",
           label: "Avisos",
+        },
+        {
+          icon: Puzzle,
+          href: "/extensoes",
+          label: "Extensões",
         },
       ]
     }

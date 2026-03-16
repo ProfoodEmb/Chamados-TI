@@ -414,10 +414,11 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
               </p>
             </div>
             
-            {/* Botão de finalizar para TI */}
+            {/* Botão de finalizar para TI - apenas quem está atribuído ao chamado */}
             {currentUser && 
              (currentUser.team === "infra" || currentUser.team === "sistemas" || currentUser.team === "admin") &&
-             ticket.status === "Aberto" && (
+             ticket.status === "Aberto" &&
+             ticket.assignedTo?.id === currentUser.id && (
               <Button
                 onClick={handleRequestClose}
                 variant="default"
@@ -429,10 +430,11 @@ export function TicketDetail({ ticket, onMessageSent, currentUser }: TicketDetai
               </Button>
             )}
             
-            {/* Botão de reenviar solicitação de fechamento */}
+            {/* Botão de reenviar solicitação de fechamento - apenas quem está atribuído */}
             {currentUser && 
              (currentUser.team === "infra" || currentUser.team === "sistemas" || currentUser.team === "admin") &&
-             ticket.status === "Aguardando Aprovação" && (
+             ticket.status === "Aguardando Aprovação" &&
+             ticket.assignedTo?.id === currentUser.id && (
               <Button
                 onClick={handleRequestClose}
                 variant="outline"
