@@ -1,0 +1,14 @@
+.git
+.next
+.vscode
+node_modules
+coverage
+*.log
+*.tsbuildinfo
+.env
+.env.local
+dev.log
+constel-*.txt
+constel-*.html
+printserve-*.txt
+printserve-*.html

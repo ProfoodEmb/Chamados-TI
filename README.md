@@ -5,11 +5,10 @@ Sistema completo de gerenciamento de chamados de TI com notificações WhatsApp,
 ## 🚀 Quick Start
 
 ### Pré-requisitos
-- Node.js 18+
-- Docker e Docker Compose
-- npm ou yarn
+- Docker Desktop
+- Git
 
-### Instalação
+### Subir em outro PC via GitHub
 
 1. Clone o repositório
 ```bash
@@ -17,39 +16,54 @@ git clone <seu-repositorio>
 cd chamados
 ```
 
-2. Instale as dependências
+2. Crie o arquivo de ambiente
+```bash
+cp .env.example .env
+```
+
+3. Edite o `.env`
+- Defina `BETTER_AUTH_SECRET`
+- Revise integrações opcionais como Evolution, Constel e PrintServe
+
+4. Suba tudo com Docker
+```bash
+docker compose up -d --build
+```
+
+5. Acesse o sistema
+```text
+http://localhost:3000
+```
+
+O container da aplicação já executa automaticamente:
+- `prisma db push`
+- `npm run db:seed`
+- `npm run start`
+
+### Desenvolvimento local sem Docker para o app
+
+Se quiser rodar o Next.js fora do container e usar só o banco no Docker:
+
+1. Instale as dependências
 ```bash
 npm install
 ```
 
-3. Configure as variáveis de ambiente
+2. Suba apenas o banco
 ```bash
-cp .env.example .env
-# Edite o .env com suas configurações
+docker compose up -d postgres
 ```
 
-4. Inicie o PostgreSQL com Docker
+3. Gere o schema no banco
 ```bash
-docker-compose up -d
+npm run db:push
+npm run db:seed
 ```
 
-5. Execute as migrations
-```bash
-npx prisma migrate deploy
-npx prisma generate
-```
-
-6. Crie um usuário admin
-```bash
-node scripts/create-admin.js
-```
-
-7. Inicie o servidor de desenvolvimento
+4. Inicie o ambiente de desenvolvimento
 ```bash
 npm run dev
 ```
-
-Acesse [http://localhost:3000](http://localhost:3000)
 
 ## 📚 Documentação
 
@@ -63,7 +77,7 @@ Toda a documentação está organizada na pasta [`docs/`](./docs/):
 
 ## 🛠️ Stack Tecnológica
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Linguagem**: TypeScript
 - **Banco de Dados**: PostgreSQL 16 (Docker)
 - **ORM**: Prisma
@@ -120,21 +134,28 @@ node scripts/clear-tickets.js       # Limpa todos os chamados
 
 ## 🐳 Docker
 
-O projeto usa Docker para o PostgreSQL:
+O projeto pode ser executado inteiro com Docker:
 
 ```bash
-# Iniciar
-docker-compose up -d
+# Subir app + banco
+docker compose up -d --build
+
+# Ver logs do app
+docker compose logs -f app
+
+# Ver status
+docker compose ps
 
 # Parar
-docker-compose down
-
-# Ver logs
-docker-compose logs -f
-
-# Status
-docker-compose ps
+docker compose down
 ```
+
+### Persistência
+
+- Banco PostgreSQL: volume `postgres_data`
+- Uploads/anexos: volume `uploads_data`
+
+Se você quiser levar tambem os dados de um PC para outro, precisara exportar o banco e copiar os arquivos de upload alem do GitHub.
 
 ## 🔐 Segurança
 

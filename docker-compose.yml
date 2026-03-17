@@ -17,6 +17,29 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tuicial-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://tuicial:tuicial_password_2024@postgres:5432/tuicial_db?schema=public
+      BETTER_AUTH_URL: http://localhost:3000
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads_data:/app/public/uploads
+
 volumes:
   postgres_data:
+    driver: local
+  uploads_data:
     driver: local
