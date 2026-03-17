@@ -1,0 +1,1277 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PRINT SERVICE | Portal Web de Serviços</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="/pws/app/webroot/img/favicon.ico" />
+        <link href="/pws/app/webroot/css/template.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/css/font-awesome/css/font-awesome.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/bootstrap/css/bootstrap-responsive.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/bootstrap-modal/css/animate.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/jquery/jquery-loadmask/jquery.loadmask.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/bootgrid/jquery.bootgrid.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/datetimepicker/css/jquery.datetimepicker.css?v=11" rel="stylesheet">
+
+    <script src="/pws/app/webroot/jquery/jquery-1.8.2.min.js?v=11"></script>
+    <script src="/pws/app/webroot/jquery/jquery-loadmask/jquery.loadmask.js?v=11"></script>
+    <script src="/pws/app/webroot/jquery/jquery.maskMoney.min.js?v=11"></script>
+    <script src="/pws/app/webroot/js/jquery.mask.min.js?v=11"></script>
+    <script src="/pws/app/webroot/js/twix.min.js?v=11"></script>
+
+    <script src="/pws/app/webroot/jquery/jquery.cookie.js?v=11"></script>
+    <script src="/pws/app/webroot/bootstrap/js/bootstrap.min.js?v=11"></script>
+    <script src="/pws/app/webroot/pwsjs/app.js?v=11"></script>
+    <script src="/pws/app/webroot/pwsjs/init.js?v=11"></script>
+
+    <script src="/pws/app/webroot/jqueryform/jquery.form.min.js?v=11"></script>
+
+    <script src="/pws/app/webroot/select2/js/select2.min.js?v=11"></script>
+    <script src="/pws/app/webroot/select2/js/i18n/pt-BR.js?v=11"></script>
+    <link href="/pws/app/webroot/select2/css/select2.min.css?v=11" rel="stylesheet">
+
+    <script src="/pws/app/webroot/bootstrap-modal/js/bootstrap.modal.js?v=11"></script>
+    <script src="/pws/app/webroot/bootstrap-modal/js/jquery.easing.1.3.js?v=11"></script>
+    <script src="/pws/app/webroot/tiny_mce/tiny_mce.js?v=11"></script>
+    <script src="/pws/app/webroot/inputmask/jquery.inputmask.bundle.js?v=11"></script>
+    <script src="/pws/app/webroot/datetimepicker/js/jquery.datetimepicker.js?v=11"></script>
+
+
+    <style>
+        table>thead>tr>th {
+            cursor: default;
+            text-align: center;
+            color: #333333;
+            text-shadow: 0 1px 0 #FFFFFF;
+            background-color: #e6e6e6;
+        }
+
+        table>thead>tr>th>a {
+            color: black;
+        }
+    </style>
+    <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJzqCIQ3uPa_gK3-VG3LhHNDB-pWL09ho&callback=initMap" type="text/javascript"></script> -->
+    <script>
+        (function(i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function() {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-91180159-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+</head>
+
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top hidden-print" id="mnu_admin_top">
+        <div class="navbar-inner" style="background:#1e1e1e">
+            <div class="container-fluid">
+
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target="#navbar">
+                    <i class="fa fa-bars  fa-2x"></i>
+                </button>
+                <a class="navbar-brand" style="rad" title="Home" href="/pws/index.php/auth_acl">    
+                    <img class="brandimg" src="https://psfx.com.br/pws/app/webroot/img/emp/200x120-pixels.jpg" style=" width: 3rem !important; height: 2.5rem !important;border-radius: 50%!important;margin-top: 8px; !important">
+                </a>
+                <div id="navbar" class="nav-collapse">
+
+                    
+                    <ul class="nav">
+                        <li class="divider-vertical"></li>
+                                                    <li class="">
+                                <a title="Dashboard" href="/pws/index.php/auth_acl">
+                                    <i class="fa fa-home fa-lg"></i>
+                                </a>
+                            </li>
+                                                                        <li class="divider-vertical"></li>
+                                                <li class="divider-vertical"></li>
+                                                    <li class="dropdown ">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#"><i class="fa fa-cubes fa-lg"></i>
+                                    Solicitações                                    <b class="caret"></b>
+                                </a>
+                                <ul class="dropdown-menu">
+                                                                            <li><a href="/pws/index.php/pws/ContratoItens">Solicitar por Equipamento</a></li>
+                                                                                                                <li><a href="/pws/index.php/pws/Contratos">Solicitar por Contrato</a></li>
+                                                                                                                <li><a href="/pws/index.php/pws/Solicitacao">Acompanhar Solicitações</a></li>
+                                                                    </ul>
+                            </li>
+                                                <li class="divider-vertical"></li>
+                        
+                        <li class="divider-vertical"></li>
+                                                    <li class="dropdown">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                                    <i class="fa fa-cogs fa-lg"></i>
+                                    Config                                    <b class="caret"></b> </a>
+                                <ul class="dropdown-menu">
+                                                                            <li><a href="/pws/index.php/auth_acl/settings">General</a></li>
+                                                                                                                <li><a href="/pws/index.php/auth_acl/empresas">Empresa</a></li>
+                                                                                                                <li><a href="/pws/index.php/pws/defeitos">Tabela Defeitos</a></li>
+                                    
+                                    <li class="nav-header">Usuários</li>
+                                                                            <li><a href="/pws/index.php/auth_acl/users">Administrar Usuário</a></li>
+                                                                                                                                                                                                                            <li><a href="/pws/index.php/pws/usersLgpd">Usuários LGPD</a></li>
+                                                                                                                                                                                                                            <li class="nav-header">Chamados</li>
+                                        <li><a href="/pws/index.php/pws/ConfiguracoesChamado">Status Padrão Abertura Chamado</a></li>
+                                                                    </ul>
+                            </li>
+                            <li class="divider-vertical"></li>
+                                                                    </ul>
+                    
+                    <ul class="nav pull-right">
+                                                    <li class="divider-vertical"></li>
+                            <li class="dropdown">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                                    <strong> Todas </strong>
+                                    <b class="caret"></b> </a>
+                                <ul class="dropdown-menu" style="max-height: 300px;overflow: auto;">
+                                                                            <li><a href="#" onclick="alteraEmp(136);"><i class="fa fa-arrow-right"></i>
+                                                PRINT SERVICE</a></li>
+                                                                            <li><a href="#" onclick="alteraEmp(136);"><i class="fa fa-arrow-right"></i>
+                                                PRINT SERVICE</a></li>
+                                                                                                            <li><a href="#" onclick="alteraEmp('0');"><i class="fa fa-arrow-right">Todas</i></a></li>
+                                                                    </ul>
+                            <li class="divider-vertical"></li>
+                            <li class="dropdown">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#"><i class="fa fa-user fa-lg"></i>
+                                    <b class="caret"></b>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="/pws/index.php/auth_acl/users/editAccount"><i class="icon-pencil"></i> Editar Perfil</a></li>
+                                    <li class="divider"></li>
+                                                                            <li class="nav-header">Cliente</li>
+                                    <li class="dropdown-submenu pull-left">
+                                        <a tabindex="-1" href="#">Selecionar Cliente</a>
+                                        <ul class="dropdown-menu" style="display: block;max-height: 300px;overflow: auto;">
+                                                                                        <li style="">
+                                                    <a href="#" onclick="alteraCli(290);">
+                                                        <i class="fa fa-plus-circle"></i>Cliente: GRAFICA TUICIAL                                                    </a>
+                                                                                        <li style="">
+                                                    <a href="#" onclick="alteraCli(290);">
+                                                        <i class="fa fa-plus-circle"></i>Cliente: GRAFICA TUICIAL                                                    </a>
+                                                                                        <li style="background:#08c"><a href="#" onclick="alteraCli('-1');"><i class="fa fa-plus-circle"></i> Cliente:Todos</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="divider-vertical"></li>
+                            <li>
+                                <a href="/pws/index.php/auth_acl/users/logout"><i class="fa fa-power-off fa-lg"></i> </a>                            </li>
+                        
+                    </ul>
+                    
+                </div>
+                <!--/.nav-collapse -->
+            </div>
+            
+        </div>
+        <div style="background: #0081c2;margin:0px;padding:0px;font-size:11px; color:#fff;">
+            <div style="display:flex;">
+                <div style="margin-left:70px">empresa: <strong>PRINT SERVICE</strong></div>
+                <div style="margin-left:10px">usuário: <strong>Tuicial - TI</strong></div>
+            </div>
+        </div>
+        
+        
+<!--
+          -->
+        
+    <!--
+    <div style="background:#ff9900; color:#fff; font-size: 12px; text-align:center">
+        <strong>Prezado cliente</strong>, A partir das 00:00 do dia 29/07, o portal estará em manutenção, ficando indisponível até 30/07 às 23h, podendo ser restabelecido antes do prazo.Esta manutenção deve-se a troca de servidores.
+    </div>
+    -->
+    </div>
+    <!-- container -->
+    <div class="container-fluid" id="container" style="padding-top: 70px;">
+        <div class="modal hide" id="exampleModal" tabindex="-1" data-backdrop="static" role="dialog" aria-labelledby="exampleModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">New message</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="modal-body-message" style="position:abolute;background:#cc0000;color: #fff;padding: 3px;position: absolute;top: 59px;right: 15px;font-size: 12px;display:none"></div>
+                        <div id="content-data-modal"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <div id="bar-button-modal"><button type="button" id="buttonCloseModal" class="btn btn-danger" data-dismiss="modal">Fechar</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal hide" style="z-index:1090" id="modalAlert" tabindex="0" data-backdrop="static" role="dialog" aria-labelledby="modalAlertLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="modalAlertLabel">New message</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div id="content-data-modalAlert"></div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="buttonClosemodalAlert" class="btn btn-danger" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal hide" id="loadingModal" data-backdrop="static" data-keyboard="false">
+            <div class="modal-body">
+                <div class="progress progress-striped active">
+                    <div id="progressBar" class="bar" style="width: 10%;">10% Completo</div>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid" style="padding-top:10px;">
+
+            <!--/.well -->
+
+            <div class="span12">
+    <div class="row-fluid">
+        <div class="span12">
+            <h1 class="page-header"><i class="fa fa-tasks fa-lg"></i> Lista de Chamados</h1>
+        </div>
+    </div>
+    <div class="row-fluid show-grid" id="tab_user_manager">
+        <div class="span12">
+            <ul class="nav nav-pills">
+                <li>
+                                            <a href="/pws/index.php/pws/ContratoItens">Equipamentos Com Contrato</a>                                    </li>
+                <li>
+                         
+                        <a href="/pws/index.php/pws/Equipamentos">Equipamentos Sem Contrato</a>                                    </li>
+                                                            <li>
+                            <a href="/pws/index.php/pws/Contratos">Contratos</a>                        </li>
+                                                    <li class="active">
+                    <a href="/pws/index.php/pws/Chamados">Chamados</a>                </li>
+                <li>
+                     
+                        <a href="/pws/index.php/pws/Solicitacao">Solicitações</a>                                    </li>
+            </ul>
+        </div>
+    </div>
+        <button type="button" class="btn btn-large btn-search" data-toggle="collapse" data-target="#search">
+        <i class="icon-filter"></i> Filtrar Resultados
+    </button>
+    <div id="search" class="collapse">
+        <div class="row-fluid show-grid">
+            <div class="span10">
+                <form action="/pws/index.php/pws/Chamados" id="form-filter-results" class="form-inline" method="post" accept-charset="utf-8"><div style="display:none;"><input type="hidden" name="_method" value="POST"/></div>                <input type="hidden" name="data[filter]" value="1" id="filter"/>                <fieldset>
+                    <legend>Filtro</legend>
+                    <div class="span3">
+                        <div class="control-group">
+                            <label class="control-label">Coluna: </label>
+
+                            <div class="controls">
+                                <select name="data[filter][field][filter1]" class="select-box" id="filterFieldFilter1">
+<option value="Chamado.id">Nº Chamado WEB</option>
+<option value="Chamado.SEQOS">Nº Chamado Sistema</option>
+<option value="Equipamento.SERIE">Serie</option>
+<option value="Equipamento.PATRIMONIO">Patrimônio</option>
+<option value="Chamado.SEQCONTRATO">Contrato</option>
+<option value="Chamado.NMSUPORTET">Técnico</option>
+<option value="Chamado.NMCLIENTE">Razão Social</option>
+</select>                            </div>
+                        </div>
+                    </div>
+                    <div class="span3">
+                        <div class="control-group">
+                            <label class="control-label">Operador: </label>
+
+                            <div class="controls">
+                                <select name="data[filter][operator][filter1]" id="filterOperatorFilter1">
+<option value="LIKE">Contem</option>
+<option value="NOT LIKE">Não Contem</option>
+<option value="LIKE BEGIN">Iniciando com</option>
+<option value="LIKE END">Termina com</option>
+<option value="=">Igual a</option>
+<option value="!=">Diferente</option>
+<option value="&gt;">Maior que</option>
+<option value="&gt;=">Maior ou igual a</option>
+<option value="&lt;">Menor que</option>
+<option value="&lt;=">Menor ou igual a</option>
+</select>                            </div>
+                        </div>
+                    </div>
+
+                    <div class="span5">
+                        <div class="control-group">
+                            <label class="control-label">Campo: </label>
+
+                            <div class="controls">
+                                <input name="data[filter][filter1]" placeholder="Localizar Chamado" type="text" id="filterFilter1"/>                                <button class="btn" type="submit">
+                                    Filtrar                                </button>
+                                <button class="btn" type="button" onclick="cancelSearch();">
+                                    <i class="icon-remove-sign"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    </form>
+                                    </fieldset>
+            </div>
+        </div>
+    </div>
+    <form action="/pws/index.php/pws/chamados" class=" form-signin form-horizontal" id="ChamadoIndexForm" method="post" accept-charset="utf-8"><div style="display:none;"><input type="hidden" name="_method" value="POST"/></div>    </form>    <div class="row-fluid show-grid">
+        <div class="span12">
+            <div class="pagination pagination-small">
+                <ul>
+                    <li class="prev"><< </li><li class="next"> >></li>                </ul>
+            </div>
+            <div class="row-fluid show-grid">
+                <div class="span12">
+                    <div class="btn-group">
+                        <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                            Status do Chamado                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="/pws/index.php/pws/Chamados/index/A">Aberturas</a>                            </li>
+                            <li>
+                                <a href="/pws/index.php/pws/Chamados/index/E">Despachados</a>                            </li>
+                            <li>
+                                <a href="/pws/index.php/pws/Chamados/index/P">Pendentes</a>                            </li>
+                            <li>
+                                <a href="/pws/index.php/pws/Chamados/index/M">Em Manutenção</a>                            </li>
+                            <li>
+                                <a href="/pws/index.php/pws/Chamados/index/C">Cancelados</a>                            </li>
+                            <!-- AJUSTES EMPRESA DATA VOICE - CLIENTES NÃO PODE VER CHAMADOS CONCLUÍDOS   -->
+                                                            <li>
+                                    <a href="/pws/index.php/pws/Chamados/index/O">Concluídos</a>                                </li>
+                                                                                    <li>
+                                <a href="/pws/index.php/pws/Chamados/index/R">Retornos</a>                            </li>
+                                                        <li>
+                                <a href="/pws/index.php/pws/Chamados">Em Aberto</a>                            </li>
+                                                            <li>
+                                    <a href="/pws/index.php/pws/Chamados/index/T">Atendido</a>                                </li>
+                                                    </ul>
+                    </div>
+                    <div class="btn-group">
+                        <a class="btn  btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                            Ordenar por:                            <span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/pws/index.php/pws/Chamados/index/sort:id/direction:asc">Nº Chamado WEB</a>                            </li>
+                            <li><a href="/pws/index.php/pws/Chamados/index/sort:SEQOS/direction:asc">Nº Chamado Sistema</a>                            </li>
+                            <li><a href="/pws/index.php/pws/Chamados/index/sort:SEQCONTRATO/direction:asc">Contrato</a>                            </li>
+                            <li><a href="/pws/index.php/pws/Chamados/index/sort:Equipamento.SERIE/direction:asc">Serie</a>                            </li>
+                            <li><a href="/pws/index.php/pws/Chamados/index/sort:CIDADE/direction:asc">Cidade</a>                            </li>
+                            <li><a href="/pws/index.php/pws/Chamados/index/sort:DEPARTAMENTO/direction:asc">Departamento</a>                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;4597654                                / 139045</div>
+                            <div><strong>Série:</strong>&nbsp;VKM9702428</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;SUPRIMENTO CONTRATO                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;005852                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;TRIAGEM                            </div>
+                            <div>
+                                <strong>Departamento: </strong>ORÇAMENTO                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;05/03/2026 08:42                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-info'style='font-size: 14px'>Pendente</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        05/03/2026 16:42                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/4597654" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/4597654" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/4597654" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;4310627                                / 137483</div>
+                            <div><strong>Série:</strong>&nbsp;LSD7826849</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;REVISAR EQUIPAMENTO                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;004932                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;MESA OP                            </div>
+                            <div>
+                                <strong>Departamento: </strong>QUALIDADE                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;22/12/2025 13:16                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-info'style='font-size: 14px'>Pendente</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        23/12/2025 10:00                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/4310627" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/4310627" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/4310627" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;2544796                                / 115441</div>
+                            <div><strong>Série:</strong>&nbsp;A797019500687</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;ATOLAMENTO DE PAPEL                             </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;006727                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;MESA OP                            </div>
+                            <div>
+                                <strong>Departamento: </strong>RECEPÇÃO                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;03/07/2023 14:22                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-primary-bootstrap4' style='font-size: 14px;'>Despachado</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        04/07/2023 17:52                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/2544796" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                                                            <button href="javascript;;" class="btn btn-large btn-success" id="btn_update_chamado_manutencao" title="Começar Manutenção" onclick="modalUpdateStatusChamado(2544796);">
+                                            <i class="fa fa-check-square-o"></i>
+                                        </button>&nbsp;
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/2544796" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/2544796" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;2093445                                / 102785</div>
+                            <div><strong>Série:</strong>&nbsp;BRBSL26954</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;MANCHAS NA IMPRESSÃO                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;006931                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;MESA OP                            </div>
+                            <div>
+                                <strong>Departamento: </strong>                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;27/07/2022 15:46                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-primary-bootstrap4' style='font-size: 14px;'>Despachado</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        29/07/2022 09:16                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/2093445" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                                                            <button href="javascript;;" class="btn btn-large btn-success" id="btn_update_chamado_manutencao" title="Começar Manutenção" onclick="modalUpdateStatusChamado(2093445);">
+                                            <i class="fa fa-check-square-o"></i>
+                                        </button>&nbsp;
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/2093445" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/2093445" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;2006786                                / 101052</div>
+                            <div><strong>Série:</strong>&nbsp;T596H705780</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;INSTALAÇÃO                             </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;006664                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;MESA OP                            </div>
+                            <div>
+                                <strong>Departamento: </strong>                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;15/06/2022 10:32                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-primary-bootstrap4' style='font-size: 14px;'>Despachado</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        16/06/2022 15:32                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/2006786" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                                                            <button href="javascript;;" class="btn btn-large btn-success" id="btn_update_chamado_manutencao" title="Começar Manutenção" onclick="modalUpdateStatusChamado(2006786);">
+                                            <i class="fa fa-check-square-o"></i>
+                                        </button>&nbsp;
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/2006786" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/2006786" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;1921375                                / 99602</div>
+                            <div><strong>Série:</strong>&nbsp;VLY7401419</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;SUPRIMENTO CONTRATO                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;004752                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;TRIAGEM                            </div>
+                            <div>
+                                <strong>Departamento: </strong>                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;13/05/2022 08:24                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-primary-bootstrap4' style='font-size: 14px;'>Despachado</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        16/05/2022 11:54                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/1921375" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                                                            <button href="javascript;;" class="btn btn-large btn-success" id="btn_update_chamado_manutencao" title="Começar Manutenção" onclick="modalUpdateStatusChamado(1921375);">
+                                            <i class="fa fa-check-square-o"></i>
+                                        </button>&nbsp;
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/1921375" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/1921375" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;1169864                                / 74087</div>
+                            <div><strong>Série:</strong>&nbsp;XVH0818198</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;CONFIGURAÇÃO                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;003209                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;PAULA                            </div>
+                            <div>
+                                <strong>Departamento: </strong>                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;17/09/2020 10:50                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-primary-bootstrap4' style='font-size: 14px;'>Despachado</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        22/09/2020 16:11                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/1169864" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                                                            <button href="javascript;;" class="btn btn-large btn-success" id="btn_update_chamado_manutencao" title="Começar Manutenção" onclick="modalUpdateStatusChamado(1169864);">
+                                            <i class="fa fa-check-square-o"></i>
+                                        </button>&nbsp;
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/1169864" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/1169864" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+                                            <div class="row-fluid show-grid" style="margin-top: 10px;">
+                    <div class="span12 well">
+                        <div class="span2">
+                            <div><strong>Chamado Nº:</strong>&nbsp;1104886                                / 70284</div>
+                            <div><strong>Série:</strong>&nbsp;Q8K0600527</div>
+                            <div><strong>Contrato:</strong>&nbsp;48                            </div>
+                            <div><strong>Tipo Defeito:</strong>&nbsp;CONFIGURAÇÃO                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Patrimônio:</strong>&nbsp;002390                            </div>
+                            <div>
+                                <strong>Técnico:</strong>&nbsp;DOUGLAS                            </div>
+                            <div>
+                                <strong>Departamento: </strong>                            </div>
+                            <div>
+                                <strong>Local de Instalação: </strong>                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Cliente: </strong>&nbsp;290 | TUICIAL GRAFICA E EDITORA LTDA                            </div>
+                            <div>
+                                <strong>Cidade: </strong>&nbsp;CASCAVEL (PR)&nbsp;
+                            </div>
+                            <div>
+                                <strong>Data de Abertura: </strong>&nbsp;24/06/2020 10:11                            </div>
+                            <div>
+                                <strong>Severidade: </strong>&nbsp;0 - Não controla                            </div>
+                        </div>
+
+                        <div class="span3">
+                            <div>
+                                <strong>Status: </strong>&nbsp;
+                                <span class='label label-primary-bootstrap4' style='font-size: 14px;'>Despachado</span>&nbsp;
+                            </div>
+                                                            <div><strong>Data
+                                        Prevista
+                                        Atendimento: </strong>
+                                        25/06/2020 15:12                                </div>
+                                                                                                                
+                        </div>
+                        <div class="row-fluid ">
+                            <div class="span12 text-right">&nbsp;
+
+                                <a href="/pws/index.php/pws/Chamados/view/1104886" class="btn btn-large btn-default" title="Ver Chamado"><i class="fa fa-eye"></i></a>                                &nbsp;
+
+                                
+                                    
+                                                                            <button href="javascript;;" class="btn btn-large btn-success" id="btn_update_chamado_manutencao" title="Começar Manutenção" onclick="modalUpdateStatusChamado(1104886);">
+                                            <i class="fa fa-check-square-o"></i>
+                                        </button>&nbsp;
+                                    
+                                    
+                                    
+                                        <a href="/pws/index.php/pws/Chamados/edit/1104886" class="btn btn-large btn-info" title="Atender Chamado"><i class="fa fa-edit"></i></a>                                        &nbsp;
+                                        <a href="/pws/index.php/pws/Oportunidades/add/1104886" class="btn btn-large btn-default" title="Add Oportunidade Comercial"><i class="fa fa-newspaper-o"></i></a>
+                                        
+
+                                                                                                                                    </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+            
+    <p>
+        Pagina 1 de 1, mostrando 8 registros de 8 no total, iniciando no registro 1, terminando em 8    </p>
+
+    <div class="pagination">
+        <ul>
+            <li class="prev"><< Anterior</li><li class="next">Proximo >></li>        </ul>
+    </div>
+    </div>
+</div>
+</div>
+<script type="text/javascript">
+    function cancelarChamado(idChamado){
+        // const baseUrl = "/pws/index.php/pws/";
+
+        // // const idChamado = 12312;
+
+        // if(confirm('Deseja realmente cancelar o chamado?') == true){
+
+        //     $.ajax({
+        //     url : `${baseUrl}/Chamados/cancelar`,
+        //     type : "POST",
+        //     async: false,
+        //     data : JSON.stringify({idChamado}),
+        //     contentType: 'application/json',
+        //     dataType: 'json',
+        //     processData : false,
+        //     }).done(function(result){
+        //         response = result
+        //     }).fail(function(){
+        //         // Here you should treat the http errors (e.g., 403, 404)
+        //     }).always(function(){
+        //         // alert("AJAX request finished!");
+        //     });
+            
+        //     if(response.success == true){
+
+        //         alert('Chamado cancelado com sucesso!');
+
+        //         // redireciona
+        //         window.location.href = baseUrl + "/Chamados/";
+
+        //     }
+
+        // }else{
+        //     return false;
+        // }
+        $.sModal({
+            header: 'Cancelar chamado',
+            animate: 'fadeDown',
+            width: 450,
+            content: '<div id="group_error"></div><br> <form style="margin: 0px;"><div class="control-group"><label class="control-label" for="tipo_status_chamado_cancel" style="font-weight: bold;">Tipo do Status</label><div class="controls"><select id="tipo_status_chamado_cancel" name="tipo_status_chamado_cancel" style="width:100%;"></select></div></div></form>',
+            buttons: [{
+                text: ' Confirmar cancelamento ',
+                addClass: 'btn-primary',
+                click: function(id, data) {
+                    const value = $('#' + id).find('#tipo_status_chamado_cancel').val();
+
+                    if(value != ''){
+                    
+                        var btnSubmit = $('#' + id).children('.modal-footer').children().first();
+                        var modal = $('#' + id).children('.modal-footer').children('a');
+                        modal.attr({
+                            disabled: 'disabled'
+                        });
+                        btnSubmit.text('Carregando...');
+
+
+                        $.ajax({
+                            url : '/pws/index.php/pws/Chamados/cancelar',
+                            type : "POST",
+                            async: false,
+                            data : JSON.stringify({idChamado, cdStatus: $('#' + id).find('#tipo_status_chamado_cancel').val()}),
+                            contentType: 'application/json',
+                            dataType: 'json',
+                            processData : false,
+                        }).done(function(result){
+                            $.sModal('close', id);
+                            window.location = '/pws/index.php/pws/Chamados';
+                        }).fail(function(){
+                            modal.removeAttr('disabled');
+                            btnSubmit.text('Confirmar cancelamento');
+                            var str_error = '<div class="alert alert-error">' +
+                                '<button data-dismiss="alert" class="close" type="button">×</button>' +
+                                '<strong>Erro! </strong> ' + o.error_message +
+                                '</div>'
+                            $('#group_error').html(str_error);
+                        }).always(function(){
+                            // alert("AJAX request finished!");
+                        });
+
+
+                        // $.post('/pws/index.php/pws/Chamados/cancelar/' + idChamado, {
+                        //     data: {
+                        //         idChamado: idChamadom
+                        //         cdStatus: $('#' + id).find('#tipo_status_chamado_cancel').val()
+                        //     }
+                        // }, function(o) {
+                        //     if (o.error == 0) {
+                        //         $.sModal('close', id);
+                        //         window.location = '/pws/index.php/pws/Chamados';
+                        //     } else {
+                        //         modal.removeAttr('disabled');
+                        //         btnSubmit.text('Confirmar cancelamento');
+                        //         var str_error = '<div class="alert alert-error">' +
+                        //             '<button data-dismiss="alert" class="close" type="button">×</button>' +
+                        //             '<strong>Erro! </strong> ' + o.error_message +
+                        //             '</div>'
+                        //         $('#group_error').html(str_error);
+                        //     }
+                        // }, 'json');
+                    }else{
+                        alert('Selecione um status');
+                    }
+                }
+            }, {
+                text: ' Cancel ',
+                click: function(id, data) {
+                    $.sModal('close', id);
+                }
+            }]
+        });
+
+    }
+
+    $('#btn_update_chamado_cancelar').live('click', function() {
+        $.getJSON("/pws/index.php/pws/chamados/listar_status_json_cancelamento", {
+            idBase: 136        }, function(cidades) {
+            
+            if (cidades != null)
+                // popularListaDeCidades(cidades, $('#tipo_status_chamado_cancel').val());
+                var options = '<option value="">Selecione um Status</option>';
+                $.each(cidades, function(index, cidade) {
+                    if ('0' === index)
+                        options += '<option selected="selected" value="' + index + '">' + cidade + '</option>';
+                    else
+                        options += '<option value="' + index + '">' + cidade + '</option>';
+                });
+                $('#tipo_status_chamado_cancel').html(options);
+        });
+    });
+
+
+    function cancelSearch() {
+        removeUserSearchCookie();
+        window.location = '/pws/index.php/pws/Chamados';
+    }
+
+    function modalUpdateStatusChamado(Chamado_id) {
+        $.sModal({
+            header: 'Atualizar chamado para Em Manutenção',
+            animate: 'fadeDown',
+            width: 450,
+            content: '<div id="group_error"></div><br> <form style="margin: 0px;"><div class="control-group"><label class="control-label" for="tipo_status_chamado" style="font-weight: bold;">Tipo do Status</label><div class="controls"><select id="tipo_status_chamado" name="tipo_status_chamado" style="width:100%;"></select></div></div></form>',
+            buttons: [{
+                text: ' Atualizar ',
+                addClass: 'btn-primary',
+                click: function(id, data) {
+                    var btnSubmit = $('#' + id).children('.modal-footer').children().first();
+                    var modal = $('#' + id).children('.modal-footer').children('a');
+                    modal.attr({
+                        disabled: 'disabled'
+                    });
+                    btnSubmit.text('Carregando...');
+                    $.post('/pws/index.php/pws/Chamados/updateChamadoStatus/' + Chamado_id, {
+                        data: {
+                            Status: {
+                                tipo_status: $('#' + id).find('#tipo_status_chamado').val()
+                            }
+                        }
+                    }, function(o) {
+                        if (o.error == 0) {
+                            $.sModal('close', id);
+                            window.location = '/pws/index.php/pws/Chamados';
+                        } else {
+                            modal.removeAttr('disabled');
+                            btnSubmit.text('Atualizar');
+                            var str_error = '<div class="alert alert-error">' +
+                                '<button data-dismiss="alert" class="close" type="button">×</button>' +
+                                '<strong>Erro! </strong> ' + o.error_message +
+                                '</div>'
+                            $('#group_error').html(str_error);
+                        }
+                    }, 'json');
+                }
+            }, {
+                text: ' Cancel ',
+                click: function(id, data) {
+                    $.sModal('close', id);
+                }
+            }]
+        });
+    }
+
+    $('#btn_update_chamado_manutencao').live('click', function() {
+        $.getJSON("/pws/index.php/pws/chamados/listar_status_json", {
+            estadoId: 'M'
+        }, function(cidades) {
+            if (cidades != null)
+                popularListaDeCidades(cidades, $('#tipo_status_chamado').val());
+        });
+    });
+
+    function popularListaDeCidades(cidades, idCidade) {
+        var options = '<option value="">Selecione um Status</option>';
+        if (cidades != null) {
+            $.each(cidades, function(index, cidade) {
+                if ('0' === index)
+                    options += '<option selected="selected" value="' + index + '">' + cidade + '</option>';
+                else
+                    options += '<option value="' + index + '">' + cidade + '</option>';
+            });
+            $('#tipo_status_chamado').html(options);
+        }
+    }
+
+    function delChamado(Chamado_id, name) {
+        $.sModal({
+            image: '/pws/app/webroot/img/icons/error.png',
+            content: 'Are you sure you want to delete  <b>' + name + '</b>?',
+            animate: 'fadeDown',
+            buttons: [{
+                text: ' Delete ',
+                addClass: 'btn-danger',
+                click: function(id, data) {
+                    $.post('/pws/index.php/pws/Chamados/delete/' + Chamado_id, {}, function(o) {
+                        $('#container').load('/pws/index.php/Pws/Chamados', function() {
+                            $.sModal('close', id);
+                            $('#tab_user_manager').find('a').each(function() {
+                                $(this).click(function() {
+                                    removeUserSearchCookie();
+                                });
+                            });
+                        });
+                    }, 'json');
+                }
+            }, {
+                text: ' Cancel ',
+                click: function(id, data) {
+                    $.sModal('close', id);
+                }
+            }]
+        });
+    }
+
+    $(document).ready(function() {
+        $('.pagination > ul > li').each(function() {
+            if ($(this).children('a').length <= 0) {
+                var tmp = $(this).html();
+                if ($(this).hasClass('prev')) {
+                    $(this).addClass('disabled');
+                } else if ($(this).hasClass('next')) {
+                    $(this).addClass('disabled');
+                } else {
+                    $(this).addClass('active');
+                }
+                $(this).html($('<a></a>').append(tmp));
+            }
+        });
+    });
+
+    function selEquip() {
+        total = document.form_sel_id.sel_equip.length;
+        fals = 0;
+        for (i = 0; i < total; i++) {
+
+            if (document.form_sel_id.sel_equip[i].checked == true) {
+                alert(document.form_sel_id.sel_equip[i].value)
+            } else {
+                fals++;
+            }
+        }
+        if (fals == total) {
+            content = 'Por Favor Selecione um Chamado para a Abrir um Chamado.';
+            $.sModal({
+                image: '/pws/app/webroot/img/icons/error.png',
+                content: '<b>' + content + '</b>',
+                animate: 'fadeDown',
+                buttons: [{
+                    text: ' Ok ',
+                    click: function(id, data) {
+                        $.sModal('close', id);
+                    }
+                }]
+            });
+            //   		$(this).click(function(){
+            // 			var strAlertSuccess = '<div class="alert alert-error" style="position: fixed; right:0px; top:45px; display: none;">'
+            // 				+ '<button data-dismiss="alert" class="close" type="button">×</button>'
+            +
+            '<strong>Success!</strong> Por Favor Selecione um Chamado na Listagem.' + '</div>';
+            // 			var alertSuccess = $(strAlertSuccess).appendTo('body');
+            // 			alertSuccess.show();
+            // 			setTimeout(function() {
+            // 				alertSuccess.remove();
+            // 			}, 10000);
+            // 			$("#container  table").unmask();
+            // 		});
+        }
+    }
+
+    function msg(content) {
+        $.sModal({
+            image: '/pws/app/webroot/img/icons/alert.png',
+            content: 'Are you sure you want to delete  <b>' + content + '</b>?',
+            animate: 'fadeDown',
+            buttons: [{
+                text: ' Cancel ',
+                click: function(id, data) {
+                    $.sModal('close', id);
+                }
+            }]
+        });
+    }
+</script>        </div>
+    </div>
+
+    <br />
+    <br />
+    <br />
+    <div class="navbar navbar-fixed-bottom hidden-phone" id="barNotify" style="bottom:40px"></div>
+    <div class="navbar navbar-fixed-bottom hidden-phone" id="status">
+        <div class="btn-toolbar">
+            <div class="btn-group pull-right" style="margin-top: 3px;">
+                &copy; PWS Licensed to Softilux 2016 - Versão: 1.0.16b            </div>
+
+        </div>
+    </div>
+
+        <!-- /container -->
+</body>
+<script>
+    $(document).ready(function() {
+        // remove user search cookie
+        $('#mnu_admin_top').find('a').each(function() {
+            $(this).click(function() {
+                removeUserSearchCookie();
+            });
+        });
+        $('#tab_user_manager').find('a').each(function() {
+            $(this).click(function() {
+                removeUserSearchCookie();
+            });
+        });
+
+        if ($('#mnu_plugins').children('ul').find('li').length <= 1) {
+            $('#mnu_plugins').hide();
+        } else {
+            $('#mnu_plugins').show();
+        }
+
+    });
+
+    function removeUserSearchCookie() {
+        $.cookie.raw = true;
+        $.removeCookie('CakeCookie[srcPassArg]', {
+            path: '/'
+        });
+    }
+
+    function alteraEmp(id) {
+        $("body").loadMask("Aguarde...");
+        $.post('/pws/index.php/auth_acl/users/editEmp/' + id, {
+            id: id
+        }, function(o) {
+            document.location.reload();
+        });
+    }
+
+    function alteraCli(id) {
+        $("body").loadMask("Aguarde...");
+        $.post('/pws/index.php/auth_acl/users/editCli/' + id, {
+            id: id
+        }, function(o) {
+            document.location.reload();
+        });
+    }
+
+    // define a base url do sistema para o javascript
+    BASE_URL = "/pws/index.php/pws/";
+
+    // instancia javascript referente a classe
+    new init().__construct('chamado');
+</script>
+
+</html>

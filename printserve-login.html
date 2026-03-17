@@ -1,0 +1,156 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PWS | Portal Web de Serviços</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="">
+<meta name="author" content="">
+	<link rel="shortcut icon" href="/pws/app/webroot/img/favicon.ico" />
+<link href="/pws/app/webroot/css/template.css" rel="stylesheet">
+<link href="/pws/app/webroot/bootstrap-modal/css/animate.min.css" rel="stylesheet">
+	<link href="/pws/app/webroot/css/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+
+<script src="/pws/app/webroot/jquery/jquery-1.8.2.min.js"></script>
+<script src="/pws/app/webroot/bootstrap/js/bootstrap.min.js"></script>
+<script src="/pws/app/webroot/bootstrap-modal/js/bootstrap.modal.js"></script>
+<script src="/pws/app/webroot/bootstrap-modal/js/jquery.easing.1.3.js"></script>
+
+	<style>
+		body {
+			background-color: #d9d9d9;
+			background: rgba(0, 0, 0, 0) url("/pws/app/webroot/img/1069108.jpg") no-repeat scroll 50% 0;
+		}
+		.well {
+			background-color: #FFF;
+		}
+		.painel{
+			box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.20) !important;
+		}
+	</style>
+</head>
+<body>
+	<!-- container -->
+	<div class="container" id="container">
+						<div class="container">
+<br/>
+<div class="center">
+<fieldset></fieldset>
+ 
+</div>
+	<div class="row">
+		<div class="span4 offset4">
+			<div class="panel panel-default">
+				<div class="panel-heading text-center">
+					<img src="/pws/app/webroot/img/PWS_logo.png" title="PWS" alt="PWS Login">
+					<h2><small>Portal Web de Serviços</small></h2>
+				</div>
+				<div class="panel-body">
+					<p>			<form action="/pws/index.php/pws" class=" form-signin" id="UserLoginForm" method="post" accept-charset="utf-8"><div style="display:none;"><input type="hidden" name="_method" value="POST"/></div>											<div class="control-group">
+						<div class="input-prepend">
+							<span class="add-on"><i class="fa fa-envelope-o"></i></span>
+							<input name="data[User][user_email]" id="prependedInput" placeholder="Endereço de Email" class="input-xlarge" required="required" maxlength="255" type="text" required="required"/>						</div>
+					</div>
+					<div class="control-group">
+						<div class="input-prepend">
+							<span class="add-on"><i class="fa fa-lock"></i></span>
+							<input name="data[User][user_password]" placeholder="Senha" class="input-xlarge" required="required" type="password" id="UserUserPassword" required="required"/>						</div>
+					</div>
+					<label class="checkbox inline" for="remember_me">
+						<input type="hidden" name="data[User][remember_me]" id="UserRememberMe_" value="0"/><input type="checkbox" name="data[User][remember_me]" value="1" id="UserRememberMe"/>						Lembrar de mim					</label>
+					<div style="padding-top:5px;"> 
+													<label>
+								<a href="#" onclick='resetPassword(); return false;'>Não consegue acessar sua conta?</a>
+							</label>
+																		
+					</div>
+					</p>
+				</div>
+				<div class="panel-footer">
+					<button class="btn btn-large btn-success btn-block" name="submit" type="submit"><i class="fa fa-sign-in"></i>&nbsp;Entrar</button>
+					</form>				</div>
+				<div class="panel-footer">
+					<div style="font-size:11px;line-height: 20px">
+						<a target="_blank" href="/pws/app/webroot//files/lgpd/politica_de_privacidade.pdf">Política de privacidade</a>, 
+						<a target="_blank" href="/pws/app/webroot//files/lgpd/termo_de _consentimento_para_tratamento_de_dados.pdf">Termo de consentimento para tratamento de dados</a>, 
+						<a target="_blank" href="/pws/app/webroot//files/lgpd/termos_e_condicoes_gerais_de_uso.pdf">Termos e condições gerais de uso</a>
+					</div>
+					<div style="text-align: center; font-size: small;">
+						&copy; powered by Softilux 2016					</div>
+				</div>
+			</div>
+
+
+
+		</div>
+	</div>
+</div>
+
+<script>
+function resetPassword() {
+	var step = 1;
+    var mId = $.sModal({
+    	header:'Redefinir Senha',
+    	width:450,
+        form:[
+			{label:'Endereço de email',type:'text',name:'user_email',attr:{'placeholder':'Endereço de email',style:'width:300px;'}}
+              ],
+        animate: 'fadeDown',
+        buttons: [{
+            text: ' Enviar ',
+            addClass: 'btn-primary',
+            click: function(id, data) {
+            	if (step === 1){
+	            	var btnSubmit = $('#'+id).children('.modal-footer').children('a');
+	            	btnSubmit.attr({disabled:'disabled'});
+	            	btnSubmit.text('Carregando...');
+	            	$.post('/pws/index.php/auth_acl/users/resetPassword',{data:{User:{user_email:$('#'+id).find('#user_email').val()}}},function(o){
+	            		if (o.send_link === 1){
+		            		btnSubmit.attr({disabled:false});
+		                	btnSubmit.text('Fechar');
+		                	$('#'+id).children('.modal-body').children('div').html('<div class="alert alert-success" style="padding:8px;">Enviamos um e-mail com as instruções de redefinição de senha. Por favor verifique seu email.</div>');
+		                	step =2;
+	            		}else if (o.send_link === -1){
+							btnSubmit.attr({disabled:false});
+		                	btnSubmit.text(' Encaminhar ');
+	            			step =1;
+	            			$('#'+id).find('.alert-error').remove();
+	            			$('#'+id).children('.modal-body').children('div').prepend('<div class="alert alert-error" style="padding:8px;"><strong>Atenção!</strong> Você não tem permissão para alterar senha. Envie um email para <strong>' + o.email_admin + '</strong></div>');
+						}else{
+	            			btnSubmit.attr({disabled:false});
+		                	btnSubmit.text(' Encaminhar ');
+	            			step =1;
+	            			$('#'+id).find('.alert-error').remove();
+	            			$('#'+id).children('.modal-body').children('div').prepend('<div class="alert alert-error" style="padding:8px;"><strong>Erro</strong> !, Por favor, forneça um endereço de e-mail correto.</div>');
+	            		}
+	            	},'json');
+            	}else if (step == 2){
+            		$.sModal('close', id);
+            	}
+            }
+        }]
+        });
+    $('#'+mId).find('input[type="text"]').each(function(){
+		$(this).keypress(function(event){
+			 if ( event.which == 13 ) {
+			 	event.preventDefault();
+			 }
+		});
+	});
+}
+$(document).ready(function(){
+	$('#authMessage').each(function(){
+		var errors = $('<div class="alert alert-error" style="margin-bottom:0px;"></div>').html($(this).html());
+		$('#container').children('.container').prepend(errors);
+	});
+
+	$('#flashMessage').each(function(){
+		var errors = $('<div class="alert alert-success" style="margin-bottom:0px;"></div>').html($(this).html());
+		$('#container').children('.container').prepend(errors);
+	});
+});
+</script>
+	</div>
+		<!-- /container -->
+</body>
+</html>

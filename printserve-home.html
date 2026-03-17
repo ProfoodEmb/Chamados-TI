@@ -1,0 +1,878 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>PRINT SERVICE | Portal Web de Serviços</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="/pws/app/webroot/img/favicon.ico" />
+        <link href="/pws/app/webroot/css/template.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/css/font-awesome/css/font-awesome.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/bootstrap/css/bootstrap-responsive.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/bootstrap-modal/css/animate.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/jquery/jquery-loadmask/jquery.loadmask.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/bootgrid/jquery.bootgrid.min.css?v=11" rel="stylesheet">
+    <link href="/pws/app/webroot/datetimepicker/css/jquery.datetimepicker.css?v=11" rel="stylesheet">
+
+    <script src="/pws/app/webroot/jquery/jquery-1.8.2.min.js?v=11"></script>
+    <script src="/pws/app/webroot/jquery/jquery-loadmask/jquery.loadmask.js?v=11"></script>
+    <script src="/pws/app/webroot/jquery/jquery.maskMoney.min.js?v=11"></script>
+    <script src="/pws/app/webroot/js/jquery.mask.min.js?v=11"></script>
+    <script src="/pws/app/webroot/js/twix.min.js?v=11"></script>
+
+    <script src="/pws/app/webroot/jquery/jquery.cookie.js?v=11"></script>
+    <script src="/pws/app/webroot/bootstrap/js/bootstrap.min.js?v=11"></script>
+    <script src="/pws/app/webroot/pwsjs/app.js?v=11"></script>
+    <script src="/pws/app/webroot/pwsjs/init.js?v=11"></script>
+
+    <script src="/pws/app/webroot/jqueryform/jquery.form.min.js?v=11"></script>
+
+    <script src="/pws/app/webroot/select2/js/select2.min.js?v=11"></script>
+    <script src="/pws/app/webroot/select2/js/i18n/pt-BR.js?v=11"></script>
+    <link href="/pws/app/webroot/select2/css/select2.min.css?v=11" rel="stylesheet">
+
+    <script src="/pws/app/webroot/bootstrap-modal/js/bootstrap.modal.js?v=11"></script>
+    <script src="/pws/app/webroot/bootstrap-modal/js/jquery.easing.1.3.js?v=11"></script>
+    <script src="/pws/app/webroot/tiny_mce/tiny_mce.js?v=11"></script>
+    <script src="/pws/app/webroot/inputmask/jquery.inputmask.bundle.js?v=11"></script>
+    <script src="/pws/app/webroot/datetimepicker/js/jquery.datetimepicker.js?v=11"></script>
+
+
+    <style>
+        table>thead>tr>th {
+            cursor: default;
+            text-align: center;
+            color: #333333;
+            text-shadow: 0 1px 0 #FFFFFF;
+            background-color: #e6e6e6;
+        }
+
+        table>thead>tr>th>a {
+            color: black;
+        }
+    </style>
+    <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJzqCIQ3uPa_gK3-VG3LhHNDB-pWL09ho&callback=initMap" type="text/javascript"></script> -->
+    <script>
+        (function(i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function() {
+                (i[r].q = i[r].q || []).push(arguments)
+            }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+        ga('create', 'UA-91180159-1', 'auto');
+        ga('send', 'pageview');
+    </script>
+</head>
+
+<body>
+    <div class="navbar navbar-inverse navbar-fixed-top hidden-print" id="mnu_admin_top">
+        <div class="navbar-inner" style="background:#1e1e1e">
+            <div class="container-fluid">
+
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target="#navbar">
+                    <i class="fa fa-bars  fa-2x"></i>
+                </button>
+                <a class="navbar-brand" style="rad" title="Home" href="/pws/index.php/auth_acl">    
+                    <img class="brandimg" src="https://psfx.com.br/pws/app/webroot/img/emp/200x120-pixels.jpg" style=" width: 3rem !important; height: 2.5rem !important;border-radius: 50%!important;margin-top: 8px; !important">
+                </a>
+                <div id="navbar" class="nav-collapse">
+
+                    
+                    <ul class="nav">
+                        <li class="divider-vertical"></li>
+                                                    <li class=" active ">
+                                <a title="Dashboard" href="/pws/index.php/auth_acl">
+                                    <i class="fa fa-home fa-lg"></i>
+                                </a>
+                            </li>
+                                                                        <li class="divider-vertical"></li>
+                                                <li class="divider-vertical"></li>
+                                                    <li class="dropdown ">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#"><i class="fa fa-cubes fa-lg"></i>
+                                    Solicitações                                    <b class="caret"></b>
+                                </a>
+                                <ul class="dropdown-menu">
+                                                                            <li><a href="/pws/index.php/pws/ContratoItens">Solicitar por Equipamento</a></li>
+                                                                                                                <li><a href="/pws/index.php/pws/Contratos">Solicitar por Contrato</a></li>
+                                                                                                                <li><a href="/pws/index.php/pws/Solicitacao">Acompanhar Solicitações</a></li>
+                                                                    </ul>
+                            </li>
+                                                <li class="divider-vertical"></li>
+                        
+                        <li class="divider-vertical"></li>
+                                                    <li class="dropdown">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                                    <i class="fa fa-cogs fa-lg"></i>
+                                    Config                                    <b class="caret"></b> </a>
+                                <ul class="dropdown-menu">
+                                                                            <li><a href="/pws/index.php/auth_acl/settings">General</a></li>
+                                                                                                                <li><a href="/pws/index.php/auth_acl/empresas">Empresa</a></li>
+                                                                                                                <li><a href="/pws/index.php/pws/defeitos">Tabela Defeitos</a></li>
+                                    
+                                    <li class="nav-header">Usuários</li>
+                                                                            <li><a href="/pws/index.php/auth_acl/users">Administrar Usuário</a></li>
+                                                                                                                                                                                                                            <li><a href="/pws/index.php/pws/usersLgpd">Usuários LGPD</a></li>
+                                                                                                                                                                                                                            <li class="nav-header">Chamados</li>
+                                        <li><a href="/pws/index.php/pws/ConfiguracoesChamado">Status Padrão Abertura Chamado</a></li>
+                                                                    </ul>
+                            </li>
+                            <li class="divider-vertical"></li>
+                                                                    </ul>
+                    
+                    <ul class="nav pull-right">
+                                                    <li class="divider-vertical"></li>
+                            <li class="dropdown">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#">
+                                    <strong> Todas </strong>
+                                    <b class="caret"></b> </a>
+                                <ul class="dropdown-menu" style="max-height: 300px;overflow: auto;">
+                                                                            <li><a href="#" onclick="alteraEmp(136);"><i class="fa fa-arrow-right"></i>
+                                                PRINT SERVICE</a></li>
+                                                                            <li><a href="#" onclick="alteraEmp(136);"><i class="fa fa-arrow-right"></i>
+                                                PRINT SERVICE</a></li>
+                                                                                                            <li><a href="#" onclick="alteraEmp('0');"><i class="fa fa-arrow-right">Todas</i></a></li>
+                                                                    </ul>
+                            <li class="divider-vertical"></li>
+                            <li class="dropdown">
+                                <a data-toggle="dropdown" class="dropdown-toggle" href="#"><i class="fa fa-user fa-lg"></i>
+                                    <b class="caret"></b>
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="/pws/index.php/auth_acl/users/editAccount"><i class="icon-pencil"></i> Editar Perfil</a></li>
+                                    <li class="divider"></li>
+                                                                            <li class="nav-header">Cliente</li>
+                                    <li class="dropdown-submenu pull-left">
+                                        <a tabindex="-1" href="#">Selecionar Cliente</a>
+                                        <ul class="dropdown-menu" style="display: block;max-height: 300px;overflow: auto;">
+                                                                                        <li style="">
+                                                    <a href="#" onclick="alteraCli(290);">
+                                                        <i class="fa fa-plus-circle"></i>Cliente: GRAFICA TUICIAL                                                    </a>
+                                                                                        <li style="">
+                                                    <a href="#" onclick="alteraCli(290);">
+                                                        <i class="fa fa-plus-circle"></i>Cliente: GRAFICA TUICIAL                                                    </a>
+                                                                                        <li style="background:#08c"><a href="#" onclick="alteraCli('-1');"><i class="fa fa-plus-circle"></i> Cliente:Todos</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="divider-vertical"></li>
+                            <li>
+                                <a href="/pws/index.php/auth_acl/users/logout"><i class="fa fa-power-off fa-lg"></i> </a>                            </li>
+                        
+                    </ul>
+                    
+                </div>
+                <!--/.nav-collapse -->
+            </div>
+            
+        </div>
+        <div style="background: #0081c2;margin:0px;padding:0px;font-size:11px; color:#fff;">
+            <div style="display:flex;">
+                <div style="margin-left:70px">empresa: <strong>PRINT SERVICE</strong></div>
+                <div style="margin-left:10px">usuário: <strong>Tuicial - TI</strong></div>
+            </div>
+        </div>
+        
+        
+<!--
+          -->
+        
+    <!--
+    <div style="background:#ff9900; color:#fff; font-size: 12px; text-align:center">
+        <strong>Prezado cliente</strong>, A partir das 00:00 do dia 29/07, o portal estará em manutenção, ficando indisponível até 30/07 às 23h, podendo ser restabelecido antes do prazo.Esta manutenção deve-se a troca de servidores.
+    </div>
+    -->
+    </div>
+    <!-- container -->
+    <div class="container-fluid" id="container" style="padding-top: 70px;">
+        <div class="modal hide" id="exampleModal" tabindex="-1" data-backdrop="static" role="dialog" aria-labelledby="exampleModalLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">New message</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div id="modal-body-message" style="position:abolute;background:#cc0000;color: #fff;padding: 3px;position: absolute;top: 59px;right: 15px;font-size: 12px;display:none"></div>
+                        <div id="content-data-modal"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <div id="bar-button-modal"><button type="button" id="buttonCloseModal" class="btn btn-danger" data-dismiss="modal">Fechar</button></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal hide" style="z-index:1090" id="modalAlert" tabindex="0" data-backdrop="static" role="dialog" aria-labelledby="modalAlertLabel">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="modalAlertLabel">New message</h4>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div id="content-data-modalAlert"></div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" id="buttonClosemodalAlert" class="btn btn-danger" data-dismiss="modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal hide" id="loadingModal" data-backdrop="static" data-keyboard="false">
+            <div class="modal-body">
+                <div class="progress progress-striped active">
+                    <div id="progressBar" class="bar" style="width: 10%;">10% Completo</div>
+                </div>
+            </div>
+        </div>
+        <div class="row-fluid" style="padding-top:10px;">
+
+            <!--/.well -->
+
+            <div class="span12">
+    <div class="row-fluid">
+        <div class="span12">
+            <div class="page-header">
+                <h1><i class="fa fa-home fa-lg"></i> Dashboard </h1>
+                                    <!-- <div class="text-left">
+                        <i class="fa fa-info-circle fa-lg"></i>
+                        Bem vindo <strong>TUICIAL - TI</strong>
+                    </div> -->
+                            </div>
+        </div>
+    </div>
+        <div class="row-fluid">
+               <div class="span6">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3><i class="fa fa-check-square-o" aria-hidden="true"></i>
+                        Atalhos</h3>
+                </div>
+                <div class="panel-body" style="min-height: 200px;">
+                    <div class="tac">
+                                                                                    <a href="/pws/index.php/pws/ContratoItens"
+                                class="quick-btn">
+                                    <i class="fa fa-wrench fa-2x"></i>
+                                    <span>Abrir Chamado</span>
+                                </a>
+                                                    
+                        
+                                                    <a href="/pws/index.php/pws/Chamados"
+                               class="quick-btn">
+                                <i class="fa fa-clipboard fa-2x"></i>
+                                <span>Acompanhar Chamados</span>
+                            </a>
+                                                
+                                                
+                                                
+                        <!--                             <a href="/pws/index.php/pws/Chamados/listarAvaliacao"
+                               class="quick-btn">
+                                <i class="fa fa-pie-chart fa-2x"></i>
+                                <span>Avaliação NPS</span>
+                            </a>
+                         -->
+
+                        
+
+                                                
+                        
+
+
+
+                        
+                        
+                        
+                    </div>
+                </div>
+            </div>
+                    </div>
+
+        
+                    <div class="span6 hidden-phone hidden-tablet" style="">
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3><i class="fa fa-check-square-o" aria-hidden="true"></i> Últimos 10 Pré-atendimentos
+                        </h3>
+                    </div>
+                    <div class="panel-body text-center" style="min-height: 200px;">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                <tr>
+                                    <th>ID Web</th>
+                                    <th>ID Ilux</th>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                                                    <tr>
+                                        <td>
+                                            <a href="/pws/index.php/pws/Chamados/view/4350752#pre-atendimento">4350752</a>
+                                        </td>
+                                        <td>137738</td>
+                                        <td>08/01/2026 12:10</td>
+                                        <td>imagem da falha 
+</td>
+                                    </tr>
+                                                                    <tr>
+                                        <td>
+                                            <a href="/pws/index.php/pws/Chamados/view/3757476#pre-atendimento">3757476</a>
+                                        </td>
+                                        <td>133720</td>
+                                        <td>24/07/2025 09:14</td>
+                                        <td>Imagem da impressão contendo os ...</td>
+                                    </tr>
+                                                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+        
+    </div>
+
+
+    <div class="row-fluid hidden-phone hidden-tablet hidden-sm" >
+        <div class="span6" style="">
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3><i class="fa fa-check-square-o" aria-hidden="true"></i> Últimos 10 Chamados</h3>
+                </div>
+                <div class="panel-body text-center" style="min-height: 200px;">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Série</th>
+                                <th>Modelo</th>
+                                <th>Data Abertura</th>
+                                <th>Status</th>
+                                <th>Localização</th>
+                                <th>Deslocamento</th>
+                                <th>Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4625389">139185</a>
+                                    </td>
+                                    <td>254TOE245080187</td>
+                                    <td>BARCODE-17</td>
+                                    <td>11-03-2026 10:44</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4597661">139046</a>
+                                    </td>
+                                    <td>A798019501067</td>
+                                    <td>C227 </td>
+                                    <td>05-03-2026 08:43</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4597654">139045</a>
+                                    </td>
+                                    <td>VKM9702428</td>
+                                    <td>M4125DN</td>
+                                    <td>05-03-2026 08:42</td>
+                                    <td>
+                                        <span class='label label-info'style='font-size: 14px'>Pendente</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4594397">139014</a>
+                                    </td>
+                                    <td>254TOE245080187</td>
+                                    <td>BARCODE-17</td>
+                                    <td>04-03-2026 14:50</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4593988">139005</a>
+                                    </td>
+                                    <td>VKM9702428</td>
+                                    <td>M4125DN</td>
+                                    <td>04-03-2026 13:14</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4587278">138923</a>
+                                    </td>
+                                    <td>LSD6617271</td>
+                                    <td>M3040DN</td>
+                                    <td>03-03-2026 08:43</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4583857">138907</a>
+                                    </td>
+                                    <td>LSD6X19924</td>
+                                    <td>M3040DN</td>
+                                    <td>02-03-2026 14:43</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4492206">138430</a>
+                                    </td>
+                                    <td>LSD7826849</td>
+                                    <td>M3040DN</td>
+                                    <td>09-02-2026 11:05</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4475040">138373</a>
+                                    </td>
+                                    <td>VKM9702428</td>
+                                    <td>M4125DN</td>
+                                    <td>05-02-2026 13:27</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                                                            <tr>
+                                    <td>
+                                        <a href="/pws/index.php/pws/Chamados/view/4380002">137899</a>
+                                    </td>
+                                    <td>LSD6X19924</td>
+                                    <td>M3040DN</td>
+                                    <td>15-01-2026 13:16</td>
+                                    <td>
+                                        <span class='label label-success'style='font-size: 14px'>Concluído</span>                                    </td>
+                                    <td>
+                                                                            </td>
+                                    <td>
+                                                                        </td>
+                                    <td>
+                                                                            </td>
+
+                                </tr>
+                            
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        
+    </div>
+</div>
+
+<script>
+
+    function validationLgpd(){
+        let idModal = 0;
+        let contentData = null;
+        const action = 1;
+        let countChecked = 0;
+        let amountCheckBox = 0;
+        let notAccept = 0;
+        const message = '';
+        let itens = [];
+        let fields = ['politica_privacidade', 'termo_uso', 'termo_consentimento', 'email', 'motivo'];
+
+        const setItens = (param) =>{
+
+            itens = [];
+            
+            fields.forEach(response => {
+                // verifi se o campo existe no json repassado pelo data
+                const data = param.find(search => {
+                    return search.name == response;
+                });
+
+                if(!!data){
+                    // itens vindo do formulário
+                    itens.push(data);
+                }
+            });
+        }
+
+        const countClick = (check) =>{
+            countChecked = 0;
+
+            // conta o total de checados
+            $('#container_termos input[type=checkbox]:checked').each(()=>{ countChecked++; });
+
+            // pega o total de checkbox
+            amountCheckBox = $('#container_termos input[type=checkbox]').length;
+
+            if(check != undefined){
+                handleDescription(false);
+                notAccept = 0;
+                $('#negado').removeAttr('checked');
+            }
+
+        }
+
+        const handleDescription = (open) =>{
+            if(open){
+                $('#addInfo').css('display', 'block');
+                $('#motivo').focus();
+            }else{
+                $('#addInfo').css('display', 'none');
+                $('#motivo').val("");
+            }
+        }
+
+        const handleConfirm = ()=>{
+            var email = $('#email').val().trim();
+            var motivo = $('#motivo').val().trim();
+            setMessage('');
+
+            // valida os checkbox
+            countClick();
+
+            // verifica se os dados foram preenchidos
+            if(countChecked < 1 && (email == '' || motivo == '')){
+                setMessage('Preencha os campos informados !');
+
+                $('#motivo').focus();
+            }else{
+                setMessage('Aguarde, validando os dados...', '#387038');
+
+                // define se não foi aceito os termos de uso
+                itens.push({name: 'negado', value: notAccept});
+                
+                if(!!contentData.id){
+                    itens.push({name : 'id', value: contentData.id});
+                }
+
+                const modal = $('#' + idModal).children('.modal-footer').children('a');
+                modal.attr({disabled:'disabled'});
+                
+                // envia os dados via post
+                $.post('/pws/index.php/auth_acl/AuthAcl/setDataLgpd', {data:{itens}}, function (response) {
+                    // 
+                    console.log(response);
+
+                    setMessage('Finalizado...', '#387038');
+
+                    // habilita os botoes novamente
+                    modal.removeAttr('disabled');
+
+                    $.sModal('close', idModal);
+
+                }, 'json');
+
+            }
+        }
+
+        const handleNotAccept = () =>{
+
+            if(notAccept == 0){
+                notAccept = 1;
+                // remove todos os checkbox
+                $('#politica_privacidade').removeAttr('checked');
+                $('#termo_uso').removeAttr('checked');
+                $('#termo_consentimento').removeAttr('checked');
+
+                handleDescription(true);
+            }else{
+                notAccept = 0;
+                $('#politica_privacidade').attr('checked', true);
+                $('#termo_uso').attr('checked', true);
+                $('#termo_consentimento').attr('checked', true);
+
+                handleDescription(false);
+            }
+            
+        }
+
+        const setMessage = (message, color) =>{
+            $('#group_error').html(message);
+            $('#group_error').css('color', color != undefined ? color : '#cc0000');
+        }
+
+        const modal = ({email, data}) =>{
+
+            contentData = data;
+            
+            $.sModal({
+                header:'Prezado usuário do PWS',
+                animate: 'fadeDown',
+                width: 700,
+                content:  
+                        '<div style="margin-bottom: 15px; line-height: 20px; font-size:13px">' +
+                        '<div id="group_error" style="font-weight: bold;"></div>' +
+                        'Em virtude da <strong>LGPD</strong> <em>(lei geral de proteção de dados)</em>, disponibilizamos os documentos explicativos referente a captura, compartilhamento e tratamento dos dados utilizados pelo <strong>PWS</strong>. ' +
+                        'De maneira geral, o <strong>PWS</strong> acessa somente informações de identificação, informações de contratos necessárias para atendimento e prestação dos serviços.' +
+                        ' Não tratamos dados sensíveis ou meios de pagamento.' +
+                        ' Desta forma, solicitamos que confirmem, ou não, o entendimento/aceite dos documentos disponibilizados.' +
+                        ' Uma vez que estes documentos tiverem confirmação, do usuário, não iremos mais solicitar, exceto se houver alterações nos termos. Entretanto, enquanto os documentos não forem confirmados, o aviso irá aparecer na tela.' +
+                        ' É necessário fazer a confirmação individual, por documento.<br/><br/>' +
+                        '<em><strong>- Termos e condições uso.</strong></em><br/>' +
+                        '<em><strong>- Política de privacidade.</strong></em><br/>' +
+                        '<em><strong>- Termo de consentimento para tratamento de dados.</strong></em><br/><br/>' +
+                        '<span style="font-size:12px">Qualquer dúvida estamos à disposição. ' +
+                        'Muito obrigado.</span></div>'+
+                        '<form style="margin: 0px;" id="contentModalLgpd">' +
+                        '<div id="container_termos">' +
+                        '<div class="control-group" style="display:flex;margin:0px"><label for="politica_privacidade" style="margin:0px;padding-right:10px">Política de privacidade</label>'+ (!!data.politica_privacidade ? ' <label style="color:#5bb75b">(confirmado)</label>' : '<input type="checkbox" onClick="javascript:objValidation.countClick(true)" name="politica_privacidade" value="1" id="politica_privacidade" checked="checked">') +  '</div><div style="line-height:13px;margin-bottom: 10px;"><a target="_blank" href="/pws/app/webroot//files/lgpd/politica_de_privacidade.pdf">download</a></div>' +
+                        '<div class="control-group" style="display:flex;margin:0px"><label for="termoUso" style="margin:0px;padding-right:10px">Termos e condições gerais de uso</label>' + (!!data.termo_uso ? '<label style="color:#5bb75b">(confirmado)</label>' : '<input type="checkbox" onClick="javascript:objValidation.countClick(true)" name="termo_uso" value="1" id="termo_uso" checked="checked">') + '</div><div style="line-height: 13px;margin-bottom: 10px;"><a target="_blank" href="/pws/app/webroot//files/lgpd/termos_e_condicoes_gerais_de_uso.pdf">download</a></div>' +
+                        '<div class="control-group" style="display:flex;margin:0px"><label for="termoConsentimento" style="margin:0px;padding-right:10px">Termo de consentimento</label>' + (!!data.termo_consentimento ? '<label  style="color:#5bb75b">(confirmado)</label>' : '<input type="checkbox" onClick="javascript:objValidation.countClick(true)" name="termo_consentimento" value="1" id="termo_consentimento" checked="checked">') + '</div><div style="line-height: 13px;margin-bottom: 10px;"><a target="_blank" href="/pws/app/webroot//files/lgpd/termo_de _consentimento_para_tratamento_de_dados.pdf">download</a></div>' +
+                        '<div id="addInfo" style="display:none">'+
+                        '<div style="margin-top: 30px;margin-bottom: 15px;"><div>Informe seu email e o motivo por não aceitar os termos de uso.</div></div>'+
+                        '<div class="control-group" style="display:flex"><label for="termoConsentimento" style="margin:0px;padding-right:10px">E-mail:</label><input type="text" name="email" value="'+email+'" id="email"></div>' +
+                        '<div class="control-group" style="display:flex"><label for="termoConsentimento" style="margin:0px;padding-right:10px">Motivo:</label><input type="text" name="motivo" size="150" value="" id="motivo"></div>' +
+                        '</div>'+
+                        '</div>' +
+                        '<div class="control-group" style="display:flex;margin:0px"><input type="checkbox" onClick="javascript:objValidation.handleNotAccept()" name="negado" value="0" id="negado" style="margin:0px"><div style="line-height: 13px;margin-bottom: 0px;margin-left:5px"><label for="termoConsentimento" style="margin:0px;padding-right:10px;color:#cc0000">Não aceito os termos de uso</label></div></div>' +
+                        '</form>'
+                        ,
+                buttons: [{
+                    text: 'Salvar',
+                    addClass: 'btn-success',
+                    click: function (id, data) {
+                        // define o id da Modal
+                        idModal = id;
+
+                        // prepara os dados
+                        setItens(data);
+
+                        // valida e envia os dados
+                        handleConfirm();
+                    }
+                },
+                {
+                    text: 'Agora não',
+                    click: function (id, data) {
+                        $.sModal('close', id);
+                    }
+                }]
+            });
+        }
+
+        return {modal, countClick, handleNotAccept}
+    }
+
+    var objValidation = validationLgpd();
+
+    const dataLgpd = {"id":"885","user_id":"5164","politica_privacidade":"2023-01-30 14:22:23","termo_uso":"2023-01-30 14:22:23","termo_consentimento":"2023-01-30 14:22:23","email":"ti@tuicial.com.br","motivo":"","negado":"0","open":false};
+
+    if(dataLgpd.open){
+        objValidation.modal({email: 'ti@tuicial.com.br', data : dataLgpd});
+    }
+
+
+    function modalUpdateStatusChamado(Chamado_id) {
+        $.sModal({
+            header:'Atualizar chamado para Em Manutenção',
+            animate: 'fadeDown',
+            width: 450,
+            content: '<div id="group_error"></div><br> <form style="margin: 0px;"><div class="control-group"><label class="control-label" for="tipo_status_chamado" style="font-weight: bold;">Tipo do Status</label><div class="controls"><select id="tipo_status_chamado" name="tipo_status_chamado" style="width:100%;"></select></div></div></form>',
+            buttons: [{
+                text: ' Atualizar ',
+                addClass: 'btn-primary',
+                click: function (id, data) {
+                    var btnSubmit = $('#'+id).children('.modal-footer').children().first();
+                    var modal = $('#'+id).children('.modal-footer').children('a');
+                    modal.attr({disabled:'disabled'});
+                    btnSubmit.text('Carregando...');
+                    $.post('/pws/index.php/pws/Chamados/updateChamadoStatus/' + Chamado_id, {data:{Status:{tipo_status:$('#'+id).find('#tipo_status_chamado').val()}}}, function (o) {
+                        if (o.error == 0) {
+                            $.sModal('close', id);
+                            window.location = '/pws/index.php/auth_acl/AuthAcl';
+                        } else {
+                            modal.removeAttr('disabled');
+                            btnSubmit.text('Atualizar');
+                            var str_error = '<div class="alert alert-error">'+
+                                '<button data-dismiss="alert" class="close" type="button">×</button>'+
+                                '<strong>Erro! </strong> '+o.error_message+
+                                '</div>'
+                            $('#group_error').html(str_error);
+                        }
+                    }, 'json');
+                }
+            }, {
+                text: ' Cancel ',
+                click: function (id, data) {
+                    $.sModal('close', id);
+                }
+            }]
+        });
+    }
+
+    $('#btn_update_chamado_manutencao').live('click', function () {
+        $.getJSON("/pws/index.php/pws/chamados/listar_status_json", {
+            estadoId: 'M'
+        }, function (cidades) {
+            if (cidades != null)
+                popularListaDeCidades(cidades, $('#tipo_status_chamado').val());
+        });
+    });
+
+    function popularListaDeCidades(cidades, idCidade) {
+        var options = '<option value="">Selecione um Status</option>';
+        if (cidades != null) {
+            $.each(cidades, function (index, cidade) {
+                if ('0' === index)
+                    options += '<option selected="selected" value="' + index + '">' + cidade + '</option>';
+                else
+                    options += '<option value="' + index + '">' + cidade + '</option>';
+            });
+            $('#tipo_status_chamado').html(options);
+        }
+    }
+</script>        </div>
+    </div>
+
+    <br />
+    <br />
+    <br />
+    <div class="navbar navbar-fixed-bottom hidden-phone" id="barNotify" style="bottom:40px"></div>
+    <div class="navbar navbar-fixed-bottom hidden-phone" id="status">
+        <div class="btn-toolbar">
+            <div class="btn-group pull-right" style="margin-top: 3px;">
+                &copy; PWS Licensed to Softilux 2016 - Versão: 1.0.16b            </div>
+
+        </div>
+    </div>
+
+        <!-- /container -->
+</body>
+<script>
+    $(document).ready(function() {
+        // remove user search cookie
+        $('#mnu_admin_top').find('a').each(function() {
+            $(this).click(function() {
+                removeUserSearchCookie();
+            });
+        });
+        $('#tab_user_manager').find('a').each(function() {
+            $(this).click(function() {
+                removeUserSearchCookie();
+            });
+        });
+
+        if ($('#mnu_plugins').children('ul').find('li').length <= 1) {
+            $('#mnu_plugins').hide();
+        } else {
+            $('#mnu_plugins').show();
+        }
+
+    });
+
+    function removeUserSearchCookie() {
+        $.cookie.raw = true;
+        $.removeCookie('CakeCookie[srcPassArg]', {
+            path: '/'
+        });
+    }
+
+    function alteraEmp(id) {
+        $("body").loadMask("Aguarde...");
+        $.post('/pws/index.php/auth_acl/users/editEmp/' + id, {
+            id: id
+        }, function(o) {
+            document.location.reload();
+        });
+    }
+
+    function alteraCli(id) {
+        $("body").loadMask("Aguarde...");
+        $.post('/pws/index.php/auth_acl/users/editCli/' + id, {
+            id: id
+        }, function(o) {
+            document.location.reload();
+        });
+    }
+
+    // define a base url do sistema para o javascript
+    BASE_URL = "/pws/index.php/authacl/";
+
+    // instancia javascript referente a classe
+    new init().__construct('authacl');
+</script>
+
+</html>

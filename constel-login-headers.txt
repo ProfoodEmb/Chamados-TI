@@ -1,0 +1,16 @@
+HTTP/1.1 200 OK
+Date: Tue, 17 Mar 2026 13:39:00 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 26602
+Connection: keep-alive
+Cache-Control: private
+X-Frame-Options: SAMEORIGIN
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+X-Content-Type-Options: nosniff
+Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' *.cookielaw.org *.movidesk.com *.gstatic.com *.cloudflare.com *.mxpnl.com *.userguiding.com *.jquery.com connect.facebook.net *.facebook.net *.googleapis.com *.hotjar.io *.hotjar.com *.typekit.net *.unpkg.com unpkg.com *.cloudflareinsights.com *.googletagmanager.com google-analytics.com *.google-analytics.com *.trychameleon.com *.amazonaws.com *.amplitude.com *.reclameaqui.com.br *.fullstory.com *.fontawesome.com *.internal *.internal:57945 prime.altubots.com *.google.com *.google.com.br *.doubleclick.net *.googleusercontent.com *.popt.in cdn.jsdelivr.net blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' * data: blob:; style-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' * data: blob:; connect-src * blob: data:; img-src * http: https: file: blob: data: cid: filesystem:; media-src * blob: data:; font-src * data:; frame-src * data: blob:; manifest-src *; frame-ancestors 'self';
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), camera=(), usb=(), accelerometer=(), gyroscope=(), payment=(), fullscreen=(), bluetooth=()
+Set-Cookie: culture=pt-BR; expires=Fri, 31-Dec-9999 23:59:59 GMT; path=/; secure; SameSite=None
+Set-Cookie: __RequestVerificationToken=GGVBrUN7rsRa8oLaOL6Di-PVxuebvM5XNiH7mJwpI0TbF9O3kTiwdlFc0HmZ8surN49ApE1n8iaSQ2rdLZKI7G9g4PY1; path=/; secure; HttpOnly; SameSite=None
+Strict-Transport-Security: max-age=0;
+

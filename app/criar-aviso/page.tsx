@@ -393,8 +393,9 @@ export default function CriarAvisoPage() {
                   </div>
                 </div>
               ) : filteredNotices.length === 0 ? (
-                <div className="bg-card border border-border rounded-xl p-12 text-center">
-                  <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-border bg-card p-12 text-center">
+                  <div className="mx-auto flex max-w-md flex-col items-center">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
                     <Megaphone className="w-8 h-8 text-blue-600" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -420,6 +421,7 @@ export default function CriarAvisoPage() {
                       Criar Primeiro Aviso
                     </Button>
                   )}
+                  </div>
                 </div>
               ) : (
                 filteredNotices.map((notice) => {
