@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KanbanBoard } from "@/components/features/kanban/kanban-board";
-import { useSimpleRealtime } from "@/lib/use-simple-realtime";
 import { authClient } from "@/lib/auth/auth-client";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 import "./kanban.css";
 
 interface Ticket {
@@ -35,12 +36,7 @@ export default function KanbanPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useSimpleRealtime({
-    onUpdate: () => fetchTickets(),
-    enabled: true,
-    interval: 3000 // 3 segundos
-  });
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -63,6 +59,7 @@ export default function KanbanPage() {
       
       // Se for líder de sistemas, filtrar apenas tickets da equipe de sistemas
       const params = new URLSearchParams()
+      params.append("view", "summary")
       if (session?.user?.role === "lider_sistemas") {
         params.append("team", "sistemas")
       }
@@ -97,6 +94,18 @@ export default function KanbanPage() {
     }
   };
 
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+
+    try {
+      await fetchTickets();
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -108,10 +117,18 @@ export default function KanbanPage() {
   return (
     <div className="p-8 h-screen flex flex-col overflow-hidden bg-gray-50">
       <div className="mb-6 shrink-0">
-        <h1 className="text-3xl font-bold text-gray-900">Kanban</h1>
-        <p className="text-gray-500 mt-1 text-sm">
-          Visualização automática do fluxo de tickets
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Kanban</h1>
+            <p className="text-gray-500 mt-1 text-sm">
+              Fluxo de tickets com atualização manual
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="gap-2 bg-white">
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 min-h-0">

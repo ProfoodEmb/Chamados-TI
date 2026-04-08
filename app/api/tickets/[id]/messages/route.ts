@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate, ensureSocketIO } from "@/lib/api/socket-server"
 
 // POST - Criar mensagem
 export async function POST(
@@ -73,25 +72,6 @@ export async function POST(
       await prisma.ticket.update({
         where: { id: ticketId },
         data: { kanbanStatus: "in_progress" }
-      })
-      console.log(`🔄 Ticket ${ticket.number} movido para "Em Progresso" (primeira resposta do suporte)`)
-    }
-
-    // Garantir que Socket.IO esteja inicializado
-    ensureSocketIO()
-
-    // Notificar sobre nova mensagem E atualização do ticket
-    notifyTicketUpdate({
-      type: 'message_created',
-      ticketId,
-      message: message
-    })
-
-    // Se mudou o kanbanStatus, notificar também sobre atualização do ticket
-    if (messageRole === "support" && ticket.kanbanStatus === "inbox") {
-      notifyTicketUpdate({
-        type: 'ticket_updated',
-        ticketId
       })
     }
 

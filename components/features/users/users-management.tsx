@@ -59,7 +59,9 @@ export function UsersManagement({ currentUser }: UsersManagementProps) {
       if (statusFilter !== "todos") params.append("status", statusFilter)
       if (searchTerm) params.append("search", searchTerm)
 
-      const response = await fetch(`/api/users?${params.toString()}`)
+      const response = await fetch(`/api/users?${params.toString()}`, {
+        cache: "no-store",
+      })
       const data = await response.json()
 
       if (response.ok) {

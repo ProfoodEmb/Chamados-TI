@@ -31,7 +31,7 @@ export async function PATCH(
 
     const { id } = await params
     const body = await request.json()
-    const { status, name, username, role, setor, password } = body
+    const { status, name, username, role, setor, password, email, empresa } = body
 
     // Não permitir alterar a si mesmo (exceto senha)
     if (id === session.user.id && (status || role)) {
@@ -52,15 +52,21 @@ export async function PATCH(
 
     // Atualizar nome se fornecido
     if (name) {
-      updateData.name = name
+      updateData.name = name.trim()
     }
 
     // Atualizar username se fornecido
     if (username) {
+      const normalizedUsername = username.trim()
+
+      if (!normalizedUsername) {
+        return NextResponse.json({ error: "Nome de usuário inválido" }, { status: 400 })
+      }
+
       // Verificar se o username já existe (exceto para o próprio usuário)
       const existingUser = await prisma.user.findFirst({
         where: {
-          username,
+          username: normalizedUsername,
           NOT: { id }
         }
       })
@@ -69,7 +75,44 @@ export async function PATCH(
         return NextResponse.json({ error: "Nome de usuário já está em uso" }, { status: 400 })
       }
 
-      updateData.username = username
+      updateData.username = normalizedUsername
+
+      // O login do sistema usa email/senha. Quando o usuário altera o username,
+      // sincronizamos o email padrão para manter o acesso funcionando.
+      if (email === undefined) {
+        const generatedEmail = `${normalizedUsername.toLowerCase()}@empresa.com`
+
+        const existingEmail = await prisma.user.findFirst({
+          where: {
+            email: generatedEmail,
+            NOT: { id }
+          }
+        })
+
+        if (existingEmail) {
+          return NextResponse.json({ error: "O email gerado para este usuário já está em uso" }, { status: 400 })
+        }
+
+        updateData.email = generatedEmail
+      }
+    }
+
+    // Atualizar email se fornecido explicitamente
+    if (email) {
+      const normalizedEmail = email.trim().toLowerCase()
+
+      const existingEmail = await prisma.user.findFirst({
+        where: {
+          email: normalizedEmail,
+          NOT: { id }
+        }
+      })
+
+      if (existingEmail) {
+        return NextResponse.json({ error: "Email já está em uso" }, { status: 400 })
+      }
+
+      updateData.email = normalizedEmail
     }
 
     // Atualizar role se fornecido
@@ -93,6 +136,17 @@ export async function PATCH(
     // Atualizar setor se fornecido
     if (setor !== undefined) {
       updateData.setor = setor
+    }
+
+    // Atualizar empresa se fornecida
+    if (empresa !== undefined) {
+      const allowedEmpresas = ["profood", "tuicial", ""]
+
+      if (!allowedEmpresas.includes(empresa)) {
+        return NextResponse.json({ error: "Empresa inválida" }, { status: 400 })
+      }
+
+      updateData.empresa = empresa || null
     }
 
     // Atualizar senha se fornecida
@@ -141,6 +195,7 @@ export async function PATCH(
       select: {
         id: true,
         name: true,
+        email: true,
         username: true,
         role: true,
         team: true,

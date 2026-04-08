@@ -41,6 +41,27 @@ interface EditUserDialogProps {
 }
 
 export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: EditUserDialogProps) {
+  const setorOptions = [
+    { value: "dpi", label: "DPI" },
+    { value: "pd", label: "P&D" },
+    { value: "seguranca", label: "Seguranca do Trabalho" },
+    { value: "pcp", label: "PCP" },
+    { value: "ctp", label: "CTP" },
+    { value: "almoxarifado", label: "Almoxarifado" },
+    { value: "faturamento", label: "Faturamento" },
+    { value: "logistica", label: "Logistica" },
+    { value: "vendas", label: "Vendas" },
+    { value: "financeiro", label: "Financeiro" },
+    { value: "rh", label: "Recursos Humanos" },
+    { value: "marketing", label: "Marketing" },
+    { value: "operacional", label: "Operacional" },
+    { value: "producao", label: "Producao" },
+    { value: "qualidade", label: "Qualidade" },
+    { value: "compras", label: "Compras" },
+    { value: "diretoria", label: "Diretoria" },
+    { value: "ti", label: "T.I." },
+  ]
+
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -48,6 +69,7 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
     role: "",
     setor: "",
     setorCustom: "",
+    empresa: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -55,13 +77,17 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
   // Preencher formulário quando o usuário mudar
   useEffect(() => {
     if (user) {
+      const rawSetor = user.setor?.trim() || ""
+      const matchedSetor = setorOptions.find((option) => option.value === rawSetor.toLowerCase())
+
       setFormData({
         name: user.name,
         username: user.username,
         password: "",
         role: user.role,
-        setor: user.setor || "",
-        setorCustom: "",
+        setor: matchedSetor ? matchedSetor.value : rawSetor ? "custom" : "",
+        setorCustom: matchedSetor ? "" : rawSetor,
+        empresa: user.empresa || "",
       })
     }
   }, [user])
@@ -83,18 +109,17 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
 
     try {
       const updateData: any = {
-        name: formData.name,
-        username: formData.username,
+        name: formData.name.trim(),
+        username: formData.username.trim(),
         role: formData.role,
-        setor: formData.setor === "outro" ? formData.setorCustom : formData.setor,
+        setor: formData.setor === "custom" ? formData.setorCustom.trim() : formData.setor,
+        empresa: formData.empresa,
       }
 
       // Só incluir senha se foi preenchida
       if (formData.password && formData.password.trim()) {
-        updateData.password = formData.password
+        updateData.password = formData.password.trim()
       }
-
-      console.log('📤 Enviando atualização:', { ...updateData, password: updateData.password ? '***' : undefined })
 
       const response = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
@@ -105,8 +130,6 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
       })
 
       const result = await response.json()
-
-      console.log('📥 Resposta:', result)
 
       if (response.ok) {
         if (typeof window !== 'undefined' && (window as any).showSimpleToast) {
@@ -135,14 +158,15 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
 
   const handleClose = () => {
     onOpenChange(false)
-    setFormData({
-      name: "",
-      username: "",
-      password: "",
-      role: "",
-      setor: "",
-      setorCustom: "",
-    })
+      setFormData({
+        name: "",
+        username: "",
+        password: "",
+        role: "",
+        setor: "",
+        setorCustom: "",
+        empresa: "",
+      })
   }
 
   if (!user) return null
@@ -189,6 +213,9 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               placeholder="Ex: joao.silva"
               required
             />
+            <p className="text-xs text-muted-foreground">
+              O email de login padrao e sincronizado automaticamente com este usuario.
+            </p>
           </div>
 
           {/* Senha (opcional) */}
@@ -256,22 +283,18 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
                 <SelectValue placeholder="Selecione o setor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Financeiro">Financeiro</SelectItem>
-                <SelectItem value="RH">Recursos Humanos</SelectItem>
-                <SelectItem value="Vendas">Vendas</SelectItem>
-                <SelectItem value="Marketing">Marketing</SelectItem>
-                <SelectItem value="Operações">Operações</SelectItem>
-                <SelectItem value="TI">Tecnologia da Informação</SelectItem>
-                <SelectItem value="Administrativo">Administrativo</SelectItem>
-                <SelectItem value="Comercial">Comercial</SelectItem>
-                <SelectItem value="Logística">Logística</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
+                {setorOptions.map((setor) => (
+                  <SelectItem key={setor.value} value={setor.value}>
+                    {setor.label}
+                  </SelectItem>
+                ))}
+                <SelectItem value="custom">Outro</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Setor Customizado */}
-          {formData.setor === "outro" && (
+          {formData.setor === "custom" && (
             <div className="space-y-2">
               <Label htmlFor="edit-setor-custom">Especifique o Setor</Label>
               <Input
@@ -283,6 +306,23 @@ export function EditUserDialog({ open, onOpenChange, user, onUserUpdated }: Edit
               />
             </div>
           )}
+
+          {/* Empresa */}
+          <div className="space-y-2">
+            <Label htmlFor="edit-empresa">
+              <Building className="w-4 h-4 inline mr-2" />
+              Empresa
+            </Label>
+            <Select value={formData.empresa} onValueChange={(value) => setFormData({ ...formData, empresa: value })}>
+              <SelectTrigger id="edit-empresa">
+                <SelectValue placeholder="Selecione a empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="profood">Profood</SelectItem>
+                <SelectItem value="tuicial">Tuicial</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleClose}>

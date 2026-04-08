@@ -2,9 +2,65 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate as notifySSE } from "@/app/api/tickets/events/route"
 import { notifyTicketCreated } from "@/lib/api/webhook-notifications"
 import { notifyTicketCreatedWhatsApp } from "@/lib/api/whatsapp-notifications"
+
+const ticketRequesterSelect = {
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+  setor: true,
+  empresa: true,
+} as const
+
+const ticketAssigneeSelect = {
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+} as const
+
+const ticketSummarySelect = {
+  id: true,
+  number: true,
+  subject: true,
+  category: true,
+  urgency: true,
+  status: true,
+  kanbanStatus: true,
+  team: true,
+  service: true,
+  anydesk: true,
+  customRequesterName: true,
+  createdAt: true,
+  updatedAt: true,
+  requesterId: true,
+  assignedToId: true,
+  requester: {
+    select: ticketRequesterSelect,
+  },
+  assignedTo: {
+    select: ticketAssigneeSelect,
+  },
+} as const
+
+const ticketListInclude = {
+  requester: {
+    select: ticketRequesterSelect,
+  },
+  assignedTo: {
+    select: ticketAssigneeSelect,
+  },
+  messages: {
+    orderBy: {
+      createdAt: "desc" as const,
+    },
+    take: 1,
+  },
+} as const
+
+const CUSTOM_REQUESTER_ID = "__custom_requester__"
 
 // GET - Listar chamados
 export async function GET(request: NextRequest) {
@@ -25,6 +81,7 @@ export async function GET(request: NextRequest) {
     // Pegar filtro de equipe da query string (para casos específicos)
     const { searchParams } = new URL(request.url)
     const teamFilter = searchParams.get('team')
+    const useSummaryView = searchParams.get("view") !== "full"
 
     // Buscar chamados baseado no role
     let tickets
@@ -32,116 +89,68 @@ export async function GET(request: NextRequest) {
     if (userRole === "admin") {
       // Admin vê todos (ou filtrado por query param)
       const whereClause = teamFilter ? { team: teamFilter } : {}
-      tickets = await prisma.ticket.findMany({
-        where: whereClause,
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              setor: true,
-              empresa: true,
-            }
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            }
-          },
-          messages: {
+      tickets = useSummaryView
+        ? await prisma.ticket.findMany({
+            where: whereClause,
+            select: ticketSummarySelect,
             orderBy: {
               createdAt: 'desc'
-            },
-            take: 1
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      })
+            }
+          })
+        : await prisma.ticket.findMany({
+            where: whereClause,
+            include: ticketListInclude,
+            orderBy: {
+              createdAt: 'desc'
+            }
+          })
     } else if (userRole.includes("lider") || userRole.includes("func")) {
       // Equipe T.I. vê chamados da sua equipe (ou filtrado por query param se for admin)
       const teamToFilter = teamFilter || userTeam
-      tickets = await prisma.ticket.findMany({
-        where: teamToFilter ? {
-          OR: [
-            { team: teamToFilter },
-            { assignedToId: userId }
-          ]
-        } : {
-          assignedToId: userId
-        },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              setor: true,
-              empresa: true,
-            }
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            }
-          },
-          messages: {
+      const whereClause = teamToFilter ? {
+        OR: [
+          { team: teamToFilter },
+          { assignedToId: userId }
+        ]
+      } : {
+        assignedToId: userId
+      }
+      tickets = useSummaryView
+        ? await prisma.ticket.findMany({
+            where: whereClause,
+            select: ticketSummarySelect,
             orderBy: {
               createdAt: 'desc'
-            },
-            take: 1
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      })
+            }
+          })
+        : await prisma.ticket.findMany({
+            where: whereClause,
+            include: ticketListInclude,
+            orderBy: {
+              createdAt: 'desc'
+            }
+          })
     } else {
       // Usuário comum vê apenas seus chamados
-      tickets = await prisma.ticket.findMany({
-        where: {
-          requesterId: userId
-        },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              setor: true,
-              empresa: true,
-            }
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            }
-          },
-          messages: {
+      tickets = useSummaryView
+        ? await prisma.ticket.findMany({
+            where: {
+              requesterId: userId
+            },
+            select: ticketSummarySelect,
             orderBy: {
               createdAt: 'desc'
+            }
+          })
+        : await prisma.ticket.findMany({
+            where: {
+              requesterId: userId
             },
-            take: 1
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      })
+            include: ticketListInclude,
+            orderBy: {
+              createdAt: 'desc'
+            }
+          })
     }
 
     return NextResponse.json(tickets)
@@ -166,10 +175,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { subject, description, category, urgency, service, anydesk, patrimonio, team, requesterId, customRequesterName, solution } = body
 
-    console.log('🔍 [API] POST /api/tickets - Body recebido:', JSON.stringify(body, null, 2))
-    console.log('🔍 [API] requesterId:', requesterId)
-    console.log('🔍 [API] customRequesterName:', customRequesterName)
-
     // Validação básica
     if (!subject || !description || !urgency) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 })
@@ -182,25 +187,29 @@ export async function POST(request: NextRequest) {
     const userRole = session.user.role || "user"
     let isCustomRequester = false
     let finalCustomRequesterName = null
+    const normalizedCustomRequesterName = customRequesterName?.trim() || null
     
     if (requesterId && (userRole.includes("lider") || userRole === "admin")) {
-      // Verificar se o usuário existe
-      const requesterExists = await prisma.user.findUnique({
-        where: { id: requesterId }
-      })
-      
-      if (requesterExists) {
-        finalRequesterId = requesterId
-        // Verificar se é "Usuário Específico" e tem nome customizado
-        if (requesterExists.name === "Usuário Específico" && customRequesterName) {
-          isCustomRequester = true
-          finalCustomRequesterName = customRequesterName
-          console.log(`📝 [Líder] Criando chamado para usuário específico: ${customRequesterName}`)
-        } else {
-          console.log(`📝 [Líder] Criando chamado em nome de: ${requesterExists.name}`)
+      if (requesterId === CUSTOM_REQUESTER_ID) {
+        if (!normalizedCustomRequesterName) {
+          return NextResponse.json(
+            { error: "Nome do solicitante é obrigatório" },
+            { status: 400 }
+          )
         }
-      } else {
-        return NextResponse.json({ error: "Usuário solicitante não encontrado" }, { status: 400 })
+
+        isCustomRequester = true
+        finalCustomRequesterName = normalizedCustomRequesterName
+      } else if (requesterId !== "self") {
+        const requesterExists = await prisma.user.findUnique({
+          where: { id: requesterId }
+        })
+        
+        if (requesterExists) {
+          finalRequesterId = requesterId
+        } else {
+          return NextResponse.json({ error: "Usuário solicitante não encontrado" }, { status: 400 })
+        }
       }
     }
 
@@ -233,7 +242,6 @@ export async function POST(request: NextRequest) {
       
       if (jackson) {
         assignedToId = jackson.id
-        console.log('🤖 [Auto-atribuição] Ticket de Automação → Jackson')
       }
     }
     // Regra 2: eCalc → Rafael
@@ -245,7 +253,6 @@ export async function POST(request: NextRequest) {
       
       if (rafael) {
         assignedToId = rafael.id
-        console.log('🤖 [Auto-atribuição] Ticket de eCalc → Rafael')
       }
     }
     // Regra 3: Questor → Rafael
@@ -257,7 +264,6 @@ export async function POST(request: NextRequest) {
       
       if (rafael) {
         assignedToId = rafael.id
-        console.log('🤖 [Auto-atribuição] Ticket de Questor → Rafael')
       }
     }
     // Demais tickets de Sistemas ficam sem atribuição automática
@@ -312,17 +318,6 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    console.log('📢 [API] Enviando notificação SSE para ticket:', ticket.number)
-    
-    // Notificar via SSE sobre novo ticket
-    notifySSE({
-      type: 'ticket_created',
-      ticket: ticket,
-      timestamp: new Date().toISOString()
-    })
-
-    console.log('✅ [API] Notificação SSE enviada para novo ticket')
-
     // Enviar notificações de forma assíncrona (não bloquear a resposta)
     // Isso garante que o ticket seja criado rapidamente
     Promise.allSettled([
@@ -333,8 +328,6 @@ export async function POST(request: NextRequest) {
         const type = index === 0 ? 'Webhook' : 'WhatsApp'
         if (result.status === 'rejected') {
           console.error(`⚠️  Erro ao enviar ${type}:`, result.reason)
-        } else {
-          console.log(`✅ ${type} enviado com sucesso`)
         }
       })
     }).catch(error => {

@@ -3,10 +3,45 @@
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate, ensureSocketIO } from "@/lib/api/socket-server"
 import { notifyTicketCreated } from "@/lib/api/webhook-notifications"
 import { notifyTicketCreatedWhatsApp } from "@/lib/api/whatsapp-notifications"
 import { revalidatePath } from "next/cache"
+
+const ticketSummarySelect = {
+  id: true,
+  number: true,
+  subject: true,
+  category: true,
+  urgency: true,
+  status: true,
+  kanbanStatus: true,
+  team: true,
+  service: true,
+  anydesk: true,
+  customRequesterName: true,
+  createdAt: true,
+  updatedAt: true,
+  requesterId: true,
+  assignedToId: true,
+  requester: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      setor: true,
+      empresa: true,
+    },
+  },
+  assignedTo: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+    },
+  },
+} as const
 
 // Tipos
 interface CreateTicketInput {
@@ -48,32 +83,7 @@ export async function getTickets(teamFilter?: string) {
       const whereClause = teamFilter ? { team: teamFilter } : {}
       tickets = await prisma.ticket.findMany({
         where: whereClause,
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              setor: true,
-              empresa: true,
-            }
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            }
-          },
-          messages: {
-            orderBy: {
-              createdAt: 'desc'
-            },
-            take: 1
-          }
-        },
+        select: ticketSummarySelect,
         orderBy: {
           createdAt: 'desc'
         }
@@ -89,32 +99,7 @@ export async function getTickets(teamFilter?: string) {
         } : {
           assignedToId: userId
         },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              setor: true,
-              empresa: true,
-            }
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            }
-          },
-          messages: {
-            orderBy: {
-              createdAt: 'desc'
-            },
-            take: 1
-          }
-        },
+        select: ticketSummarySelect,
         orderBy: {
           createdAt: 'desc'
         }
@@ -124,32 +109,7 @@ export async function getTickets(teamFilter?: string) {
         where: {
           requesterId: userId
         },
-        include: {
-          requester: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-              setor: true,
-              empresa: true,
-            }
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            }
-          },
-          messages: {
-            orderBy: {
-              createdAt: 'desc'
-            },
-            take: 1
-          }
-        },
+        select: ticketSummarySelect,
         orderBy: {
           createdAt: 'desc'
         }
@@ -210,7 +170,6 @@ export async function createTicket(input: CreateTicketInput) {
       
       if (jackson) {
         assignedToId = jackson.id
-        console.log('🤖 [Auto-atribuição] Ticket de Automação → Jackson')
       }
     }
     // Regra 2: eCalc → Rafael
@@ -222,7 +181,6 @@ export async function createTicket(input: CreateTicketInput) {
       
       if (rafael) {
         assignedToId = rafael.id
-        console.log('🤖 [Auto-atribuição] Ticket de eCalc → Rafael')
       }
     }
     // Regra 3: Questor → Rafael
@@ -234,7 +192,6 @@ export async function createTicket(input: CreateTicketInput) {
       
       if (rafael) {
         assignedToId = rafael.id
-        console.log('🤖 [Auto-atribuição] Ticket de Questor → Rafael')
       }
     }
     // Demais tickets de Sistemas ficam sem atribuição automática
@@ -287,17 +244,6 @@ export async function createTicket(input: CreateTicketInput) {
       }
     })
 
-    // Garantir que Socket.IO esteja inicializado
-    ensureSocketIO()
-
-    // Notificar via Socket.IO sobre novo ticket
-    const notified = notifyTicketUpdate({
-      type: 'ticket_created',
-      ticket: ticket
-    })
-
-    console.log('📢 Notificação Socket.IO enviada:', notified ? 'Sucesso' : 'Falhou')
-
     // Enviar notificações de forma assíncrona (não bloquear a resposta)
     Promise.allSettled([
       notifyTicketCreated(ticket as any),
@@ -307,8 +253,6 @@ export async function createTicket(input: CreateTicketInput) {
         const type = index === 0 ? 'Webhook' : 'WhatsApp'
         if (result.status === 'rejected') {
           console.error(`⚠️  Erro ao enviar ${type}:`, result.reason)
-        } else {
-          console.log(`✅ ${type} enviado com sucesso`)
         }
       })
     }).catch(error => {
@@ -421,13 +365,6 @@ export async function updateTicket(input: UpdateTicketInput) {
           }
         }
       }
-    })
-
-    // Notificar via Socket.IO
-    ensureSocketIO()
-    notifyTicketUpdate({
-      type: 'ticket_updated',
-      ticket: ticket
     })
 
     // Revalidar cache

@@ -44,6 +44,13 @@ const problemasComuns: Record<string, string[]> = {
     "Lentidão no sistema",
     "Outro problema",
   ],
+  heidelberg: [
+    "Sistema não abre",
+    "Erro ao fazer login",
+    "Problema na integração",
+    "Lentidão no sistema",
+    "Outro problema",
+  ],
   idsecure: [
     "Problema com acesso",
     "Erro de autenticação",
@@ -70,6 +77,13 @@ const problemasComuns: Record<string, string[]> = {
     "Sistema não abre",
     "Erro ao emitir nota",
     "Problema com estoque",
+    "Relatório não gera",
+    "Outro problema",
+  ],
+  rhid: [
+    "Erro ao fazer login",
+    "Problema com acesso",
+    "Cadastro não atualiza",
     "Relatório não gera",
     "Outro problema",
   ],
@@ -114,11 +128,13 @@ const problemasComuns: Record<string, string[]> = {
 
 const sistemasLogos: Record<string, string> = {
   ecalc: "/sistemas/ecalc.png",
+  heidelberg: "/sistemas/Heidelberg1.png",
   idsecure: "/sistemas/idsecure.jpg",
   mercos: "/sistemas/mercos.png",
   ploomes: "/sistemas/ploomes.png",
-  powerbi: "/sistemas/PowerBI.png",
+  powerbi: "/sistemas/powerbi.png",
   questor: "/sistemas/questor.png",
+  rhid: "/sistemas/rhid.png",
   sankhya: "/sistemas/sankhya.png",
   estoque: "/sistemas/estoque.png",
   // Automações
@@ -129,11 +145,13 @@ const sistemasLogos: Record<string, string> = {
 
 const sistemasCores: Record<string, { from: string; to: string; button: string }> = {
   ecalc: { from: "from-orange-600", to: "to-orange-500", button: "bg-orange-600 hover:bg-orange-700" },
+  heidelberg: { from: "from-indigo-600", to: "to-blue-500", button: "bg-indigo-600 hover:bg-indigo-700" },
   idsecure: { from: "from-red-600", to: "to-red-500", button: "bg-red-600 hover:bg-red-700" },
   mercos: { from: "from-purple-600", to: "to-green-500", button: "bg-purple-600 hover:bg-purple-700" },
   ploomes: { from: "from-purple-600", to: "to-purple-500", button: "bg-purple-600 hover:bg-purple-700" },
   powerbi: { from: "from-yellow-600", to: "to-yellow-500", button: "bg-yellow-600 hover:bg-yellow-700" },
   questor: { from: "from-orange-600", to: "to-orange-500", button: "bg-orange-600 hover:bg-orange-700" },
+  rhid: { from: "from-sky-600", to: "to-cyan-500", button: "bg-sky-600 hover:bg-sky-700" },
   sankhya: { from: "from-green-600", to: "to-green-500", button: "bg-green-600 hover:bg-green-700" },
   estoque: { from: "from-amber-700", to: "to-amber-600", button: "bg-amber-700 hover:bg-amber-800" },
   // Automações

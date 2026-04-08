@@ -13,7 +13,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Plus,
-  ArrowRight
+  ArrowRight,
+  RefreshCw
 } from "lucide-react"
 
 interface Ticket {
@@ -64,6 +65,7 @@ export default function Home() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [personalStats, setPersonalStats] = useState<PersonalStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -112,11 +114,10 @@ export default function Home() {
 
   const fetchTickets = async () => {
     try {
-      const ticketsResponse = await fetch("/api/tickets")
+      const ticketsResponse = await fetch("/api/tickets?view=summary")
       if (ticketsResponse.ok) {
         const ticketsData = await ticketsResponse.json()
         setTickets(ticketsData)
-        console.log('✅ [HOME] Tickets atualizados:', ticketsData.length)
       }
     } catch (error) {
       console.error("Erro ao buscar tickets:", error)
@@ -129,42 +130,38 @@ export default function Home() {
       if (response.ok) {
         const stats = await response.json()
         setPersonalStats(stats)
-        console.log('✅ [HOME] Estatísticas pessoais:', stats)
       }
     } catch (error) {
       console.error("Erro ao buscar estatísticas pessoais:", error)
     }
   }
 
-  // Polling a cada 60 segundos para atualizações
-  useEffect(() => {
-    if (!user) return
-    
-    const interval = setInterval(() => {
-      fetchTickets()
-      
+  const handleRefresh = async () => {
+    if (!user || isRefreshing) return
+
+    setIsRefreshing(true)
+
+    try {
+      await fetchTickets()
+
       const isTIUser = user.role === "admin" || 
                       user.role === "lider_infra" || 
                       user.role === "func_infra" || 
                       user.role === "lider_sistemas" || 
                       user.role === "func_sistemas"
-      
-      if (isTIUser) {
-        fetchPersonalStats(user.id)
-      }
-    }, 60000) // 60 segundos
 
-    return () => {
-      clearInterval(interval)
+      if (isTIUser) {
+        await fetchPersonalStats(user.id)
+      }
+    } finally {
+      setIsRefreshing(false)
     }
-  }, [user])
+  }
 
   // Filtrar chamados do usuário (criados ou atribuídos) - apenas os 3 mais recentes
   const myRecentTickets = user ? tickets.filter(ticket => 
     ticket.requesterId === user.id || ticket.assignedToId === user.id
   ).slice(0, 3) : []
-  
-  const recentTickets = tickets.slice(0, 4)
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -191,8 +188,11 @@ export default function Home() {
                    user?.role === "func_infra" || 
                    user?.role === "lider_sistemas" || 
                    user?.role === "func_sistemas"
-  
-  const isFuncOrLiderOrAdmin = user?.role?.includes("func") || user?.role?.includes("lider") || user?.role === "admin"
+
+  const recentSectionTitle = isTIUser ? "Chamados Recentes" : "Meus Últimos Chamados"
+  const emptyRecentTicketsMessage = isTIUser
+    ? "Você não tem chamados criados ou atribuídos"
+    : "Você ainda não abriu nenhum chamado"
 
   return (
     <div className="min-h-screen max-h-screen overflow-y-scroll bg-gradient-to-br from-gray-50 to-gray-100 p-4 scrollbar-visible">
@@ -204,6 +204,16 @@ export default function Home() {
               Olá, {user?.name?.split(" ")[0] || "Usuário"}! 👋
             </h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isLoading}
+            className="gap-2 bg-white"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
         </div>
 
         {/* Personal Stats for TI Users */}
@@ -270,72 +280,70 @@ export default function Home() {
           </div>
 
           {/* Recent Tickets Section */}
-          {isFuncOrLiderOrAdmin && (
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold text-gray-900">Chamados Recentes</h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => router.push('/tickets')}
-                  className="text-sm text-blue-600 hover:text-blue-700"
-                >
-                  Ver todos
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </Button>
-              </div>
-              
-              {myRecentTickets.length > 0 ? (
-                <div className="space-y-2">
-                  {myRecentTickets.map((ticket) => {
-                    const statusInfo = getStatusBadge(ticket.status)
-                    const isMyTicket = ticket.requesterId === user?.id
-                    return (
-                      <Card 
-                        key={ticket.id}
-                        className="p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
-                        onClick={() => router.push(`/tickets/${ticket.id}`)}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <span className="text-xs font-mono text-gray-500 font-semibold">#{ticket.number}</span>
-                              {isMyTicket && (
-                                <Badge className="text-[10px] px-2 py-0.5 bg-purple-100 text-purple-800 border-purple-200">
-                                  Meu Chamado
-                                </Badge>
-                              )}
-                              <Badge className={`text-[10px] px-2 py-0.5 ${statusInfo.className}`}>
-                                {statusInfo.label}
-                              </Badge>
-                              <Badge className={`text-[10px] px-2 py-0.5 ${urgencyColors[ticket.urgency as keyof typeof urgencyColors]}`}>
-                                {urgencyLabels[ticket.urgency as keyof typeof urgencyLabels]}
-                              </Badge>
-                            </div>
-                            <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
-                              {ticket.subject}
-                            </h3>
-                            <p className="text-xs text-gray-500">
-                              Criado em {formatDate(ticket.createdAt)}
-                            </p>
-                          </div>
-                          <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
-                        </div>
-                      </Card>
-                    )
-                  })}
-                </div>
-              ) : (
-                <Card className="p-8 text-center bg-white">
-                  <div className="flex flex-col items-center justify-center text-gray-400">
-                    <TicketIcon className="w-12 h-12 mb-3 opacity-50" />
-                    <p className="text-sm font-medium">Nenhum chamado recente</p>
-                    <p className="text-xs mt-1">Você não tem chamados criados ou atribuídos</p>
-                  </div>
-                </Card>
-              )}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-900">{recentSectionTitle}</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push('/tickets')}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                Ver todos
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
             </div>
-          )}
+            
+            {myRecentTickets.length > 0 ? (
+              <div className="space-y-2">
+                {myRecentTickets.map((ticket) => {
+                  const statusInfo = getStatusBadge(ticket.status)
+                  const isMyTicket = ticket.requesterId === user?.id
+                  return (
+                    <Card 
+                      key={ticket.id}
+                      className="p-4 hover:shadow-md transition-shadow cursor-pointer bg-white"
+                      onClick={() => router.push(`/tickets/${ticket.id}`)}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span className="text-xs font-mono text-gray-500 font-semibold">#{ticket.number}</span>
+                            {isMyTicket && (
+                              <Badge className="text-[10px] px-2 py-0.5 bg-purple-100 text-purple-800 border-purple-200">
+                                Meu Chamado
+                              </Badge>
+                            )}
+                            <Badge className={`text-[10px] px-2 py-0.5 ${statusInfo.className}`}>
+                              {statusInfo.label}
+                            </Badge>
+                            <Badge className={`text-[10px] px-2 py-0.5 ${urgencyColors[ticket.urgency as keyof typeof urgencyColors]}`}>
+                              {urgencyLabels[ticket.urgency as keyof typeof urgencyLabels]}
+                            </Badge>
+                          </div>
+                          <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
+                            {ticket.subject}
+                          </h3>
+                          <p className="text-xs text-gray-500">
+                            Criado em {formatDate(ticket.createdAt)}
+                          </p>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 flex-shrink-0 mt-1" />
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            ) : (
+              <Card className="p-8 text-center bg-white">
+                <div className="flex flex-col items-center justify-center text-gray-400">
+                  <TicketIcon className="w-12 h-12 mb-3 opacity-50" />
+                  <p className="text-sm font-medium">Nenhum chamado recente</p>
+                  <p className="text-xs mt-1">{emptyRecentTicketsMessage}</p>
+                </div>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>

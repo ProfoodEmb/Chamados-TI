@@ -7,10 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Download, Clock, CheckCircle2, AlertCircle, Wifi, WifiOff } from "lucide-react"
-import { useSimplePolling } from "@/lib/use-simple-polling"
+import { Search, Download, Clock, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react"
 import { AssignTicketDialog } from "@/components/features/tickets/assign-ticket-dialog"
-import { NoticeBoard } from "@/components/features/notices/notice-board"
 
 interface User {
   id: string
@@ -55,6 +53,7 @@ export default function TIPage() {
   const [user, setUser] = useState<User | null>(null)
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
   const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   // Verificar autorização e buscar tickets
   useEffect(() => {
     const init = async () => {
@@ -79,7 +78,7 @@ export default function TIPage() {
           setIsAuthorized(true)
           
           // Buscar tickets
-          await fetchTickets()
+          await fetchTickets(session.user)
         }
       } catch (error) {
         console.error("Erro ao inicializar:", error)
@@ -93,11 +92,12 @@ export default function TIPage() {
   }, [])
 
   // Função para buscar tickets
-  const fetchTickets = async () => {
+  const fetchTickets = async (currentUser: User | null = user) => {
     try {
       // Se for líder de sistemas, filtrar apenas tickets da equipe de sistemas
       const params = new URLSearchParams()
-      if (user?.role === "lider_sistemas") {
+      params.append("view", "summary")
+      if (currentUser?.role === "lider_sistemas") {
         params.append("team", "sistemas")
       }
       
@@ -121,33 +121,20 @@ export default function TIPage() {
 
   // Função para recarregar tickets após atribuição
   const handleTicketAssigned = () => {
-    // O polling vai atualizar automaticamente
-    console.log("Ticket atribuído com sucesso!")
+    fetchTickets()
   }
 
-  // Sistema de tempo real com polling simples
-  const { isActive, lastUpdate, forceUpdate, interval } = useSimplePolling({
-    onUpdate: (data) => {
-      console.log('Atualização recebida via polling:', data)
-      fetchTickets()
-    },
-    enabled: isAuthorized,
-    interval: 8000 // 8 segundos
-  })
+  const handleRefresh = async () => {
+    if (isRefreshing) return
 
-  // Escutar evento de criação de chamado (fallback)
-  useEffect(() => {
-    const handleTicketCreated = () => {
-      console.log("Evento ticketCreated recebido - atualizando tickets...")
-      fetchTickets()
+    setIsRefreshing(true)
+
+    try {
+      await fetchTickets()
+    } finally {
+      setIsRefreshing(false)
     }
-
-    window.addEventListener('ticketCreated', handleTicketCreated)
-
-    return () => {
-      window.removeEventListener('ticketCreated', handleTicketCreated)
-    }
-  }, [])
+  }
 
   const statusColors = {
     "Aberto": "bg-gray-500",           // Caixa de Entrada - Cinza
@@ -236,39 +223,17 @@ export default function TIPage() {
                   <p className="text-xs text-muted-foreground">Gerencie todos os chamados do sistema</p>
                 </div>
                 
-                {/* Indicador de polling */}
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-50 border border-green-200">
-                    {isActive ? (
-                      <>
-                        <Wifi className="w-3 h-3 text-green-600" />
-                        <span className="text-xs text-green-600">
-                          Polling ({interval}s)
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="w-3 h-3 text-red-600" />
-                        <span className="text-xs text-red-600">Desconectado</span>
-                      </>
-                    )}
-                    <span className="text-xs text-green-500">({lastUpdate})</span>
-                  </div>
-                  
                   <button 
-                    onClick={forceUpdate}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
                     className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors"
                   >
-                    <Clock className="w-3 h-3 text-blue-600" />
+                    <RefreshCw className={`w-3 h-3 text-blue-600 ${isRefreshing ? "animate-spin" : ""}`} />
                     <span className="text-xs text-blue-600">Atualizar</span>
                   </button>
                 </div>
               </div>
-            </div>
-
-            {/* Bloco de Avisos */}
-            <div className="mb-3">
-              <NoticeBoard />
             </div>
 
             {/* Cards de Estatísticas */}

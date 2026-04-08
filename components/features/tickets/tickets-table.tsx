@@ -3,10 +3,11 @@
 import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search } from "lucide-react"
+import { RefreshCw, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { type FilterType } from "@/lib/mock-tickets"
 
 interface Ticket {
@@ -53,6 +54,7 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
 
   const fetchTickets = async () => {
     try {
-      const response = await fetch("/api/tickets")
+      const response = await fetch("/api/tickets?view=summary")
       if (response.ok) {
         const data = await response.json()
         setTickets(data)
@@ -73,33 +75,17 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
     }
   }
 
-  // Escutar evento de criação/atualização de chamado e polling a cada 8 segundos
-  useEffect(() => {
-    const handleTicketCreated = () => {
-      console.log("Evento ticketCreated recebido na tabela - atualizando tickets...")
-      fetchTickets()
-    }
+  const handleRefresh = async () => {
+    if (isRefreshing) return
 
-    const handleTicketUpdated = () => {
-      console.log("Evento ticketUpdated recebido na tabela - atualizando tickets...")
-      fetchTickets()
-    }
+    setIsRefreshing(true)
 
-    window.addEventListener('ticketCreated', handleTicketCreated)
-    window.addEventListener('ticketUpdated', handleTicketUpdated)
-    
-    // Polling a cada 8 segundos para garantir atualização em tempo real
-    const interval = setInterval(() => {
-      console.log("🔄 Polling: Atualizando tickets automaticamente...")
-      fetchTickets()
-    }, 8000)
-
-    return () => {
-      window.removeEventListener('ticketCreated', handleTicketCreated)
-      window.removeEventListener('ticketUpdated', handleTicketUpdated)
-      clearInterval(interval)
+    try {
+      await fetchTickets()
+    } finally {
+      setIsRefreshing(false)
     }
-  }, [])
+  }
 
   const filteredTickets = useMemo(() => {
     let filtered = tickets
@@ -175,6 +161,10 @@ export function TicketsTable({ activeFilter }: TicketsTableProps) {
               className="pl-10 w-full"
             />
           </div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing} className="gap-2">
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
         </div>
       </div>
 

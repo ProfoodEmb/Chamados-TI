@@ -5,10 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Calendar, Clock, Trash2, Edit, Eye, Filter } from "lucide-react"
+import { Plus, Search, Calendar, Clock, Trash2, Edit, Eye, Filter, RefreshCw, Megaphone } from "lucide-react"
 import { CreateNoticeDialog } from "@/components/features/notices/create-notice-dialog"
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog"
-import { useNoticesPolling } from "@/lib/use-notices-polling"
 
 interface Notice {
   id: string
@@ -51,18 +50,7 @@ export default function AvisosManagementPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [noticeToDelete, setNoticeToDelete] = useState<string | null>(null)
-
-  // Sistema de tempo real para avisos (página de gerenciamento)
-  const { isActive: isPollingActive, lastUpdate, forceUpdate, interval } = useNoticesPolling({
-    enabled: isAuthorized && !isLoading,
-    onUpdate: (data) => {
-      if (data.hasChanges) {
-        console.log('📢 Atualizando gerenciamento de avisos em tempo real')
-        fetchNotices()
-      }
-    },
-    interval: 8000 // 8 segundos para gerenciamento
-  })
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -125,7 +113,7 @@ export default function AvisosManagementPage() {
 
       if (response.ok) {
         console.log('✅ Aviso excluído com sucesso')
-        fetchNotices() // Recarregar lista
+        await fetchNotices()
       } else {
         const error = await response.json()
         alert('Erro ao excluir aviso: ' + error.error)
@@ -227,13 +215,21 @@ export default function AvisosManagementPage() {
     return matchesSearch && matchesType && matchesStatus
   })
 
-  const handleNoticeCreated = () => {
-    fetchNotices()
+  const handleNoticeCreated = async () => {
     setShowCreateDialog(false)
-    // Forçar atualização em tempo real
-    setTimeout(() => {
-      forceUpdate()
-    }, 500)
+    await fetchNotices()
+  }
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return
+
+    setIsRefreshing(true)
+
+    try {
+      await fetchNotices()
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   // Mostrar loading enquanto verifica autorização
@@ -256,55 +252,66 @@ export default function AvisosManagementPage() {
   return (
     <>
       <div className="px-6 pb-6 -mt-16 pt-16">
-        {/* Header com gradiente */}
         <div className="mb-8">
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 p-8 shadow-xl">
-                <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]" />
+              <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
                 <div className="relative flex items-center justify-between">
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                        <span className="text-4xl">📢</span>
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+                        <Megaphone className="h-7 w-7 text-primary" />
                       </div>
                       <div>
-                        <h1 className="text-3xl font-bold text-white">Gerenciar Avisos</h1>
-                        <p className="text-blue-100">Crie e gerencie todos os avisos do sistema</p>
+                        <h1 className="text-3xl font-bold text-foreground">Gerenciar Avisos</h1>
+                        <p className="text-muted-foreground">Crie e gerencie todos os avisos do sistema</p>
                       </div>
                     </div>
                   </div>
                   
-                  {/* Botão Criar Aviso */}
-                  <Button 
-                    onClick={() => setShowCreateDialog(true)}
-                    className="bg-white text-blue-700 hover:bg-blue-50 gap-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                    size="lg"
-                  >
-                    <Plus className="w-5 h-5" />
-                    Criar Aviso
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={handleRefresh}
+                      disabled={isRefreshing}
+                      className="gap-2"
+                      size="lg"
+                    >
+                      <RefreshCw className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`} />
+                      Atualizar
+                    </Button>
+
+                    {/* Botão Criar Aviso */}
+                    <Button 
+                      onClick={() => setShowCreateDialog(true)}
+                      className="gap-2 bg-primary text-primary-foreground shadow-lg transition-all duration-200 hover:bg-primary/90 hover:shadow-xl"
+                      size="lg"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Criar Aviso
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Filtros e Ações com visual melhorado */}
-            <div className="bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="mb-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Busca com ícone animado */}
                 <div className="flex-1 relative group">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     placeholder="Buscar avisos por título ou conteúdo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-12 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
+                    className="h-12 rounded-xl pl-10"
                   />
                 </div>
 
                 {/* Filtro de Tipo com ícone */}
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full md:w-56 h-12 rounded-xl border-gray-300">
+                  <SelectTrigger className="h-12 w-full rounded-xl md:w-56">
                     <div className="flex items-center gap-2">
-                      <Filter className="w-4 h-4 text-gray-500" />
+                      <Filter className="w-4 h-4 text-muted-foreground" />
                       <SelectValue placeholder="Tipo" />
                     </div>
                   </SelectTrigger>
@@ -319,7 +326,7 @@ export default function AvisosManagementPage() {
 
                 {/* Filtro de Status */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-56 h-12 rounded-xl border-gray-300">
+                  <SelectTrigger className="h-12 w-full rounded-xl md:w-56">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -339,19 +346,19 @@ export default function AvisosManagementPage() {
                 <div className="flex items-center justify-center py-20">
                   <div className="text-center">
                     <div className="relative w-16 h-16 mx-auto mb-4">
-                      <div className="absolute inset-0 border-4 border-blue-200 rounded-full animate-ping"></div>
-                      <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-ping"></div>
+                      <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
                     </div>
-                    <p className="text-gray-600 font-medium">Carregando avisos...</p>
+                    <p className="font-medium text-muted-foreground">Carregando avisos...</p>
                   </div>
                 </div>
               ) : filteredNotices.length === 0 ? (
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-16 text-center">
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <span className="text-4xl">📢</span>
+                <div className="rounded-2xl border border-border bg-card p-16 text-center shadow-sm">
+                  <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 shadow-sm ring-1 ring-primary/10">
+                    <Megaphone className="h-9 w-9 text-primary" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">Nenhum aviso encontrado</h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  <h3 className="mb-3 text-xl font-bold text-foreground">Nenhum aviso encontrado</h3>
+                  <p className="mx-auto mb-6 max-w-md text-muted-foreground">
                     {searchTerm || typeFilter !== "all" || statusFilter !== "all" 
                       ? "Tente ajustar os filtros de busca para encontrar o que procura"
                       : "Comece criando seu primeiro aviso clicando no botão acima"
@@ -360,7 +367,7 @@ export default function AvisosManagementPage() {
                   {!searchTerm && typeFilter === "all" && statusFilter === "all" && (
                     <Button 
                       onClick={() => setShowCreateDialog(true)}
-                      className="bg-blue-600 hover:bg-blue-700 gap-2 shadow-lg"
+                      className="gap-2 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
                     >
                       <Plus className="w-4 h-4" />
                       Criar Primeiro Aviso
@@ -373,18 +380,18 @@ export default function AvisosManagementPage() {
                   return (
                     <div 
                       key={notice.id} 
-                      className="group bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 hover:shadow-xl hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-300 hover:-translate-y-1"
+                      className="group rounded-2xl border border-border bg-card p-6 transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           {/* Header com ícone maior */}
                           <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 rounded-xl group-hover:scale-110 transition-transform">
+                            <div className="rounded-xl bg-primary/10 p-3 transition-transform group-hover:scale-110">
                               <span className="text-3xl">{getTypeIcon(notice.type)}</span>
                             </div>
                             <div className="flex-1">
-                              <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">{notice.title}</h3>
+                              <h3 className="mb-2 text-xl font-bold text-foreground">{notice.title}</h3>
                               <div className="flex items-center gap-2 flex-wrap">
                                 <Badge variant="outline" className={`${getTypeColor(notice.type)} border-2 font-medium`}>
                                   {notice.type === "info" && "Informação"}
@@ -405,7 +412,7 @@ export default function AvisosManagementPage() {
                           </div>
 
                           {/* Conteúdo */}
-                          <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2 text-base">{notice.content}</p>
+                          <p className="mb-4 line-clamp-2 text-base text-muted-foreground">{notice.content}</p>
 
                           {/* Informações adicionais com ícones */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">

@@ -1,177 +1,178 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react"
 
 interface TicketPollingOptions {
   ticketId: string
   onUpdate?: (ticket: any) => void
   enabled?: boolean
-  interval?: number // em milissegundos
+  interval?: number
 }
 
 export function useTicketPolling(options: TicketPollingOptions) {
-  const { ticketId, onUpdate, enabled = true, interval = 20000 } = options // 20 segundos padrão
+  const { ticketId, onUpdate, enabled = true, interval = 8000 } = options
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [isActive, setIsActive] = useState(false)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  const lastMessageCountRef = useRef<number>(0)
-  const lastAttachmentCountRef = useRef<number>(0)
-  const lastStatusRef = useRef<string>('')
+  const [isPageVisible, setIsPageVisible] = useState(
+    typeof document === "undefined" ? true : !document.hidden
+  )
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const onUpdateRef = useRef(onUpdate)
+  const lastMessageCountRef = useRef<number | null>(null)
+  const lastAttachmentCountRef = useRef<number | null>(null)
+  const lastStatusRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!enabled || !ticketId) {
-      cleanup()
-      return
-    }
+    onUpdateRef.current = onUpdate
+  }, [onUpdate])
 
-    console.log('💬 Iniciando polling de mensagens para ticket:', ticketId)
-    setIsActive(true)
-    
-    // Função para verificar atualizações do ticket
-    const checkForUpdates = async () => {
-      try {
-        console.log('🔍 Verificando mensagens e anexos do ticket via polling...')
-        
-        // Buscar ticket completo com mensagens e anexos
-        const response = await fetch(`/api/tickets/${ticketId}`)
-        
-        // Verificar se a resposta é válida
-        if (!response.ok) {
-          console.warn(`⚠️ Resposta não OK: ${response.status} ${response.statusText}`)
-          return
-        }
-
-        // Verificar se o content-type é JSON
-        const contentType = response.headers.get('content-type')
-        if (!contentType || !contentType.includes('application/json')) {
-          console.warn('⚠️ Resposta não é JSON:', contentType)
-          return
-        }
-
-        const ticket = await response.json()
-        const currentMessageCount = ticket.messages?.length || 0
-        const currentAttachmentCount = ticket.attachments?.length || 0
-        const currentStatus = ticket.status || ''
-        
-        // Se o número de mensagens, anexos ou status mudou, notificar
-        const messagesChanged = lastMessageCountRef.current > 0 && currentMessageCount !== lastMessageCountRef.current
-        const attachmentsChanged = lastAttachmentCountRef.current > 0 && currentAttachmentCount !== lastAttachmentCountRef.current
-        const statusChanged = lastStatusRef.current !== '' && currentStatus !== lastStatusRef.current
-        
-        if (messagesChanged) {
-          console.log('💬 Nova mensagem detectada via polling:', { 
-            anterior: lastMessageCountRef.current, 
-            atual: currentMessageCount 
-          })
-          onUpdate?.(ticket)
-        }
-        
-        if (attachmentsChanged) {
-          console.log('📎 Novo anexo detectado via polling:', { 
-            anterior: lastAttachmentCountRef.current, 
-            atual: currentAttachmentCount 
-          })
-          onUpdate?.(ticket)
-        }
-
-        if (statusChanged) {
-          console.log('🔄 Status do ticket mudou via polling:', { 
-            anterior: lastStatusRef.current, 
-            atual: currentStatus 
-          })
-          onUpdate?.(ticket)
-        }
-        
-        // Se é a primeira vez, apenas definir o ticket
-        if (lastMessageCountRef.current === 0 && lastAttachmentCountRef.current === 0) {
-          onUpdate?.(ticket)
-        }
-        
-        lastMessageCountRef.current = currentMessageCount
-        lastAttachmentCountRef.current = currentAttachmentCount
-        lastStatusRef.current = currentStatus
-        
-        setLastUpdate(new Date())
-      } catch (error) {
-        console.error('❌ Erro no polling de mensagens:', error)
-      }
-    }
-
-    // Primeira verificação imediata
-    checkForUpdates()
-
-    // Configurar intervalo
-    intervalRef.current = setInterval(checkForUpdates, interval)
-
-    // Escutar eventos de foco da janela para atualizar imediatamente
-    const handleFocus = () => {
-      console.log('👁️ Janela focada - verificando mensagens')
-      checkForUpdates()
-    }
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('👁️ Página visível - verificando mensagens')
-        checkForUpdates()
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      cleanup()
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [enabled, ticketId, interval, onUpdate])
-
-  const cleanup = () => {
+  const clearPolling = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
       intervalRef.current = null
     }
-    setIsActive(false)
   }
 
+  const syncTicketState = (ticket: any, forceNotify = false) => {
+    const currentMessageCount = ticket.messages?.length || 0
+    const currentAttachmentCount = ticket.attachments?.length || 0
+    const currentStatus = ticket.status || ""
+
+    const isFirstLoad =
+      lastMessageCountRef.current === null &&
+      lastAttachmentCountRef.current === null &&
+      lastStatusRef.current === null
+
+    const hasChanges =
+      forceNotify ||
+      isFirstLoad ||
+      currentMessageCount !== lastMessageCountRef.current ||
+      currentAttachmentCount !== lastAttachmentCountRef.current ||
+      currentStatus !== lastStatusRef.current
+
+    if (hasChanges) {
+      onUpdateRef.current?.(ticket)
+    }
+
+    lastMessageCountRef.current = currentMessageCount
+    lastAttachmentCountRef.current = currentAttachmentCount
+    lastStatusRef.current = currentStatus
+    setLastUpdate(new Date())
+  }
+
+  const fetchCurrentTicket = async () => {
+    const response = await fetch(`/api/tickets/${ticketId}`)
+
+    if (!response.ok) {
+      return null
+    }
+
+    const contentType = response.headers.get("content-type")
+    if (!contentType || !contentType.includes("application/json")) {
+      return null
+    }
+
+    return response.json()
+  }
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden)
+    }
+
+    handleVisibilityChange()
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!enabled || !ticketId) {
+      clearPolling()
+      setIsActive(false)
+      return
+    }
+
+    const checkForUpdates = async () => {
+      try {
+        const ticket = await fetchCurrentTicket()
+        if (!ticket) {
+          return
+        }
+
+        syncTicketState(ticket)
+      } catch (error) {
+        console.error("Erro no polling do ticket:", error)
+      }
+    }
+
+    const startPolling = () => {
+      clearPolling()
+      intervalRef.current = setInterval(() => {
+        void checkForUpdates()
+      }, interval)
+      setIsActive(true)
+    }
+
+    const stopPolling = () => {
+      clearPolling()
+      setIsActive(false)
+    }
+
+    const handleFocus = () => {
+      if (!document.hidden) {
+        void checkForUpdates()
+      }
+    }
+
+    if (isPageVisible) {
+      void checkForUpdates()
+      startPolling()
+    } else {
+      stopPolling()
+    }
+
+    window.addEventListener("focus", handleFocus)
+
+    return () => {
+      stopPolling()
+      window.removeEventListener("focus", handleFocus)
+    }
+  }, [enabled, ticketId, interval, isPageVisible])
+
   const forceUpdate = async () => {
-    console.log('🔄 Atualização forçada de mensagens')
     try {
-      const response = await fetch(`/api/tickets/${ticketId}`)
-      
-      if (!response.ok) {
-        console.warn(`⚠️ Resposta não OK: ${response.status} ${response.statusText}`)
+      const ticket = await fetchCurrentTicket()
+      if (!ticket) {
         return
       }
 
-      const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
-        console.warn('⚠️ Resposta não é JSON:', contentType)
-        return
-      }
-
-      const ticket = await response.json()
-      onUpdate?.(ticket)
-      setLastUpdate(new Date())
+      syncTicketState(ticket, true)
     } catch (error) {
-      console.error('❌ Erro na atualização forçada:', error)
+      console.error("Erro na atualização manual do ticket:", error)
     }
   }
 
   const formatLastUpdate = () => {
     const now = new Date()
     const diff = Math.floor((now.getTime() - lastUpdate.getTime()) / 1000)
-    
+
     if (diff < 60) {
       return `${diff}s atrás`
-    } else {
-      const minutes = Math.floor(diff / 60)
-      return `${minutes}min atrás`
     }
+
+    const minutes = Math.floor(diff / 60)
+    return `${minutes}min atrás`
   }
 
   return {
     isActive,
     lastUpdate: formatLastUpdate(),
     forceUpdate,
-    interval: Math.floor(interval / 1000) // retorna em segundos para display
+    interval: Math.floor(interval / 1000),
   }
 }

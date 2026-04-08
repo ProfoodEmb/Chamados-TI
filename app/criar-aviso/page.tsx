@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Search, Calendar, Clock, Trash2, Edit, Eye, Filter, Megaphone, Wifi, WifiOff } from "lucide-react"
+import { Plus, Search, Calendar, Clock, Trash2, Edit, Eye, Filter, Megaphone, RefreshCw } from "lucide-react"
 import { CreateNoticeDialog } from "@/components/features/notices/create-notice-dialog"
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog"
-import { useNoticesPolling } from "@/lib/use-notices-polling"
 
 interface Notice {
   id: string
@@ -52,20 +51,7 @@ export default function CriarAvisoPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [noticeToDelete, setNoticeToDelete] = useState<string | null>(null)
-
-  // Sistema de tempo real para avisos
-  const { isActive: isPollingActive, lastUpdate, forceUpdate, interval } = useNoticesPolling({
-    enabled: !isLoading && !!user,
-    onUpdate: (data) => {
-      console.log('🔄 Página Avisos recebeu onUpdate:', data.noticeCount, 'avisos')
-      if (data.hasChanges && data.notices) {
-        console.log('📢 Atualizando lista de avisos em tempo real')
-        console.log('📋 Novos avisos:', data.notices.map((n: any) => n.title))
-        setNotices(data.notices)
-      }
-    },
-    interval: 3000 // 3 segundos para teste mais rápido
-  })
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     const init = async () => {
@@ -116,11 +102,7 @@ export default function CriarAvisoPage() {
 
       if (response.ok) {
         console.log('✅ Aviso excluído com sucesso')
-        fetchNotices() // Recarregar lista
-        // Forçar atualização em tempo real
-        setTimeout(() => {
-          forceUpdate()
-        }, 500)
+        await fetchNotices()
       } else {
         const error = await response.json()
         alert('Erro ao excluir aviso: ' + error.error)
@@ -231,23 +213,31 @@ export default function CriarAvisoPage() {
     return matchesSearch && matchesType && matchesStatus
   })
 
-  const handleNoticeCreated = () => {
+  const handleNoticeCreated = async () => {
     console.log('🆕 Aviso criado - atualizando lista')
     setShowCreateDialog(false)
-    
-    // Atualização imediata
-    fetchNotices()
-    
-    // Forçar atualização do sistema de tempo real após um pequeno delay
-    setTimeout(() => {
-      console.log('🔄 Forçando atualização do tempo real')
-      forceUpdate()
-    }, 1000)
-    
-    // Segunda atualização para garantir
-    setTimeout(() => {
-      fetchNotices()
-    }, 2000)
+    await fetchNotices()
+  }
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return
+
+    setIsRefreshing(true)
+
+    try {
+      await fetchNotices()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  const hasActiveFilters =
+    searchTerm.trim() !== "" || typeFilter !== "all" || statusFilter !== "all"
+
+  const clearFilters = () => {
+    setSearchTerm("")
+    setTypeFilter("all")
+    setStatusFilter("all")
   }
 
   // Mostrar loading enquanto carrega
@@ -267,13 +257,13 @@ export default function CriarAvisoPage() {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto pt-16 md:pl-16">
-          <div className="p-6">
+        <main className="flex-1 overflow-y-auto pt-12 md:pl-16">
+          <div className="w-full px-4 pb-6 pt-0">
             {/* Header */}
             <div className="mb-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                     <Megaphone className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -288,30 +278,14 @@ export default function CriarAvisoPage() {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  {/* Indicador de tempo real */}
-                  <div className="flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg">
-                    {isPollingActive ? (
-                      <>
-                        <Wifi className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-muted-foreground">
-                          Tempo Real ({interval}s)
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <WifiOff className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-muted-foreground">Desconectado</span>
-                      </>
-                    )}
-                  </div>
-
                   {/* Botão Atualizar */}
                   <Button 
                     variant="outline" 
-                    onClick={forceUpdate}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
                     className="gap-2"
                   >
-                    <Clock className="w-4 h-4" />
+                    <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
                     Atualizar
                   </Button>
 
@@ -319,7 +293,7 @@ export default function CriarAvisoPage() {
                   {canCreateNotice() && (
                     <Button 
                       onClick={() => setShowCreateDialog(true)}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 gap-2 text-white shadow-lg"
+                      className="gap-2 bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
                     >
                       <Plus className="w-4 h-4" />
                       Criar Novo Aviso
@@ -330,7 +304,7 @@ export default function CriarAvisoPage() {
             </div>
 
             {/* Filtros e Ações */}
-            <div className="bg-card border border-border rounded-xl p-4 mb-6">
+            <div className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Busca */}
                 <div className="flex-1 relative">
@@ -372,15 +346,6 @@ export default function CriarAvisoPage() {
                 </Select>
               </div>
 
-              {/* Status de atualização */}
-              {isPollingActive && (
-                <div className="mt-3 pt-3 border-t border-border">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Última atualização: {lastUpdate}</span>
-                    <span>Próxima verificação em {interval}s</span>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Lista de Avisos */}
@@ -393,34 +358,43 @@ export default function CriarAvisoPage() {
                   </div>
                 </div>
               ) : filteredNotices.length === 0 ? (
-                <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-border bg-card p-12 text-center">
-                  <div className="mx-auto flex max-w-md flex-col items-center">
-                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
-                    <Megaphone className="w-8 h-8 text-blue-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {searchTerm || typeFilter !== "all" || statusFilter !== "all" 
-                      ? "Nenhum aviso encontrado"
+                <div className="flex min-h-[320px] w-full items-center justify-center rounded-2xl border border-border bg-card px-8 py-8 text-center shadow-sm">
+                  <div className="mx-auto flex max-w-2xl flex-col items-center">
+                    <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 shadow-sm ring-1 ring-primary/10">
+                      <Megaphone className="h-9 w-9 text-primary" />
+                    </div>
+                    <span className="mb-3 inline-flex rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
+                      {hasActiveFilters ? "Filtros ativos" : "Painel de avisos"}
+                    </span>
+                    <h3 className="mb-2 text-2xl font-semibold text-foreground">
+                      {hasActiveFilters
+                        ? "Nenhum aviso encontrado"
                       : "Nenhum aviso criado ainda"
                     }
                   </h3>
-                  <p className="text-muted-foreground mb-4">
-                    {searchTerm || typeFilter !== "all" || statusFilter !== "all" 
-                      ? "Tente ajustar os filtros de busca"
+                    <p className="mb-6 max-w-lg text-sm leading-6 text-muted-foreground">
+                      {hasActiveFilters
+                        ? "Tente limpar ou ajustar os filtros para encontrar os avisos que você procura."
                       : canCreateNotice() 
-                        ? "Crie seu primeiro aviso clicando no botão acima"
+                        ? "Crie seu primeiro aviso para comunicar novidades, manutenções ou informações importantes para o time."
                         : "Aguarde novos avisos da equipe T.I."
                     }
                   </p>
-                  {!searchTerm && typeFilter === "all" && statusFilter === "all" && canCreateNotice() && (
-                    <Button 
-                      onClick={() => setShowCreateDialog(true)}
-                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Primeiro Aviso
-                    </Button>
-                  )}
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      {hasActiveFilters ? (
+                        <Button variant="outline" onClick={clearFilters} className="gap-2">
+                          <Filter className="h-4 w-4" />
+                          Limpar filtros
+                        </Button>
+                      ) : null}
+
+                      {!hasActiveFilters && canCreateNotice() && (
+                        <Button onClick={() => setShowCreateDialog(true)} className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                          <Plus className="h-4 w-4" />
+                          Criar Primeiro Aviso
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : (

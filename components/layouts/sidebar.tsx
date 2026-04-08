@@ -129,12 +129,18 @@ export function Sidebar() {
         })
       }
 
-      // Adicionar "Extensões" para todos os usuários T.I.
-      baseItems.push({
-        icon: Puzzle,
-        href: "/ti/extensoes",
-        label: "Extensões",
-      })
+      // Adicionar "Extensões" para líderes dos setores e admin
+      if (
+        user.role === "admin" ||
+        user.role === "lider_infra" ||
+        user.role === "lider_sistemas"
+      ) {
+        baseItems.push({
+          icon: Puzzle,
+          href: "/ti/extensoes",
+          label: "Extensões",
+        })
+      }
 
       return baseItems
     } else {
@@ -154,11 +160,6 @@ export function Sidebar() {
           icon: Megaphone,
           href: "/criar-aviso",
           label: "Avisos",
-        },
-        {
-          icon: Puzzle,
-          href: "/extensoes",
-          label: "Extensões",
         },
       ]
     }

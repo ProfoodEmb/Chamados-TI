@@ -22,12 +22,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 // Sistemas (ERP + outros)
 const listaSistemas = [
   { id: "ecalc", nome: "Ecalc", logo: "/sistemas/ecalc.png" },
+  { id: "heidelberg", nome: "Heidelberg", logo: "/sistemas/Heidelberg1.png" },
   { id: "questor", nome: "Questor", logo: "/sistemas/questor.png" },
   { id: "sankhya", nome: "Sankhya", logo: "/sistemas/sankhya.png" },
   { id: "ploomes", nome: "Ploomes", logo: "/sistemas/ploomes.png" },
   { id: "mercos", nome: "Mercos", logo: "/sistemas/mercos.png" },
   { id: "rhid", nome: "RHID", logo: "/sistemas/rhid.png" },
-  { id: "IDSecure", nome: "IDSecure", logo: "/sistemas/IDSecure.jpg" },
+  { id: "idsecure", nome: "IDSecure", logo: "/sistemas/idsecure.jpg" },
   { id: "estoque", nome: "Sistema de Estoque", logo: "/sistemas/estoque.png" },
 ]
 

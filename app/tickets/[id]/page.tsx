@@ -66,34 +66,18 @@ export default function TicketDetailPage() {
   const { isActive, lastUpdate, forceUpdate, interval } = useTicketPolling({
     ticketId,
     onUpdate: (updatedTicket) => {
-      console.log('💬 Ticket atualizado via polling:', updatedTicket)
       setTicket(updatedTicket)
+      setError(null)
       setIsLoading(false)
     },
-    enabled: !!ticketId,
-    interval: 5000 // 5 segundos para atualização em tempo real
+    enabled: !!ticketId && !isLoading && !error,
+    interval: 8000
   })
 
   useEffect(() => {
     if (ticketId) {
       fetchTicket()
       fetchCurrentUser()
-    }
-  }, [ticketId])
-
-  // Escutar eventos de atualização de ticket
-  useEffect(() => {
-    const handleTicketUpdated = (event: any) => {
-      console.log('🔔 Evento ticketUpdated recebido:', event.detail)
-      // Forçar atualização imediata
-      fetchTicket()
-      forceUpdate()
-    }
-
-    window.addEventListener('ticketUpdated', handleTicketUpdated)
-
-    return () => {
-      window.removeEventListener('ticketUpdated', handleTicketUpdated)
     }
   }, [ticketId])
 
@@ -119,6 +103,7 @@ export default function TicketDetailPage() {
       if (response.ok) {
         const data = await response.json()
         setTicket(data)
+        setError(null)
       } else if (response.status === 404) {
         setError("Chamado não encontrado")
       } else if (response.status === 403) {

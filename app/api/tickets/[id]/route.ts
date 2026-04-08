@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db/prisma"
 import { auth } from "@/lib/auth/auth"
 import { headers } from "next/headers"
-import { notifyTicketUpdate as notifySSE } from "@/app/api/tickets/events/route"
 
 // GET - Buscar chamado específico
 export async function GET(
@@ -178,12 +177,6 @@ export async function PATCH(
           }
         }
       }
-    })
-
-    // Notificar via SSE sobre atualização do ticket
-    notifySSE({
-      type: 'ticket_updated',
-      ticket: updatedTicket
     })
 
     return NextResponse.json(updatedTicket)

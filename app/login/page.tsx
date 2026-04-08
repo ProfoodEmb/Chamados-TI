@@ -22,14 +22,23 @@ export default function LoginPage() {
     setError("")
     
     try {
-      let emailToUse = username
-      
-      // Se não contém @, assumir que é username e adicionar @empresa.com
-      if (!username.includes('@')) {
-        emailToUse = `${username}@empresa.com`
+      const resolveResponse = await fetch("/api/auth/resolve-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ identifier: username }),
+      })
+
+      const resolveData = await resolveResponse.json()
+
+      if (!resolveResponse.ok || !resolveData?.email) {
+        setError("Nao foi possivel validar o usuario informado.")
+        setIsLoading(false)
+        return
       }
       
-      console.log('Tentando login com email:', emailToUse)
+      const emailToUse = resolveData.email
       
       // Fazer login com Better Auth
       const result = await signIn.email({

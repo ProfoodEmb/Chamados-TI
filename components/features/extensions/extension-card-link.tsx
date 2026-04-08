@@ -2,7 +2,8 @@
 
 import { type MouseEvent, type ReactNode, useState } from "react"
 
-interface ExtensionLaunchConfig {
+interface FormExtensionLaunchConfig {
+  mode?: "form"
   loginUrl: string
   redirectUrl: string
   fields: Record<string, string>
@@ -10,11 +11,43 @@ interface ExtensionLaunchConfig {
   providerLabel: string
 }
 
+interface ScriptExtensionLaunchConfig {
+  mode: "script"
+  startUrl: string
+  redirectUrl: string
+  scriptUrl: string
+  redirectDelayMs: number
+  providerLabel: string
+}
+
+interface RedirectExtensionLaunchConfig {
+  mode: "redirect"
+  redirectUrl: string
+  redirectDelayMs: number
+  providerLabel: string
+  helperUrl?: string
+}
+
+type ExtensionLaunchConfig =
+  | FormExtensionLaunchConfig
+  | ScriptExtensionLaunchConfig
+  | RedirectExtensionLaunchConfig
+
 interface ExtensionCardLinkProps {
-  provider?: "constel" | "printserve"
-  href: string
+  provider?:
+    | "constel"
+    | "printserve"
+    | "ipcom"
+    | "questor"
+    | "sankhya"
+    | "ecalc"
+    | "mercos"
+    | "ploomes"
+    | "powerbi"
+  href?: string
   className: string
   children: ReactNode
+  disabled?: boolean
 }
 
 function showInfoToast(message: string) {
@@ -112,6 +145,7 @@ export function ExtensionCardLink({
   href,
   className,
   children,
+  disabled = false,
 }: ExtensionCardLinkProps) {
   const [isLaunching, setIsLaunching] = useState(false)
 
@@ -176,10 +210,124 @@ export function ExtensionCardLink({
 
       if (!response.ok) {
         const result = await response.json().catch(() => null)
-        throw new Error(result?.error || "Não foi possível iniciar o login automático da Constel.")
+        throw new Error(result?.error || "Não foi possível iniciar o login automático da extensão.")
       }
 
       const config = (await response.json()) as ExtensionLaunchConfig
+
+      if (config.mode === "redirect") {
+        writeConstelLoadingPage(
+          tab,
+          `Conectando na ${config.providerLabel}...`,
+          "Estamos preparando a abertura do sistema."
+        )
+
+        const navigate = (targetWindow: Window, url: string) => {
+          try {
+            targetWindow.location.replace(url)
+          } catch {
+            targetWindow.location.href = url
+          }
+        }
+
+        let hasFinishedRedirect = false
+        const finishRedirect = () => {
+          if (hasFinishedRedirect || tab.closed) {
+            return
+          }
+
+          hasFinishedRedirect = true
+
+          if (helperWindow && !helperWindow.closed) {
+            helperWindow.close()
+          }
+
+          navigate(tab, config.redirectUrl)
+        }
+
+        if (useHelperWindow && helperWindow && config.helperUrl) {
+          helperWindow.addEventListener(
+            "load",
+            () => {
+              window.setTimeout(finishRedirect, 80)
+            },
+            { once: true }
+          )
+
+          navigate(helperWindow, config.helperUrl)
+          window.setTimeout(finishRedirect, config.redirectDelayMs)
+        } else {
+          window.setTimeout(() => {
+            if (!tab.closed) {
+              navigate(tab, config.redirectUrl)
+            }
+          }, config.redirectDelayMs)
+        }
+
+        return
+      }
+
+      if (config.mode === "script") {
+        writeConstelLoadingPage(
+          tab,
+          `Conectando na ${config.providerLabel}...`,
+          "Estamos autenticando seu acesso e preparando a abertura do sistema."
+        )
+
+        const launchTarget = useHelperWindow && helperWindow ? helperWindow : tab
+        let hasInjectedScript = false
+
+        const injectLoginScript = () => {
+          if (hasInjectedScript || launchTarget.closed) {
+            return
+          }
+
+          hasInjectedScript = true
+
+          try {
+            launchTarget.location.replace(config.scriptUrl)
+          } catch {
+            launchTarget.location.href = config.scriptUrl
+          }
+        }
+
+        launchTarget.addEventListener(
+          "load",
+          () => {
+            window.setTimeout(injectLoginScript, 80)
+          },
+          { once: true }
+        )
+
+        try {
+          launchTarget.location.replace(config.startUrl)
+        } catch {
+          launchTarget.location.href = config.startUrl
+        }
+
+        window.setTimeout(
+          injectLoginScript,
+          Math.max(config.redirectDelayMs - 500, 900)
+        )
+
+        if (useHelperWindow && helperWindow) {
+          window.setTimeout(() => {
+            if (!tab.closed) {
+              try {
+                tab.location.replace(config.redirectUrl)
+              } catch {
+                tab.location.href = config.redirectUrl
+              }
+            }
+
+            helperWindow.close()
+          }, config.redirectDelayMs + 150)
+        } else {
+          window.setTimeout(injectLoginScript, config.redirectDelayMs)
+        }
+
+        return
+      }
 
       writeConstelLoadingPage(
         tab,
@@ -244,6 +392,17 @@ export function ExtensionCardLink({
     } finally {
       setIsLaunching(false)
     }
+  }
+
+  if (disabled) {
+    return (
+      <div
+        className={`${className} cursor-default opacity-90`}
+        aria-disabled="true"
+      >
+        {children}
+      </div>
+    )
   }
 
   if (provider) {

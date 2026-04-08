@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Megaphone, Info, AlertTriangle, Wrench, Sparkles, Trash2, Calendar, Clock } from "lucide-react"
+import { Megaphone, Info, AlertTriangle, Wrench, Sparkles, Trash2, Calendar, Clock, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/shared/dialogs/confirm-dialog"
-import { useNoticesPolling } from "@/lib/use-notices-polling"
-import { NoticeToast } from "@/components/shared/toasts/notice-toast"
 
 interface Notice {
   id: string
@@ -41,29 +39,7 @@ export function NoticeBoard() {
   const [user, setUser] = useState<User | null>(null)
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [noticeToDelete, setNoticeToDelete] = useState<string | null>(null)
-  const [showToast, setShowToast] = useState(false)
-  const [toastNotice, setToastNotice] = useState<any>(null)
-
-  // Sistema de tempo real para avisos
-  const { isActive: isPollingActive } = useNoticesPolling({
-    enabled: !isLoading,
-    onUpdate: (data) => {
-      console.log('🔄 NoticeBoard recebeu onUpdate:', data.noticeCount, 'avisos')
-      if (data.hasChanges && data.notices) {
-        console.log('📢 Atualizando mural de avisos em tempo real')
-        console.log('📋 Novos avisos:', data.notices.map((n: any) => n.title))
-        setNotices(data.notices)
-      }
-    },
-    onNewNotice: (notice) => {
-      console.log('🆕 Novo aviso no mural:', notice.title)
-      setToastNotice(notice)
-      setShowToast(true)
-      // Forçar atualização da lista também
-      fetchNotices()
-    },
-    interval: 3000 // 3 segundos para teste mais rápido
-  })
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   useEffect(() => {
     fetchUser()
@@ -111,7 +87,7 @@ export function NoticeBoard() {
 
       if (response.ok) {
         console.log('✅ Aviso excluído com sucesso')
-        fetchNotices() // Recarregar lista
+        await fetchNotices()
       } else {
         const error = await response.json()
         alert('Erro ao excluir aviso: ' + error.error)
@@ -219,16 +195,40 @@ export function NoticeBoard() {
     return user.role === "admin" || user.id === notice.author.id
   }
 
+  const handleRefresh = async () => {
+    if (isRefreshing) return
+
+    setIsRefreshing(true)
+
+    try {
+      await fetchNotices()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <div className="bg-card rounded-lg border border-border p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 bg-yellow-100 rounded-lg flex items-center justify-center">
-          <Megaphone className="w-3.5 h-3.5 text-yellow-600" />
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-yellow-100 rounded-lg flex items-center justify-center">
+            <Megaphone className="w-3.5 h-3.5 text-yellow-600" />
+          </div>
+          <div>
+            <h2 className="text-xs font-semibold text-foreground">Mural de avisos</h2>
+            <p className="text-[10px] text-muted-foreground">Fique por dentro das novidades</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-xs font-semibold text-foreground">Mural de avisos</h2>
-          <p className="text-[10px] text-muted-foreground">Fique por dentro das novidades</p>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="h-7 gap-1 px-2 text-[10px]"
+        >
+          <RefreshCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+          Atualizar
+        </Button>
       </div>
 
       <div className="space-y-2 mb-2 max-h-[300px] overflow-y-auto scrollbar-visible">
@@ -341,17 +341,6 @@ export function NoticeBoard() {
         variant="destructive"
         onConfirm={confirmDeleteNotice}
       />
-
-      {/* Toast de novo aviso */}
-      {showToast && toastNotice && (
-        <NoticeToast
-          notice={toastNotice}
-          onClose={() => {
-            setShowToast(false)
-            setToastNotice(null)
-          }}
-        />
-      )}
     </div>
   )
 }

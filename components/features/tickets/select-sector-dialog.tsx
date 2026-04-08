@@ -17,11 +17,13 @@ import { Input } from "@/components/ui/input"
 
 const sistemas = [
   { id: "ecalc", nome: "Ecalc", logo: "/sistemas/ecalc.png" },
+  { id: "heidelberg", nome: "Heidelberg", logo: "/sistemas/Heidelberg1.png" },
   { id: "idsecure", nome: "IDSecure", logo: "/sistemas/idsecure.jpg" },
   { id: "mercos", nome: "Mercos", logo: "/sistemas/mercos.png" },
   { id: "ploomes", nome: "Ploomes", logo: "/sistemas/ploomes.png" },
   { id: "powerbi", nome: "Power BI", logo: "/sistemas/powerbi.png" },
   { id: "questor", nome: "Questor", logo: "/sistemas/questor.png" },
+  { id: "rhid", nome: "RHID", logo: "/sistemas/rhid.png" },
   { id: "sankhya", nome: "Sankhya", logo: "/sistemas/sankhya.png" },
   { id: "estoque", nome: "Sistema de Estoque", logo: "/sistemas/estoque.png" },
   { id: "chamados", nome: "Sistema de Chamados", logo: "/sistemas/chamados.svg" },
@@ -32,6 +34,8 @@ const automacoes = [
   { id: "ploomes_auto", nome: "Ploomes", logo: "/sistemas/ploomes.png" },
   { id: "thebestacai", nome: "The Best Açaí", logo: "/sistemas/thebestacai.png" },
 ]
+
+const CUSTOM_REQUESTER_ID = "__custom_requester__"
 
 interface SelectSectorDialogProps {
   open: boolean
@@ -112,8 +116,7 @@ export function SelectSectorDialog({
 
   const handleCustomNameSubmit = () => {
     if (customRequesterName.trim()) {
-      // Passar o ID do "Usuário Específico" e o nome customizado
-      onSelectRequester?.(selectedRequesterId, customRequesterName)
+      onSelectRequester?.(selectedRequesterId, customRequesterName.trim())
       setShowCustomNameInput(false)
       // Não fechar o dialog, apenas voltar para mostrar os setores
     }
@@ -321,32 +324,11 @@ export function SelectSectorDialog({
 
                   {/* Card "Usuário Específico" */}
                   <button
-                    onClick={async () => {
-                      try {
-                        // Buscar o ID do usuário "Usuário Específico"
-                        const response = await fetch('/api/users')
-                        const data = await response.json()
-                        
-                        console.log('🔍 Resposta da API:', data)
-                        
-                        // A API retorna { users: [...] }
-                        const users = data.users || []
-                        const specificUser = users.find((u: any) => u.name === "Usuário Específico")
-                        
-                        if (specificUser) {
-                          console.log('✅ Usuário Específico encontrado:', specificUser)
-                          setSelectedRequesterId(specificUser.id)
-                          setShowCustomNameInput(true)
-                          setShowRequesterSelect(false)
-                        } else {
-                          console.error('❌ Usuário Específico não encontrado na lista')
-                          console.log('Usuários disponíveis:', users.map((u: any) => u.name))
-                          alert('Erro: Usuário Específico não encontrado no sistema')
-                        }
-                      } catch (error) {
-                        console.error('Erro ao buscar usuários:', error)
-                        alert('Erro ao buscar usuários')
-                      }
+                    onClick={() => {
+                      setSelectedRequesterId(CUSTOM_REQUESTER_ID)
+                      setCustomRequesterName("")
+                      setShowCustomNameInput(true)
+                      setShowRequesterSelect(false)
                     }}
                     className="relative p-6 rounded-2xl border-2 border-gray-200 bg-white hover:border-purple-300 hover:shadow-md transition-all"
                   >
